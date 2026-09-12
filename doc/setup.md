@@ -195,6 +195,36 @@ export default defineConfig({
 * **Bebas Warning Ukuran (*Zero Chunk Warning*)**: Memecah bundle monolitik menjadi chunk-chunk terpisah yang berada jauh di bawah batas ambang 500 kB.
 * **Kecepatan Download**: Mempercepat proses pemuatan awal halaman (*First Contentful Paint*) melalui transfer paralel berkas pada HTTP/2.
 
+---
+
+### 5. Panduan Pembaruan Versi (Upgrade & Update Guide)
+
+Ketika paket `laravel-pack-ui` merilis versi baru (Patch, Minor, atau Major):
+
+1. **Jalankan Update Composer**:
+   ```bash
+   composer update chandra2004/laravel-pack-ui
+   ```
+   * **Patch / Minor**: Otomatis tertarik jika menggunakan format default `"^1.3"`.
+   * **Mayor (Breaking Changes)**: Jalankan `composer require chandra2004/laravel-pack-ui:^2.0`.
+
+2. **Sinkronkan Berkas Komponen Terbaru ke Project**:
+   ```bash
+   php artisan pack:install --force
+   ```
+   *Atau secara terpisah:*
+   ```bash
+   php artisan vendor:publish --tag=pack-ui-components --force
+   php artisan vendor:publish --tag=pack-ui-composables --force
+   ```
+
+3. **Build Ulang Asset Frontend**:
+   ```bash
+   npm run build
+   ```
+
+---
+
 ### 📚 Daftar Dokumentasi Komponen & Composables
 
 | Kategori | Komponen / File | Tautan Dokumentasi | Deskripsi Singkat |

@@ -102,11 +102,72 @@ Perintah ini akan memeriksa lingkungan project Anda secara otomatis:
 # Otomatis pasang seluruh dependensi prasyarat tanpa pertanyaan konfirmasi
 php artisan pack:install --all
 
-# Timpa seluruh berkas komponen jika sebelumnya sudah pernah dipasang
+# Timpa seluruh berkas komponen jika sebelumnya sudah pernah dipasang (Sangat disarankan saat Update)
 php artisan pack:install --force
 
 # Pilihan terbaik untuk project Laravel yang baru dibuat (fresh install):
 php artisan pack:install --all --force
+```
+
+---
+
+## 🔄 Panduan Pembaruan Versi (Upgrade & Update Guide)
+
+Ketika paket `chandra2004/laravel-pack-ui` merilis pembaruan versi (baik berupa **Patch**, **Minor**, maupun **Major**), ikuti 3 langkah berikut agar aplikasi Anda mendapatkan fitur, perbaikan bug, dan komponen terbaru:
+
+### Langkah 1: Update Versi Package via Composer
+
+Jalankan perintah berikut di terminal project Anda:
+
+```bash
+composer update chandra2004/laravel-pack-ui
+```
+
+#### 📌 Ketentuan Batasan Versi (*Version Constraints*):
+* **Pembaruan Patch (`v1.3.0` $\to$ `v1.3.1`) & Minor (`v1.3.0` $\to$ `v1.4.0`)**:  
+  Jika file `composer.json` project Anda menggunakan format default `"chandra2004/laravel-pack-ui": "^1.3"`, Composer akan **otomatis menarik versi patch dan minor terbaru** yang kompatibel saat Anda mengeksekusi `composer update`.
+* **Pembaruan Mayor / Breaking Changes (`v1.x` $\to$ `v2.0.0`)**:  
+  Composer sengaja **tidak** mengupdate ke versi mayor secara otomatis guna mencegah error akibat perubahan struktur API (*breaking changes*). Untuk beralih ke versi mayor baru, perbarui constraint secara eksplisit:
+  ```bash
+  composer require chandra2004/laravel-pack-ui:^2.0
+  ```
+
+---
+
+### Langkah 2: Terbitkan Ulang Komponen Terbaru ke Project Anda
+
+> [!IMPORTANT]
+> Karena komponen Vue dan Composables disalin langsung (*published*) ke dalam direktori aplikasi Anda (`resources/js/Components/Pack/` dan `resources/js/Composables/Pack/`), menjalankan `composer update` saja **hanya memperbarui berkas di folder `vendor/`**, bukan berkas komponen yang digunakan di project Anda.
+
+Jalankan perintah installer dengan opsi `--force` untuk menyinkronkan berkas komponen terbaru ke project Anda:
+
+```bash
+php artisan pack:install --force
+```
+
+Atau jika Anda hanya ingin memperbarui file komponen UI saja tanpa menyentuh file konfigurasi blade/app:
+```bash
+# Terbitkan ulang komponen UI
+php artisan vendor:publish --tag=pack-ui-components --force
+
+# Terbitkan ulang composables
+php artisan vendor:publish --tag=pack-ui-composables --force
+```
+
+> [!WARNING]
+> **Penting Sebelum Menjalankan `--force`:**  
+> Jika Anda pernah memodifikasi kode secara manual di dalam berkas `resources/js/Components/Pack/...`, opsi `--force` akan **menimpa (*overwrite*)** perubahan kustom tersebut. Pastikan Anda telah melakukan `git commit` atau backup kode terlebih dahulu.
+
+---
+
+### Langkah 3: Kompilasi Ulang Asset Frontend
+
+Setelah berkas komponen terbaru diperbarui di project Anda, jalankan build Vite:
+
+```bash
+npm run build
+# atau untuk lingkungan development:
+npm run dev
 ```
 
 ---
