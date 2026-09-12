@@ -52,32 +52,29 @@ Lalu jalankan di terminal:
 composer update chandra2004/laravel-pack-ui
 ```
 
-### 2. Pasang Komponen ke dalam Project
+### 2. Jalankan Smart Auto-Installer
 
-Jalankan perintah artisan instalasi:
+Jalankan perintah instalasi cerdas:
 
 ```bash
 php artisan pack:install
 ```
 
-Atau menggunakan tag publish bawaan Laravel:
+> 💡 **Fitur Cerdas `pack:install` (v1.1.0+)**:
+> Command ini akan secara otomatis mengaudit project Anda:
+> 1. ✅ **Deteksi Vue 3 & Inertia.js**: Jika belum terpasang, otomatis memasang `inertiajs/inertia-laravel` via Composer dan dependensi Vue 3 + `@inertiajs/vue3` di `package.json`.
+> 2. ✅ **Deteksi Tailwind CSS v4 Engine**: Jika belum ada, otomatis memasang `tailwindcss` dan `@tailwindcss/vite`.
+> 3. ✅ **Deteksi Google Material Symbols**: Otomatis memasang paket font ikon `material-symbols`.
+> 4. ✅ **Auto-Config `app.css` & `vite.config.js`**: Otomatis menambahkan directive `@import 'tailwindcss';`, `@import 'material-symbols';`, dan plugin Vite.
+> 5. ✅ **Publish Komponen**: Menyalin seluruh komponen UI dan composable ke `resources/js/`.
 
+Opsi tambahan yang tersedia:
 ```bash
-php artisan vendor:publish --tag=pack-ui
-```
+# Otomatis konfirmasi pasang seluruh prasyarat tanpa prompt interaktif
+php artisan pack:install --all
 
-Berkas akan otomatis disalin ke:
-- `resources/js/Components/Pack/`
-- `resources/js/Composables/Pack/`
-
-### 3. Prasyarat Styling
-Pastikan project Anda telah mengimpor font Google Material Symbols dan Tailwind CSS pada `resources/css/app.css`:
-
-```css
-@import 'tailwindcss';
-@import 'material-symbols';
-
-@custom-variant dark (&:where(.dark, .dark *));
+# Timpa berkas komponen jika sebelumnya sudah pernah dipasang
+php artisan pack:install --force
 ```
 
 ---
