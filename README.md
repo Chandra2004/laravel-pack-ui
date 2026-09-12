@@ -22,6 +22,12 @@ Enterprise UI Components & Composables untuk **Laravel + Inertia.js + Vue 3**, d
 
 ---
 
+## 📚 Dokumentasi API & Panduan Komponen Lengkap
+Dokumentasi teknis mendalam untuk setiap props, events, slots, varian tipe input, preview file, dan contoh kodenya tersedia di:
+👉 **[PACK-COMPONENT-LAYOUT.md](./PACK-COMPONENT-LAYOUT.md)**
+
+---
+
 ## 🚀 Cara Instalasi di Project Laravel Lain
 
 ### 1. Tambahkan ke `composer.json` Project Anda
@@ -36,7 +42,7 @@ Tambahkan repositori Git di `composer.json`:
     }
 ],
 "require": {
-    "chandra2004/laravel-pack-ui": "dev-main"
+    "chandra2004/laravel-pack-ui": "^1.0"
 }
 ```
 
