@@ -1,111 +1,278 @@
 # Laravel Pack UI
 
-Enterprise UI Components & Composables untuk **Laravel + Inertia.js + Vue 3**, dirancang dengan **Tailwind CSS v4** dan **Google Material Symbols**.
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/chandra2004/laravel-pack-ui.svg?style=flat-square&color=blue)](https://packagist.org/packages/chandra2004/laravel-pack-ui)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
+[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.2-777bb4.svg?style=flat-square&logo=php)](https://php.net)
+[![Laravel Framework](https://img.shields.io/badge/Laravel-11.x%20%7C%2012.x-FF2D20.svg?style=flat-square&logo=laravel)](https://laravel.com)
+[![Inertia.js](https://img.shields.io/badge/Inertia.js-Vue%203-9553e9.svg?style=flat-square&logo=inertia)](https://inertiajs.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4.x-38bdf8.svg?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
+
+**Laravel Pack UI** adalah paket komponen antarmuka (*UI Component Kit*) dan composables *enterprise-grade* yang dirancang khusus untuk ekosistem **Laravel + Inertia.js + Vue 3**, ditenagai oleh **Tailwind CSS v4** dan **Google Material Symbols**.
+
+Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan **Laravel Breeze**): seluruh kode komponen dipublikasikan langsung ke dalam direktori `resources/js/` project Anda. Pendekatan ini memberikan kebebasan penuh bagi developer untuk menyesuaikan desain, memperluas fitur, dan menikmati performa tanpa beban *runtime wrapper* tambahan.
 
 ---
 
-## 📦 Komponen yang Disediakan
+## 🌟 Mengapa Memilih Laravel Pack UI?
 
-1. **`InputField.vue`** – Universal Form Facade dengan 10+ varian (`text`, `email`, `password`, `select`, `date`, `file`, `switch`, `checkbox`, `radio`, `color`, `range`, `textarea`).
-2. **`TableComponent.vue`** – Tabel data interaktif lengkap dengan multi-column skeleton loader, sorting, empty state, dan search toolbar.
-3. **`Pagination.vue`** – Komponen pagination responsif kompatibel dengan Laravel LengthAwarePaginator dan client-side mode.
-4. **`Modal.vue`** – Dialog overlay dengan animasi Tailwind, variant status badges, dan teleport.
-5. **`Alert.vue`** – Banner notifikasi inline (info, success, warning, error, neutral) dengan aksen bar ramping dan progress auto-close.
-6. **`ToastNotification.vue`** – Floating toast notification dengan antrian reactive global, multi-position, dan countdown progress bar.
-7. **`ButtonSubmit.vue`** – Tombol aksi polimorfik dengan dukungan Google Icons, loading spinner, dan ragam varian warna.
-8. **`ButtonTheme.vue`** – Dark/Light/System mode theme switcher dengan deteksi preferensi OS dan multi-style (switch, icon, button, segmented).
-
-### 🧩 Composables
-- **`useNotification.js`** – Global reactive toast notifier (`notify.success()`, `notify.error()`, dll).
-- **`useTheme.js`** – Theme manager dengan persistensi localStorage dan deteksi skema sistem.
-- **`useClickOutside.js`** – Utility penutup dropdown/popover saat klik di luar elemen.
+* 🚀 **Smart Auto-Installer**: Mendeteksi secara cerdas apakah project Anda sudah memiliki Vue, Inertia, Tailwind v4, atau Google Icons, dan otomatis memasangnya jika belum tersedia.
+* 🎨 **Desain Modern & Konsisten**: Standar border-radius harmonis (`rounded-xl` untuk input dan `rounded-2xl` untuk card/dialog), shadow lembut (`shadow-2xs`), serta tipografi Google Material Symbols.
+* 🔒 **Sistem Form & Validasi Tangguh**: `InputField.vue` universal mencakup 10+ tipe input (email regex, phone auto-hyphen, currency mask `Rp 1.500.000`, 4-tahap password strength meter, autocomplete search).
+* 📁 **Rich File Upload & Lightbox**: Mendukung 4 varian unggah berkas (`avatar`, `dropzone` hero, `grid` galeri multi-foto, dan `list` tabel dokumen) lengkap dengan pembersih memory leak blob dan modal preview resolusi penuh.
+* ⚡ **Kompatibel Penuh Tailwind CSS v4**: Menggunakan engine performa tinggi `@tailwindcss/vite` dengan konfigurasi dark mode instan `@custom-variant dark`.
+* 🌓 **Manajemen Tema Bawaan**: Composable `useTheme` terintegrasi dengan `ButtonTheme.vue` yang mendukung mode Terang, Gelap, dan Sinkronisasi Preferensi OS (*System*).
 
 ---
 
-## 📚 Dokumentasi API & Panduan Komponen Lengkap
-Dokumentasi teknis mendalam untuk setiap props, events, slots, varian tipe input, preview file, dan contoh kodenya tersedia di:
-👉 **[PACK-COMPONENT-LAYOUT.md](./PACK-COMPONENT-LAYOUT.md)**
+## 📦 Komponen & Composables yang Disediakan
+
+| Komponen | Deskripsi Singkat |
+|---|---|
+| **`InputField.vue`** | Universal form control facade mendukung teks, sandi, angka, tanggal, upload file, select, switch, checkbox, radio, color, range slider, dan textarea. |
+| **`TableComponent.vue`** | Tabel data interaktif dilengkapi multi-column skeleton loader, sortable header, toolbar pencarian, dan penanganan status kosong (*empty state*). |
+| **`Pagination.vue`** | Paginator responsif yang kompatibel langsung dengan Laravel `LengthAwarePaginator` maupun pagination client-side. |
+| **`Modal.vue`** | Dialog popup & confirmation overlay dengan transisi Tailwind halus, varian status (info, danger, success, warning), dan focus-trap. |
+| **`Alert.vue`** | Banner notifikasi inline (solid, soft, outline) dengan strip aksen warna ramping dan progress bar auto-close. |
+| **`ToastNotification.vue`** | Sistem floating notification global dengan antrian reaktif, countdown timer, dan dukungan multi-posisi. |
+| **`ButtonSubmit.vue`** | Tombol aksi polimorfik dengan dukungan Google Icons, indikator loading spinner, dan ragam varian warna kontras tinggi. |
+| **`ButtonTheme.vue`** | Pengubah tema dark/light mode dengan 4 pilihan tampilan (icon-only, button, switch pill, dan segmented 3-way). |
+
+### 🧩 Composables (State Helpers)
+* **`useNotification.js`** – Pemicu notifikasi toast reaktif dari mana saja (`notify.success()`, `notify.error()`, `notify.warning()`, `notify.info()`).
+* **`useTheme.js`** – State manager tema gelap/terang dengan persistensi `localStorage` dan sinkronisasi preferensi sistem operasi.
+* **`useClickOutside.js`** – Helper penutup otomatis popover, dropdown, atau menu saat pengguna mengklik di luar area elemen.
 
 ---
 
-## 🚀 Cara Instalasi di Project Laravel Lain
+## 🚀 Instalasi di Project Laravel
 
-### 1. Tambahkan ke `composer.json` Project Anda
+Karena paket ini telah terdaftar resmi di **Packagist.org**, Anda dapat langsung memasangnya menggunakan **`composer require`** tanpa perlu menambahkan konfigurasi repositori manual.
 
-Tambahkan repositori Git di `composer.json`:
+### Langkah 1: Pasang Paket via Composer
 
-```json
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "https://github.com/Chandra2004/laravel-pack-ui.git"
-    }
-],
-"require": {
-    "chandra2004/laravel-pack-ui": "^1.0"
-}
-```
-
-Lalu jalankan di terminal:
+Jalankan perintah berikut di terminal project Laravel Anda:
 
 ```bash
-composer update chandra2004/laravel-pack-ui
+composer require chandra2004/laravel-pack-ui
 ```
 
-### 2. Jalankan Smart Auto-Installer
+---
 
-Jalankan perintah instalasi cerdas:
+### Langkah 2: Jalankan Smart Auto-Installer
+
+Setelah paket berhasil diunduh oleh Composer, jalankan perintah instalasi cerdas:
 
 ```bash
 php artisan pack:install
 ```
 
-> 💡 **Fitur Cerdas `pack:install` (v1.1.0+)**:
-> Command ini akan secara otomatis mengaudit project Anda:
-> 1. ✅ **Deteksi Vue 3 & Inertia.js**: Jika belum terpasang, otomatis memasang `inertiajs/inertia-laravel` via Composer dan dependensi Vue 3 + `@inertiajs/vue3` di `package.json`.
-> 2. ✅ **Deteksi Tailwind CSS v4 Engine**: Jika belum ada, otomatis memasang `tailwindcss` dan `@tailwindcss/vite`.
-> 3. ✅ **Deteksi Google Material Symbols**: Otomatis memasang paket font ikon `material-symbols`.
-> 4. ✅ **Auto-Config `app.css` & `vite.config.js`**: Otomatis menambahkan directive `@import 'tailwindcss';`, `@import 'material-symbols';`, dan plugin Vite.
-> 5. ✅ **Publish Komponen**: Menyalin seluruh komponen UI dan composable ke `resources/js/`.
+#### 💡 Apa Saja yang Dilakukan Smart Auto-Installer?
+Perintah ini akan memeriksa lingkungan project Anda secara otomatis:
+1. **Pemeriksaan Vue 3 & Inertia.js**:
+   - Jika project belum memiliki `inertiajs/inertia-laravel`, installer otomatis mengeksekusi `composer require inertiajs/inertia-laravel`.
+   - Jika `vue`, `@inertiajs/vue3`, dan `@vitejs/plugin-vue` belum ada di `package.json`, installer otomatis menambahkannya.
+2. **Pemasangan Tailwind CSS v4 & Google Icons**:
+   - Memastikan `tailwindcss` (^4.0.0) dan `@tailwindcss/vite` terpasang di `devDependencies`.
+   - Memastikan `material-symbols` terpasang di `dependencies`.
+3. **Konfigurasi Otomatis `app.css` & `vite.config.js`**:
+   - Menyisipkan directive `@import 'tailwindcss';` dan `@import 'material-symbols';` ke `resources/css/app.css`.
+   - Mengonfigurasi plugin `vue()`, `tailwindcss()`, dan path alias `'@'` di `vite.config.js`.
+4. **Penerbitan Komponen**:
+   - Menyalin seluruh file komponen ke `resources/js/Components/Pack/`.
+   - Menyalin seluruh file composable ke `resources/js/Composables/Pack/`.
 
-Opsi tambahan yang tersedia:
+#### Opsi Perintah Tambahan:
 ```bash
-# Otomatis konfirmasi pasang seluruh prasyarat tanpa prompt interaktif
+# Otomatis pasang seluruh dependensi prasyarat tanpa pertanyaan konfirmasi
 php artisan pack:install --all
 
-# Timpa berkas komponen jika sebelumnya sudah pernah dipasang
+# Timpa seluruh berkas komponen jika sebelumnya sudah pernah dipasang
 php artisan pack:install --force
+
+# Pilihan terbaik untuk project Laravel yang baru dibuat (fresh install):
+php artisan pack:install --all --force
 ```
 
 ---
 
-## 📖 Contoh Penggunaan
+## 📖 Contoh Penggunaan Sederhana
+
+Semua komponen dapat langsung di-import menggunakan path alias standar `@/Components/Pack/...`:
+
+### 1. Form Lengkap dengan Validasi (`InputField.vue` & `ButtonSubmit.vue`)
 
 ```vue
 <script setup>
+import { useForm } from '@inertiajs/vue3';
 import InputField from '@/Components/Pack/InputField.vue';
 import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
-import { useNotification } from '@/Composables/Pack/useNotification.js';
 
-const notify = useNotification();
+const form = useForm({
+    name: '',
+    email: '',
+    password: '',
+    role: 'merchant',
+    is_active: true,
+});
+
+const submit = () => {
+    form.post('/users');
+};
 </script>
 
 <template>
-    <InputField
-        label="Nama Lengkap"
-        placeholder="Masukkan nama Anda..."
-        icon="person"
-        required
-    />
+    <form @submit.prevent="submit" class="space-y-4 max-w-lg">
+        <!-- Input Teks Biasa -->
+        <InputField
+            v-model="form.name"
+            label="Nama Lengkap"
+            placeholder="Masukkan nama pengguna..."
+            icon="person"
+            :error="form.errors.name"
+            required
+        />
 
-    <ButtonSubmit variant="primary" @click="notify.success('Data tersimpan!')">
-        Simpan Perubahan
-    </ButtonSubmit>
+        <!-- Input Email dengan Live Validation -->
+        <InputField
+            v-model="form.email"
+            type="email"
+            label="Alamat Email"
+            placeholder="nama@domain.com"
+            icon="mail"
+            :error="form.errors.email"
+            required
+        />
+
+        <!-- Input Password dengan Indikator Kekuatan & Toggle Visibility -->
+        <InputField
+            v-model="form.password"
+            type="password"
+            label="Kata Sandi Akun"
+            placeholder="Minimal 8 karakter..."
+            :error="form.errors.password"
+            required
+        />
+
+        <!-- Switch Toggle -->
+        <InputField
+            v-model="form.is_active"
+            type="switch"
+            label="Aktifkan Akun"
+            subtext="Pengguna dapat langsung login setelah pendaftaran"
+        />
+
+        <!-- Tombol Submit dengan Auto Loading Spinner -->
+        <ButtonSubmit
+            type="submit"
+            variant="primary"
+            icon="check_circle"
+            :loading="form.processing"
+        >
+            Simpan Data
+        </ButtonSubmit>
+    </form>
 </template>
 ```
 
 ---
 
-## 📄 Lisensi
-MIT License &copy; 2026 [Chandra Tri Antomo](https://github.com/Chandra2004)
+### 2. Notifikasi Toast & Dialog Konfirmasi (`useNotification` & `Modal.vue`)
 
+```vue
+<script setup>
+import { ref } from 'vue';
+import Modal from '@/Components/Pack/Modal.vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+import ToastNotification from '@/Components/Pack/ToastNotification.vue';
+import { useNotification } from '@/Composables/Pack/useNotification.js';
+
+const notify = useNotification();
+const showDeleteModal = ref(false);
+
+const handleDelete = () => {
+    showDeleteModal.value = false;
+    // Memicu notifikasi toast mengambang
+    notify.success('Data layanan berhasil dihapus secara permanen!');
+};
+</script>
+
+<template>
+    <div class="p-6 space-y-4">
+        <ButtonSubmit variant="danger" icon="delete" @click="showDeleteModal = true">
+            Hapus Layanan
+        </ButtonSubmit>
+
+        <!-- Dialog Modal Konfirmasi -->
+        <Modal
+            v-model="showDeleteModal"
+            variant="danger"
+            title="Konfirmasi Hapus"
+            context="Tindakan Berisiko"
+            confirm-text="Ya, Hapus Sekarang"
+            cancel-text="Batalkan"
+            @confirm="handleDelete"
+        >
+            <p class="text-xs text-slate-600 dark:text-slate-300">
+                Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+        </Modal>
+
+        <!-- Kontainer Global Toast (Cukup pasang 1x di App Layout Anda) -->
+        <ToastNotification position="top-right" />
+    </div>
+</template>
+```
+
+---
+
+### 3. Pengubah Tema Dark / Light (`ButtonTheme.vue`)
+
+```vue
+<script setup>
+import ButtonTheme from '@/Components/Pack/ButtonTheme.vue';
+</script>
+
+<template>
+    <header class="flex items-center justify-between p-4 border-b">
+        <h1 class="text-lg font-bold">Dashboard</h1>
+
+        <!-- Tombol Pengubah Tema (Bisa pilih variant: switch, icon, button, segmented) -->
+        <ButtonTheme variant="switch" show-label />
+    </header>
+</template>
+```
+
+---
+
+## 📚 Dokumentasi Lengkap Komponen (API Reference)
+
+Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*props*), *events*, *slots*, *method expose*, aturan validasi, serta katalog ragam varian dropzone berkas dapat Anda baca pada berkas:
+
+👉 **[Buka Dokumentasi Lengkap: PACK-COMPONENT-LAYOUT.md](./PACK-COMPONENT-LAYOUT.md)**
+
+### Isi dari `PACK-COMPONENT-LAYOUT.md`:
+* 📌 **Setup & Prasyarat**: Font Google Material Symbols, konfigurasi Tailwind v4, dan Inertia Layout setup.
+* 📌 **Alert Component**: Varian styling (`solid`, `soft`, `outline`), penanganan event `dismiss`, dan custom icon slot.
+* 📌 **ToastNotification System**: Penggunaan composable `notify.success()`, `notify.error()`, `notify.warning()`, notifikasi dengan tombol aksi (*action callback*), serta pengaturan timer auto-close.
+* 📌 **TableComponent**: Konfigurasi header dinamis, sorting, kolom checkbox selection, multi-column skeleton loader, ekspor CSV bawaan, dan kustomisasi baris.
+* 📌 **Pagination Component**: Parameter pagination Laravel `LengthAwarePaginator`, mode client-side, dynamic rendering, dan jump-to-page.
+* 📌 **Modal Overlay**: Ukuran lebar responsif (`sm`, `md`, `lg`, `xl`, `full`), posisi dialog (center, top, bottom sheet), varian status badge, dan custom footer action.
+* 📌 **ButtonTheme**: Mode segmented 3-arah, switch toggle pill, tombol teks, dan persistensi tema.
+* 📌 **ButtonSubmit**: Varian tombol polimorfik (Primary, Danger, Success, Warning, Soft, Ghost), posisi ikon, dan status loading spinner.
+* 📌 **InputField Deep-Dive**: Bedah tuntas 10 sub-komponen input form:
+  * Text, Email & Telepon (dengan live validation & formatting)
+  * Password (dengan checklist kriteria keamanan & strength score)
+  * Currency (auto rupiah formatting `id-ID`)
+  * Select & Autocomplete Search (dropdown popover)
+  * File Upload 4 Varian: `avatar`, `dropzone`, `grid`, dan `list`
+  * Date & Time Picker (kalender popover bahasa Indonesia)
+  * Color Picker (swatch & eyedropper screen API)
+  * Range Slider (kustomisasi formatter & track)
+  * Checkbox, Radio Group & Switch Toggle
+
+---
+
+## 📄 Lisensi
+
+Paket ini dirilis di bawah lisensi terbuka [MIT License](LICENSE.md) &copy; 2026 **[Chandra Tri Antomo](https://github.com/Chandra2004)**.
+Bebas digunakan untuk project pribadi maupun komersial.
