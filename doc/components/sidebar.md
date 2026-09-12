@@ -138,3 +138,4 @@ Ketika dibuka di perangkat mobile (lebar layar di bawah `mobileBreakpoint`):
 1. **Layar Latar Belakang (Backdrop)**: Menggunakan backdrop gelap dengan efek blur (`backdrop-blur-sm`).
 2. **Body Scroll Lock**: Saat drawer terbuka, halaman utama di belakang otomatis dikunci agar tidak dapat di-scroll secara tak sengaja.
 3. **Sentuhan di Luar Area**: Mengetuk di luar drawer mobile otomatis menutup navigasi.
+

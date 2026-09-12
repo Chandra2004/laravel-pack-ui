@@ -82,3 +82,4 @@ import Skeleton from '@/Components/Pack/Skeleton.vue';
   <td class="p-3"><Skeleton variant="circular" size="sm" /></td>
 </tr>
 ```
+

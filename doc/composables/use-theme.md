@@ -125,3 +125,4 @@ const unsubscribe = subscribe(({ theme, isDark }) => {
 
 // Panggil unsubscribe() saat komponen dilepas (onUnmounted)
 ```
+

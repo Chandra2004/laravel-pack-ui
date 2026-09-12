@@ -101,3 +101,4 @@ import Avatar from '@/Components/Pack/Avatar.vue';
   </div>
 </div>
 ```
+
