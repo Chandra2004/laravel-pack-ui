@@ -1,0 +1,34 @@
+{
+    "name": "chandra2004/laravel-pack-ui",
+    "version": "1.0.0",
+    "description": "Enterprise Pack UI Components & Composables for Laravel Inertia Vue 3 with Tailwind CSS",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["laravel", "inertia", "vue", "tailwind", "components", "ui-kit", "enterprise"],
+    "authors": [
+        {
+            "name": "Chandra Tri Antomo",
+            "homepage": "https://github.com/Chandra2004"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/console": "^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Chandra2004\\LaravelPackUi\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Chandra2004\\LaravelPackUi\\PackUiServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
+
