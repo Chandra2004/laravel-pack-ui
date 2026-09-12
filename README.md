@@ -37,9 +37,16 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 | **`ToastNotification.vue`** | Sistem floating notification global dengan antrian reaktif, countdown timer, dan dukungan multi-posisi. |
 | **`ButtonSubmit.vue`** | Tombol aksi polimorfik dengan dukungan Google Icons, indikator loading spinner, dan ragam varian warna kontras tinggi. |
 | **`ButtonTheme.vue`** | Pengubah tema dark/light mode dengan 4 pilihan tampilan (icon-only, button, switch pill, dan segmented 3-way). |
+| **`Avatar.vue`** | Foto profil user / inisial nama otomatis dengan status indicator (online, away, busy, offline) dan group stack. |
+| **`Breadcrumb.vue`** | Navigasi hirarki responsif dengan auto-collapse path panjang, ikon home, dan separator kustom. |
+| **`Card.vue`** | Container serbaguna dengan dukungan collapsible body, loading overlay, header icon, dan actions slot. |
+| **`Dropdown.vue`** | Menu aksi popover dengan navigasi keyboard lengkap (panah, enter, esc), varian item, separator, dan badge. |
+| **`Sidebar.vue`** | Sidebar navigasi dashboard desktop collapsible + mobile drawer teleported, lengkap dengan sub-sub menu rekursif dan popover flyout. |
+| **`Skeleton.vue`** | Placeholder loading loader dengan varian teks berparagraf natural, circular, rectangular, rounded, dan efek radiant shimmer. |
+| **`Stepper.vue`** | Multi-step form & progress wizard horizontal maupun vertikal dengan status complete/error dan validasi langkah. |
 
 ### 🧩 Composables (State Helpers)
-* **`useNotification.js`** – Pemicu notifikasi toast reaktif dari mana saja (`notify.success()`, `notify.error()`, `notify.warning()`, `notify.info()`).
+* **`useNotification.js`** – Pemicu notifikasi toast reaktif dari mana saja (`notify.success()`, `notify.error()`, `notify.warning()`, `notify.info()`), sinkron otomatis dengan session flash Laravel.
 * **`useTheme.js`** – State manager tema gelap/terang dengan persistensi `localStorage` dan sinkronisasi preferensi sistem operasi.
 * **`useClickOutside.js`** – Helper penutup otomatis popover, dropdown, atau menu saat pengguna mengklik di luar area elemen.
 
@@ -83,7 +90,10 @@ Perintah ini akan memeriksa lingkungan project Anda secara otomatis:
    - **`resources/js/app.js`**: Mengonfigurasi `createInertiaApp` dan mendaftarkan plugin `ZiggyVue` (`createApp().use(ZiggyVue)`).
    - **`resources/css/app.css`**: Menyisipkan directive `@import 'tailwindcss';` dan `@import 'material-symbols';`.
    - **`vite.config.js`**: Mengonfigurasi plugin `vue()`, `tailwindcss()`, dan path alias `'ziggy-js'` serta `'@'`.
-4. **Penerbitan Komponen & Composables**:
+4. **Konfigurasi Flash Session Inertia (`HandleInertiaRequests.php`)**:
+   - Otomatis membuat atau memperbarui method `share()` pada `app/Http/Middleware/HandleInertiaRequests.php` untuk membagikan session flash (`success`, `error`, `warning`, `info`, `message`, `alert`).
+   - Mendaftarkan middleware ke `bootstrap/app.php` (Laravel 11/12) sehingga setiap redirect controller dengan `->with('success', '...')` otomatis memicu toast notification di frontend melalui `useNotification.js`.
+5. **Penerbitan Komponen & Composables**:
    - Menyalin seluruh file komponen ke `resources/js/Components/Pack/`.
    - Menyalin seluruh file composable ke `resources/js/Composables/Pack/`.
 

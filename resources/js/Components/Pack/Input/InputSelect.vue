@@ -59,6 +59,14 @@ const props = defineProps({
         type: Boolean,
         default: null, // Otomatis jika opsi > 5
     },
+    clearable: {
+        type: Boolean,
+        default: false,
+    },
+    chipDisplay: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 const emit = defineEmits(['update:modelValue', 'change', 'blur', 'focus', 'clear']);
@@ -76,6 +84,7 @@ useClickOutside(containerRef, () => {
 });
 
 // Normalize options to uniform array of objects: { value, label, subtext, disabled }
+// Normalize options to uniform array of objects: { value, label, subtext, group, disabled }
 const normalizedOptions = computed(() => {
     return props.options.map((opt) => {
         if (typeof opt === 'object' && opt !== null) {
@@ -83,6 +92,7 @@ const normalizedOptions = computed(() => {
                 value: opt.value,
                 label: opt.label !== undefined ? opt.label : opt.value,
                 subtext: opt.subtext || '',
+                group: opt.group || '',
                 disabled: !!opt.disabled,
             };
         }
@@ -90,6 +100,7 @@ const normalizedOptions = computed(() => {
             value: opt,
             label: String(opt),
             subtext: '',
+            group: '',
             disabled: false,
         };
     });
@@ -102,7 +113,34 @@ const filteredOptions = computed(() => {
     return normalizedOptions.value.filter(opt =>
         opt.label.toLowerCase().includes(query) ||
         opt.subtext.toLowerCase().includes(query)
+        String(opt.label).toLowerCase().includes(query) ||
+        String(opt.subtext).toLowerCase().includes(query) ||
+        String(opt.group).toLowerCase().includes(query)
     );
+});
+
+// Detect whether grouping is used
+const hasGrouping = computed(() => normalizedOptions.value.some(o => Boolean(o.group)));
+
+// Grouped structure for template rendering
+const groupedFilteredOptions = computed(() => {
+    if (!hasGrouping.value) {
+        return [{ name: null, items: filteredOptions.value }];
+    }
+    const groups = [];
+    const map = new Map();
+
+    filteredOptions.value.forEach(item => {
+        const gName = item.group || 'Lainnya';
+        if (!map.has(gName)) {
+            const gObj = { name: gName, items: [] };
+            map.set(gName, gObj);
+            groups.push(gObj);
+        }
+        map.get(gName).items.push(item);
+    });
+
+    return groups;
 });
 
 // Determine if search box should be visible
@@ -112,6 +150,7 @@ const isSearchVisible = computed(() => {
 });
 
 // Selected label for display in trigger
+// Selected label for display in trigger (when not using chips or in single mode)
 const selectedLabel = computed(() => {
     if (props.multiple && Array.isArray(props.modelValue)) {
         if (props.modelValue.length === 0) return '';
@@ -125,12 +164,28 @@ const selectedLabel = computed(() => {
     return found ? found.label : '';
 });
 
+// Selected items as array of objects for Chips rendering
+const selectedChips = computed(() => {
+    if (!props.multiple || !Array.isArray(props.modelValue)) return [];
+    return props.modelValue.map(val => {
+        const found = normalizedOptions.value.find(o => o.value === val);
+        return found ? found : { value: val, label: val };
+    });
+});
+
 const isSelected = (val) => {
     if (props.multiple && Array.isArray(props.modelValue)) {
         return props.modelValue.includes(val);
     }
     return String(props.modelValue) === String(val);
 };
+
+const hasValue = computed(() => {
+    if (props.multiple && Array.isArray(props.modelValue)) {
+        return props.modelValue.length > 0;
+    }
+    return props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== '';
+});
 
 const toggleDropdown = () => {
     if (props.disabled || props.readonly || props.loading) return;
@@ -180,6 +235,24 @@ const selectOption = (opt) => {
     }
 };
 
+const removeChip = (val) => {
+    if (props.disabled || props.readonly) return;
+    const current = Array.isArray(props.modelValue) ? [...props.modelValue] : [];
+    const idx = current.indexOf(val);
+    if (idx > -1) {
+        current.splice(idx, 1);
+        emit('update:modelValue', current);
+        emit('change', current);
+    }
+};
+
+const handleClear = () => {
+    const emptyVal = props.multiple ? [] : '';
+    emit('update:modelValue', emptyVal);
+    emit('change', emptyVal);
+    emit('clear');
+};
+
 const handleKeyDown = (e) => {
     if (!isOpen.value) {
         if (['Enter', ' ', 'ArrowDown'].includes(e.key)) {
@@ -221,17 +294,21 @@ const sizeClasses = computed(() => {
             return {
                 trigger: 'px-2.5 py-1 text-xs min-h-[32px]',
                 icon: 'text-base',
+                chip: 'text-[10px] px-1.5 py-0.5',
             };
         case 'lg':
             return {
                 trigger: 'px-3.5 py-2.5 text-base min-h-[44px]',
+                trigger: 'px-3.5 py-2 text-base min-h-[44px]',
                 icon: 'text-xl',
+                chip: 'text-xs px-2.5 py-1',
             };
         case 'md':
         default:
             return {
                 trigger: 'px-3 py-1.5 text-sm min-h-[38px]',
                 icon: 'text-lg',
+                chip: 'text-[11px] px-2 py-0.5',
             };
     }
 });
@@ -260,16 +337,20 @@ defineExpose({
             :name="name"
             :value="Array.isArray(modelValue) ? modelValue.join(',') : modelValue"
             :required="required && !modelValue"
+            :required="required && !hasValue"
         />
 
         <!-- PrimeVue Styled Dropdown Trigger Button -->
         <button
+        <div
             ref="triggerButtonRef"
             type="button"
             role="combobox"
+            tabindex="0"
             :aria-expanded="isOpen"
             :aria-controls="`listbox-${id}`"
             :disabled="disabled || loading"
+            :aria-disabled="disabled || loading"
             @click="toggleDropdown"
             class="w-full flex items-center justify-between text-left rounded-xl bg-white dark:bg-slate-900 border shadow-2xs transition-all duration-150 select-none focus:outline-hidden cursor-pointer"
             :class="[
@@ -280,6 +361,7 @@ defineExpose({
                     ? 'border-rose-500 dark:border-rose-500 focus:border-rose-600 focus:ring-4 focus:ring-rose-500/15 bg-rose-50/10 dark:bg-rose-950/10'
                     : !isOpen ? 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15' : '',
                 disabled || loading ? 'opacity-60 bg-slate-100 dark:bg-slate-800/60 cursor-not-allowed' : '',
+                disabled || loading ? 'opacity-60 bg-slate-100 dark:bg-slate-800/60 cursor-not-allowed pointer-events-none' : '',
                 readonly ? 'bg-slate-50 dark:bg-slate-800/40 cursor-default' : '',
             ]"
         >
@@ -298,15 +380,65 @@ defineExpose({
             >
                 {{ selectedLabel || placeholder }}
             </span>
+            <!-- Value Display: Chips Mode (Multiple) or Label Mode (Single / Fallback) -->
+            <div class="flex-1 min-w-0 mr-2">
+                <!-- Mode Chips untuk Multiple Select -->
+                <div
+                    v-if="multiple && chipDisplay && selectedChips.length > 0"
+                    class="flex flex-wrap items-center gap-1.5 py-0.5"
+                >
+                    <span
+                        v-for="chip in selectedChips"
+                        :key="chip.value"
+                        class="inline-flex items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800 font-medium"
+                        :class="sizeClasses.chip"
+                    >
+                        <span class="truncate max-w-[150px]">{{ chip.label }}</span>
+                        <button
+                            v-if="!disabled && !readonly"
+                            type="button"
+                            @click.stop="removeChip(chip.value)"
+                            class="hover:text-blue-900 dark:hover:text-white rounded-full transition-colors flex items-center justify-center cursor-pointer"
+                            title="Hapus"
+                        >
+                            <span class="material-symbols-outlined text-xs leading-none">close</span>
+                        </button>
+                    </span>
+                </div>
 
             <!-- Right Icon (Chevron / Loading Spinner) -->
+                <!-- Text Display / Placeholder -->
+                <span
+                    v-else
+                    class="truncate block"
+                    :class="selectedLabel ? 'text-slate-800 dark:text-slate-100 font-medium' : 'text-slate-400 dark:text-slate-500'"
+                >
+                    {{ selectedLabel || placeholder }}
+                </span>
+            </div>
+
+            <!-- Right Action Icons: Clearable & Chevron / Loading Spinner -->
             <div class="flex items-center gap-1 shrink-0 text-slate-400 dark:text-slate-500">
+                <!-- Clear Button -->
+                <button
+                    v-if="clearable && hasValue && !disabled && !readonly"
+                    type="button"
+                    @click.stop="handleClear"
+                    class="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                    title="Hapus Pilihan"
+                >
+                    <span class="material-symbols-outlined text-sm leading-none">cancel</span>
+                </button>
+
+                <!-- Loading Spinner -->
                 <span
                     v-if="loading"
                     class="material-symbols-outlined text-base leading-none text-blue-600 dark:text-blue-400 animate-spin"
                 >
                     progress_activity
                 </span>
+
+                <!-- Chevron Icon -->
                 <span
                     v-else
                     class="material-symbols-outlined text-lg leading-none transition-transform duration-200 ease-out"
@@ -316,6 +448,7 @@ defineExpose({
                 </span>
             </div>
         </button>
+        </div>
 
         <!-- PrimeVue Styled Floating Popover Panel -->
         <Transition
@@ -333,6 +466,7 @@ defineExpose({
                 class="absolute left-0 right-0 z-50 mt-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden"
             >
                 <!-- Search Filter Input (PrimeVue Header Filter) -->
+                <!-- Search Filter Input -->
                 <div v-if="isSearchVisible" class="p-2 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50">
                     <div class="relative flex items-center">
                         <span class="material-symbols-outlined absolute left-2.5 text-slate-400 text-base leading-none pointer-events-none">
@@ -358,6 +492,7 @@ defineExpose({
                 </div>
 
                 <!-- Options List Container (Smooth Scrollable) -->
+                <!-- Options List Container with Option Grouping Support -->
                 <ul class="max-h-60 overflow-y-auto overscroll-contain p-1.5 space-y-0.5 focus:outline-hidden divide-y divide-transparent">
                     <li
                         v-for="(opt, idx) in filteredOptions"
@@ -371,6 +506,26 @@ defineExpose({
                                 ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold'
                                 : highlightedIndex === idx
                                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
+                    <template v-for="(groupObj, gIdx) in groupedFilteredOptions" :key="gIdx">
+                        <!-- Group Header Divider -->
+                        <li
+                            v-if="groupObj.name"
+                            class="px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500 bg-slate-50/80 dark:bg-slate-800/60 rounded-md select-none sticky top-0 z-10 backdrop-blur-xs my-0.5"
+                        >
+                            {{ groupObj.name }}
+                        </li>
+
+                        <!-- Options inside Group -->
+                        <li
+                            v-for="opt in groupObj.items"
+                            :key="opt.value"
+                            role="option"
+                            :aria-selected="isSelected(opt.value)"
+                            @click.stop="selectOption(opt)"
+                            class="relative flex items-center justify-between px-3 py-2 text-xs sm:text-sm rounded-lg cursor-pointer select-none transition-colors duration-100"
+                            :class="[
+                                isSelected(opt.value)
+                                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold'
                                     : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80',
                             opt.disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : '',
                         ]"
@@ -379,6 +534,14 @@ defineExpose({
                             <div class="truncate">{{ opt.label }}</div>
                             <div v-if="opt.subtext" class="text-[11px] text-slate-400 dark:text-slate-500 truncate">
                                 {{ opt.subtext }}
+                                opt.disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : '',
+                            ]"
+                        >
+                            <div class="space-y-0.5 min-w-0 flex-1 mr-2">
+                                <div class="truncate">{{ opt.label }}</div>
+                                <div v-if="opt.subtext" class="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                                    {{ opt.subtext }}
+                                </div>
                             </div>
                         </div>
 
@@ -390,6 +553,15 @@ defineExpose({
                             check
                         </span>
                     </li>
+                            <!-- Checkmark Indicator -->
+                            <span
+                                v-if="isSelected(opt.value)"
+                                class="material-symbols-outlined text-base text-blue-600 dark:text-blue-400 leading-none shrink-0"
+                            >
+                                check
+                            </span>
+                        </li>
+                    </template>
 
                     <!-- Empty Search State -->
                     <li

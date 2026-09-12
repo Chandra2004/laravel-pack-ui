@@ -203,16 +203,25 @@ export default defineConfig({
 | :--- | :--- | :--- | :--- |
 | **Components** | `Alert.vue` | [Alert.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Alert.vue) | Inline banner alert dengan auto-close, variant & dismiss |
 | **Components** | `ToastNotification.vue` | [ToastNotification.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/ToastNotification.vue) | Floating toast notification dengan progress bar & timer |
+| **Components** | `Avatar.vue` | [Avatar.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Avatar.vue) | Foto user / inisial dengan status dot & group stack |
+| **Components** | `Breadcrumb.vue` | [Breadcrumb.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Breadcrumb.vue) | Navigasi breadcrumb responsif dengan separator & ikon |
+| **Components** | `Card.vue` | [Card.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Card.vue) | Container card universal dengan collapsible & loading |
+| **Components** | `Dropdown.vue` | [Dropdown.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Dropdown.vue) | Menu dropdown dengan keyboard navigation |
+| **Components** | `Sidebar.vue` | [Sidebar.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Sidebar.vue) | Sidebar navigasi collapsible dengan mobile drawer |
+| **Components** | `Skeleton.vue` | [Skeleton.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Skeleton.vue) | Standalone skeleton loader (circle, rect, text) |
+| **Components** | `Stepper.vue` | [Stepper.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Stepper.vue) | Multi-step wizard / progress indicator |
 | **Components** | `ButtonSubmit.vue` | [ButtonSubmit.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/ButtonSubmit.vue) | Polymorphic button (`button`, `Link`, `a`) dengan loading spinner |
 | **Components** | `ButtonTheme.vue` | [ButtonTheme.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/ButtonTheme.vue) | Toggle mode terang/gelap (light/dark mode) |
-| **Components** | `InputField.vue` | [InputField.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/InputField.vue) | Facade universal input form (mendelegasikan ke 10 sub-komponen `Input/`) |
+| **Components** | `InputField.vue` | [InputField.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/InputField.vue) | Facade universal input form (mendelegasikan ke 12 sub-komponen `Input/`) |
 | **Components** | `Modal.vue` | [Modal.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Modal.vue) | Overlay dialog modal via `<Teleport>` dengan Focus Trap & Expose API |
 | **Components** | `Pagination.vue` | [Pagination.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Pagination.vue) | Navigasi halaman kompatibel Laravel Paginator & Client-side |
 | **Components** | `TableComponent.vue` | [TableComponent.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/TableComponent.vue) | Data table wrapper dengan skeleton loader, export CSV & empty state |
-| **Sub-Components** | `Input/*.vue` *(10 files)* | [Input/](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/) | 10 sub-komponen terspesialisasi: Text, DatePicker, File, Select, Color, Radio, Checkbox, Textarea, Range, Switch |
+| **Sub-Components** | `Input/*.vue` *(12 files)* | [Input/](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/) | 12 sub-komponen terspesialisasi: Text, DatePicker, File, Select, Color, Radio, Checkbox, Textarea, Range, Switch, Otp, Mask |
+| **Sub-Components** | `SidebarItem.vue` | [SidebarItem.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/SidebarItem.vue) | Sub-komponen rekursif untuk item sidebar multi-level & popover flyout menu |
 | **Composables** | `useNotification.js` | [useNotification.js](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Composables/Pack/useNotification.js) | State management & API pemicu toast notification |
 | **Composables** | `useTheme.js` | [useTheme.js](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Composables/Pack/useTheme.js) | State management & toggle dark/light theme |
 | **Composables** | `useClickOutside.js` | [useClickOutside.js](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Composables/Pack/useClickOutside.js) | Hook pendeteksi klik luar elemen target (popover, calendar, dropdown) |
+| **Composables** | `useFormValidation.js` | [useFormValidation.js](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Composables/Pack/useFormValidation.js) | Composable validasi form & field level dengan rule presets & integrasi error Laravel |
 
 ---
 
@@ -1326,6 +1335,8 @@ Komponen universal input form yang menggabungkan seluruh variasi elemen input HT
 | **Media & Spesial** | `'file'` | Box upload drag-and-drop dengan live thumbnail preview |
 | | `'color'` | Floating color picker popover dengan palet warna cepat, eyedropper layar, dan salin HEX |
 | | `'range'` | Slider rentang nilai dengan indikator badge angka dinamis |
+| | `'otp'` | Input One-Time Password / PIN dengan slot digit terpisah, auto-focus, paste parsing, masking, dan countdown timer |
+| | `'mask'` | Input berformat pola kustom/preset (kartu kredit, NPWP, NIK, kode pos) dengan pemformatan otomatis dan pengikatan raw value |
 
 ---
 
@@ -1371,6 +1382,23 @@ Komponen universal input form yang menggabungkan seluruh variasi elemen input HT
 | `liveValidation`| `Boolean` | `true` | Mengaktifkan validasi langsung format email, password strength meter, dan format nomor telepon |
 | `rangeLabel` | `String` | `'Nilai'` | Label teks sebelum angka nilai pada `type="range"` |
 | `rangeFormatter` | `Function` | `null` | Fungsi kustom pemformatan angka slider (misal: `(v) => `${v}%`` atau `(v) => `Rp ${v}``) |
+| `autoResize` | `Boolean` | `false` | Textarea otomatis menyesuaikan tinggi dengan konten (`type="textarea"`) |
+| `minRows` | `[Number, String]` | `null` | Batas minimal baris saat auto-resize (`type="textarea"`) |
+| `maxRows` | `[Number, String]` | `null` | Batas maksimal baris saat auto-resize (`type="textarea"`) |
+| `resize` | `String` | `'vertical'` | Kontrol arah resize manual CSS: `'none'`, `'vertical'`, `'both'`, `'horizontal'` |
+| `indeterminate`| `Boolean` | `false` | Status parsial "sebagian tercentang" dengan ikon minus (`type="checkbox"`) |
+| `chipDisplay` | `Boolean` | `true` | Menampilkan opsi terpilih sebagai chips/tags dengan tombol hapus individual pada multi-select (`type="select"`) |
+| `length` | `Number` | `6` | Jumlah slot digit pada input PIN/OTP (`type="otp"`) |
+| `integerOnly` | `Boolean` | `true` | Hanya mengizinkan karakter angka pada OTP (`type="otp"`) |
+| `masked` | `Boolean` | `false` | Menyembunyikan tampilan karakter OTP dengan titik sandi (`type="otp"`) |
+| `separator` | `String` | `''` | Karakter pemisah antar grup slot OTP (contoh: `'-'`) |
+| `separatorAfter`| `Number` | `null` | Posisi pemisah setelah slot ke-N (default: tengah) (`type="otp"`) |
+| `countdown` | `Number` | `0` | Durasi timer hitung mundur kirim ulang OTP dalam detik (`type="otp"`) |
+| `resendText` | `String` | `'Kirim Ulang Kode OTP'` | Teks label tombol kirim ulang setelah countdown habis (`type="otp"`) |
+| `mask` | `String` | `''` | Pola masking kustom: `#` (angka), `A` (huruf), `*` (alfanumerik) (`type="mask"`) |
+| `preset` | `String` | `''` | Preset pola mask bawaan: `'credit-card'`, `'npwp'`, `'nik'`, `'postal-code'`, `'phone-id'`, `'expiry'`, `'cvv'` |
+| `slotChar` | `String` | `'_'` | Karakter placeholder pada posisi slot yang belum diisi (`type="mask"`) |
+| `emitRaw` | `Boolean` | `true` | Mengikat nilai murni tanpa pemisah ke `v-model` (`type="mask"`) |
 
 ---
 
@@ -1395,10 +1423,12 @@ Komponen universal input form yang menggabungkan seluruh variasi elemen input HT
 | `change` | `Event` | Dipicu saat terjadi event change native pada elemen kontrol |
 | `blur` | `FocusEvent` | Dipicu saat elemen kehilangan fokus |
 | `focus` | `FocusEvent` | Dipicu saat elemen menerima fokus |
-| `clear` | — | Dipicu saat tombol clear/hapus pada input (search, text, date picker) diklik |
+| `clear` | — | Dipicu saat tombol clear/hapus pada input (search, text, date picker, select, mask) diklik |
 | `error` | `String` | Dipicu saat terjadi error validasi berkas (`maxSize` atau `maxFiles`) |
 | `cancel-upload` | — | Dipicu saat tombol batalkan unggahan pada `type="file"` diklik |
 | `validate` | `{ valid: Boolean, message: String }` | Dipicu saat live validation mengevaluasi keabsahan format (email, password, tel) |
+| `complete` | `String` | Dipicu saat seluruh digit OTP telah lengkap terisi (`type="otp"`) |
+| `resend` | — | Dipicu saat tombol kirim ulang OTP diklik setelah timer countdown selesai (`type="otp"`) |
 
 ### Component Expose API (`defineExpose`)
 
@@ -1718,11 +1748,163 @@ const focusEmailInput = () => {
 </template>
 ```
 
+#### 6. Verifikasi Transaksi & Kartu Kredit (OTP & Masked Input)
+```vue
+<script setup>
+import { ref } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+
+const otpCode = ref('');
+const cardNumber = ref('');
+const cardExpiry = ref('');
+const cardCvv = ref('');
+const npwp = ref('');
+
+const handleOtpComplete = (code) => {
+  console.log('OTP siap diverifikasi:', code);
+};
+
+const handleResendOtp = () => {
+  console.log('Mengirim ulang OTP ke nomor WhatsApp merchant...');
+};
+</script>
+
+<template>
+  <div class="space-y-5">
+    <!-- Input OTP / PIN 6-digit dengan countdown & separator '-' -->
+    <InputField
+      v-model="otpCode"
+      type="otp"
+      label="Kode Verifikasi OTP"
+      hint="Masukkan 6 digit kode yang dikirim via SMS/WhatsApp"
+      :length="6"
+      separator="-"
+      :countdown="60"
+      auto-focus
+      @complete="handleOtpComplete"
+      @resend="handleResendOtp"
+      required
+    />
+
+    <!-- Input Nomor Kartu Kredit dengan Masking Otomatis -->
+    <InputField
+      v-model="cardNumber"
+      type="mask"
+      preset="credit-card"
+      label="Nomor Kartu Kredit / Debit"
+      icon="credit_card"
+      clearable
+      required
+    />
+
+    <div class="grid grid-cols-2 gap-3">
+      <!-- Expiry Date MM/YY -->
+      <InputField
+        v-model="cardExpiry"
+        type="mask"
+        preset="expiry"
+        label="Masa Berlaku"
+        placeholder="BB/TT"
+        required
+      />
+
+      <!-- CVV 3-digit -->
+      <InputField
+        v-model="cardCvv"
+        type="mask"
+        preset="cvv"
+        label="Kode CVV"
+        placeholder="123"
+        icon-right="lock"
+        required
+      />
+    </div>
+
+    <!-- Input NPWP Perusahaan -->
+    <InputField
+      v-model="npwp"
+      type="mask"
+      preset="npwp"
+      label="Nomor Pokok Wajib Pajak (NPWP)"
+      hint="Format: 00.000.000.0-000.000"
+    />
+  </div>
+</template>
+```
+
+#### 7. Fitur Lanjutan (Auto-Resize Textarea, Grouped Select & Indeterminate Checkbox)
+```vue
+<script setup>
+import { ref } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+
+const complaintNote = ref('');
+const selectedBank = ref('');
+const selectedChannels = ref(['qris', 'va_bca']);
+const isAllSelected = ref(false);
+const isIndeterminate = ref(true);
+
+const groupedBanks = [
+  { value: 'bca', label: 'BCA (Bank Central Asia)', group: 'Bank Konvensional' },
+  { value: 'mandiri', label: 'Bank Mandiri', group: 'Bank Konvensional' },
+  { value: 'bri', label: 'Bank BRI', group: 'Bank Konvensional' },
+  { value: 'bsi', label: 'BSI (Bank Syariah Indonesia)', group: 'Bank Syariah' },
+  { value: 'muamalat', label: 'Bank Muamalat', group: 'Bank Syariah' },
+];
+</script>
+
+<template>
+  <div class="space-y-4">
+    <!-- Textarea yang mengembang otomatis (Auto-Resize) -->
+    <InputField
+      v-model="complaintNote"
+      type="textarea"
+      label="Keterangan Komplain Transaksi"
+      placeholder="Ketik detail transaksi yang ingin diinvestigasi..."
+      auto-resize
+      :min-rows="2"
+      :max-rows="8"
+      hint="Textarea otomatis meninggi tanpa scrollbar hingga batas 8 baris"
+    />
+
+    <!-- Select dengan Pengelompokan Opsi (Grouped Options) & Clearable -->
+    <InputField
+      v-model="selectedBank"
+      type="select"
+      label="Pilih Bank Penyelesaian"
+      :options="groupedBanks"
+      clearable
+      required
+    />
+
+    <!-- Multi-Select dengan Tampilan Chips/Badges -->
+    <InputField
+      v-model="selectedChannels"
+      type="select"
+      label="Saluran Pembayaran Aktif"
+      :options="groupedBanks"
+      multiple
+      chip-display
+    />
+
+    <!-- Checkbox Indeterminate (State Parsial) -->
+    <InputField
+      v-model="isAllSelected"
+      type="checkbox"
+      label="Pilih Semua Transaksi"
+      subtext="Menampilkan ikon tanda minus (-) saat sebagian data terpilih"
+      :indeterminate="isIndeterminate"
+    />
+  </div>
+</template>
+```
+
 ---
 
 ## 9. Arsitektur Internal & Sub-Komponen Input (`Input/`)
 
 Untuk menjaga agar komponen `InputField.vue` tetap bersih, modular, dan mudah dirawat, arsitektur form control Pack menggunakan pola **Facade Pattern**. Komponen induk `InputField.vue` bertindak sebagai *orchestrator / facade* (menangani label, *required asterisk*, *character counter limit*, slot header/hint/error, dan forwarding `ref="controlRef"`), sementara logika render dan penanganan interaksi spesifik didelegasikan ke **10 sub-komponen** yang berada di dalam folder [resources/js/Components/Pack/Input/](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/).
+Untuk menjaga agar komponen `InputField.vue` tetap bersih, modular, dan mudah dirawat, arsitektur form control Pack menggunakan pola **Facade Pattern**. Komponen induk `InputField.vue` bertindak sebagai *orchestrator / facade* (menangani label, *required asterisk*, *character counter limit*, slot header/hint/error, dan forwarding `ref="controlRef"`), sementara logika render dan penanganan interaksi spesifik didelegasikan ke **12 sub-komponen** yang berada di dalam folder [resources/js/Components/Pack/Input/](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/).
 
 ### Diagram Alur Delegasi Facade InputField
 
@@ -1738,18 +1920,27 @@ InputField.vue (Facade Orchestrator)
 │
 ├── type="select"
 │     └── → InputSelect.vue (Custom PrimeVue-style Dropdown with Search & Keyboard Nav)
+│     └── → InputSelect.vue (Custom PrimeVue-style Dropdown with Grouping, Chips & Keyboard Nav)
 │
 ├── type="textarea"
 │     └── → InputTextarea.vue (Multiline Text Input with Auto-rows & Character Counter)
+│     └── → InputTextarea.vue (Multiline Text Input with Auto-Resize, Min/Max Rows & Char Counter)
 │
 ├── type="checkbox"
 │     └── → InputCheckbox.vue (Custom Checkbox with Label & Subtext Slots)
+│     └── → InputCheckbox.vue (Custom Checkbox with Indeterminate State & Group Options Mode)
 │
 ├── type="radio"
 │     └── → InputRadio.vue (Radio Group with Rich Option Card / Standard Styling)
 │
 ├── type="switch"
 │     └── → InputSwitch.vue (Modern Animated On/Off Toggle Pill)
+│
+├── type="otp"
+│     └── → InputOtp.vue (Digit Slot Entry, Auto-Focus, Paste Parsing, Masking & Countdown Timer)
+│
+├── type="mask"
+│     └── → InputMask.vue (Pattern Masking: Credit Card, NPWP, NIK, Expiry, CVV & Raw Binding)
 │
 ├── type="file"
 │     └── → InputFile.vue
@@ -1770,6 +1961,7 @@ InputField.vue (Facade Orchestrator)
 ---
 
 ### Inventaris & Spesifikasi 10 Sub-Komponen Input
+### Inventaris & Spesifikasi 12 Sub-Komponen Input
 
 #### 9.1 `InputText.vue`
 * **Lokasi File**: [InputText.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/InputText.vue)
@@ -1806,6 +1998,9 @@ InputField.vue (Facade Orchestrator)
 * **Lokasi File**: [InputSelect.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/InputSelect.vue)
 * **Tipe yang Ditangani**: `'select'`.
 * **Fitur Unggulan**:
+  * **Option Grouping**: Mendukung pengelompokan opsi dengan header divider otomatis jika properti `group` disertakan pada opsi (contoh: `{ value: 'bca', label: 'BCA', group: 'Bank Transfer' }`).
+  * **Multi-Select Chips Mode**: Opsi terpilih ditampilkan sebagai badge chip individual yang dapat dihapus satu per satu (`chipDisplay`, default `true`).
+  * **Clearable Single Select**: Tombol `(X)` untuk mereset pilihan kembali ke kosong (`clearable: true`).
   * **Search Filter**: Input pencarian real-time di dalam dropdown jika jumlah opsi > 5 atau prop `searchable` aktif.
   * **Navigasi Keyboard Lengkap**: Mendukung tombol panah atas/bawah (`ArrowUp`/`ArrowDown`), `Enter` untuk memilih, dan `Escape` untuk menutup.
   * **Integrasi `useClickOutside`**: Menutup panel listbox secara mulus saat klik di luar.
@@ -1832,6 +2027,10 @@ InputField.vue (Facade Orchestrator)
 * **Fitur Unggulan**:
   * Checkbox kustom dengan ikon centang Google Icons.
   * Mendukung label, subteks penjelasan tambahan, serta slot default untuk link syarat & ketentuan interaktif.
+  * **Indeterminate State**: Mendukung status parsial (`indeterminate: true`) yang menampilkan ikon minus (`remove`), sangat berguna untuk checkbox *"Select All"* pada tabel data.
+  * **Group Options Mode**: Mendukung prop `options` untuk merender daftar pilihan banyak sekaligus dengan binding array ke `v-model`.
+  * **Array Value Binding**: Mendukung prop `value` untuk menambahkan/menghapus item ke dalam array `modelValue`.
+  * **Aksesibilitas**: Dilengkapi atribut `aria-checked="mixed"` saat kondisi indeterminate aktif.
 
 #### 9.8 `InputTextarea.vue`
 * **Lokasi File**: [InputTextarea.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/InputTextarea.vue)
@@ -1840,6 +2039,10 @@ InputField.vue (Facade Orchestrator)
   * Atribut baris dinamis (`rows`) dan batas karakter (`maxlength`).
   * Styling fokus seragam dengan `InputText`.
   * Expose API: `focus()`, `blur()`, dan `textareaRef`.
+  * **Auto-Resize Otomatis**: Textarea mengembang otomatis menyesuaikan tinggi isi teks tanpa scrollbar (`autoResize: true`).
+  * **Min & Max Rows Constraints**: Membatasi batas minimum (`minRows`) dan batas maksimum (`maxRows`) ketinggian saat auto-resize aktif.
+  * **Resize Handle Control**: Kontrol arah handle resize CSS via prop `resize` (`'none'`, `'vertical'`, `'both'`, `'horizontal'`).
+  * **Expose API**: Menyediakan `focus()`, `blur()`, `adjustHeight()`, dan `textareaRef`.
 
 #### 9.9 `InputRange.vue`
 * **Lokasi File**: [InputRange.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/InputRange.vue)
@@ -1854,6 +2057,35 @@ InputField.vue (Facade Orchestrator)
 * **Fitur Unggulan**:
   * Toggle pill modern dengan transisi geser halus.
   * Aksesibilitas bawaan dengan `role="switch"` dan `aria-checked`.
+
+#### 9.11 `InputOtp.vue` *(Komponen Baru)*
+* **Lokasi File**: [InputOtp.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/InputOtp.vue)
+* **Tipe yang Ditangani**: `'otp'`.
+* **Fitur Unggulan**:
+  * **Slot-Based Digits**: Input terpisah per digit (default 6 digit) dengan navigasi otomatis keyboard (`ArrowLeft`, `ArrowRight`, `Backspace`).
+  * **Clipboard Paste Auto-Distribute**: Otomatis mendistribusikan kode OTP saat pengguna melakukan paste (*Ctrl+V*) dari SMS atau pesan WhatsApp.
+  * **Masking Support**: Mode `masked: true` untuk menyembunyikan angka menjadi titik sandi (cocok untuk PIN transaksi/keuangan).
+  * **Separator Visual**: Menampilkan pemisah visual antar grup angka (misal `separator="-"` setelah digit ke-3).
+  * **Built-in Resend Countdown**: Fitur timer hitung mundur bawaan (`countdown="60"`) dengan tombol kirim ulang otomatis aktif saat waktu habis.
+  * **Event `@complete`**: Otomatis memicu event saat seluruh slot telah terisi penuh.
+  * **Expose API**: `focus()`, `clear()`, `getValue()`, `startCountdown()`.
+
+#### 9.12 `InputMask.vue` *(Komponen Baru)*
+* **Lokasi File**: [InputMask.vue](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Components/Pack/Input/InputMask.vue)
+* **Tipe yang Ditangani**: `'mask'`.
+* **Fitur Unggulan**:
+  * **Pattern Masking Fleksibel**: Mendukung pola kustom dengan karakter `#` (angka), `A` (huruf), dan `*` (alfanumerik).
+  * **Preset Pola Bawaan**:
+    * `'credit-card'`: `####-####-####-####`
+    * `'npwp'`: `##.###.###.#-###.###`
+    * `'nik'`: `################` (16 digit)
+    * `'postal-code'`: `#####` (5 digit)
+    * `'phone-id'`: `####-####-####`
+    * `'expiry'`: `##/##` (MM/YY)
+    * `'cvv'`: `###`
+  * **Dual Value Binding**: Nilai yang diikat ke `v-model` adalah nilai mentah tanpa separator (`emitRaw: true`), sementara tampilan input memformat otomatis secara visual.
+  * **Slot Placeholder**: Menampilkan karakter panduan pada posisi yang belum terisi (default `slotChar="_"`).
+  * **Expose API**: `focus()`, `blur()`, `inputRef`.
 
 ---
 
@@ -1913,3 +2145,199 @@ useClickOutside(menuRef, () => {
   </div>
 </template>
 ```
+
+---
+
+## 11. Composable `useFormValidation.js` *(Baru)*
+
+Composable tingkat form (*form-level validation*) yang fleksibel untuk mengelola validasi berbasis aturan (*rule-based*), status kesalahan (*error state*), status field disentuh (*touched*), serta kompatibel penuh dengan objek formulir InertiaJS (`useForm`) dan response error Laravel (HTTP 422).
+
+### Lokasi File
+
+* **Composable**: [useFormValidation.js](file:///c:/SPEED/INTEGRATION-PAYMENT-GATEWAY/resources/js/Composables/Pack/useFormValidation.js)
+
+### Fitur & Keunggulan:
+* **Rule-Based Declarative Schema**: Mendukung skema validasi bersih dan deklaratif tanpa library eksternal berat.
+* **Bahasa Indonesia Ramah Pengguna**: Pesan kesalahan bawaan disajikan dalam Bahasa Indonesia yang profesional dan otomatis menyesuaikan label field.
+* **Mode Validasi Fleksibel**:
+  * `'touched'` *(Default)*: Validasi langsung berjalan setelah pengguna menyentuh/mengisi field tersebut.
+  * `'eager'`: Validasi langsung dievaluasi pada setiap ketukan karakter sejak awal.
+  * `'lazy'`: Validasi hanya dievaluasi saat fungsi `validate()` dipanggil (misal saat form disubmit).
+* **Integrasi Backend Laravel**: Menyediakan fungsi `setErrors(response.data.errors)` untuk langsung memasukkan pesan kesalahan dari controller Laravel ke dalam form frontend.
+
+### Aturan Validasi yang Didukung (`schemaRules`)
+
+| Rule | Tipe | Contoh Nilai | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `required` | `Boolean \| String` | `true` atau `'Harus diisi!'` | Memastikan field tidak kosong, null, false, atau array kosong |
+| `email` | `Boolean \| String` | `true` | Validasi format alamat email standar RFC |
+| `phone` | `Boolean \| String` | `true` | Validasi nomor telepon Indonesia (10–15 digit angka) |
+| `numeric` | `Boolean \| String` | `true` | Memastikan nilai berupa angka numerik valid |
+| `min` | `Number` | `10000` | Batas nilai minimum angka |
+| `max` | `Number` | `10000000` | Batas nilai maksimum angka |
+| `minLength` | `Number` | `8` | Batas minimal panjang karakter teks |
+| `maxLength` | `Number` | `100` | Batas maksimal panjang karakter teks |
+| `pattern` | `RegExp \| String` | `/^[A-Z0-9]+$/` | Validasi kecocokan pola regular expression kustom |
+| `confirmed` | `String` | `'password'` | Memastikan nilai sama persis dengan field lain (konfirmasi sandi) |
+| `custom` | `Function` | `(val, all) => ...` | Fungsi validasi logika kustom; mengembalikan pesan string jika error, atau null jika valid |
+| `label` | `String` | `'Nomor Rekening'` | Kustomisasi nama label field yang muncul pada pesan error |
+
+### Signature API (`useFormValidation`)
+
+```javascript
+import { useFormValidation } from '@/Composables/Pack/useFormValidation';
+
+const {
+  errors,         // Objek reaktif pesan error { [field]: string }
+  touched,        // Objek reaktif status field yang sudah disentuh { [field]: boolean }
+  isValid,        // Computed boolean: true jika tidak ada error
+  isDirty,        // Computed boolean: true jika minimal 1 field telah disentuh
+  validate,       // Function(): Mengevaluasi seluruh form, return boolean
+  validateField,  // Function(field): Mengevaluasi 1 field tertentu
+  touch,          // Function(field): Menandai field telah disentuh (blur event)
+  clearErrors,    // Function(field?): Menghapus error satu atau seluruh field
+  setFieldError,  // Function(field, msg): Menetapkan pesan error manual
+  setErrors,      // Function(errorsObj): Batch assign error dari response Laravel
+  reset,          // Function(): Mereset seluruh state error dan touched
+} = useFormValidation(formData, schemaRules, { mode: 'touched' });
+```
+
+### Contoh Penggunaan `useFormValidation`
+
+#### 1. Validasi Form Transaksi Pembayaran
+```vue
+<script setup>
+import { reactive } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+import { useFormValidation } from '@/Composables/Pack/useFormValidation';
+
+const form = reactive({
+  merchantName: '',
+  email: '',
+  phone: '',
+  nominal: 0,
+  pin: '',
+});
+
+const rules = {
+  merchantName: { required: true, minLength: 3, label: 'Nama Merchant' },
+  email: { required: true, email: true, label: 'Alamat Email' },
+  phone: { required: true, phone: true, label: 'Nomor WhatsApp' },
+  nominal: { required: true, numeric: true, min: 10000, max: 50000000, label: 'Nominal Transaksi' },
+  pin: { required: true, minLength: 6, maxLength: 6, label: 'PIN Keamanan' },
+};
+
+const { errors, validate, touch, reset } = useFormValidation(form, rules);
+
+const handleSubmit = () => {
+  if (!validate()) {
+    console.warn('Form masih mengandung kesalahan!');
+    return;
+  }
+  console.log('Data valid, kirim ke backend:', form);
+};
+</script>
+
+<template>
+  <form @submit.prevent="handleSubmit" class="space-y-4">
+    <InputField
+      v-model="form.merchantName"
+      label="Nama Merchant"
+      :error="errors.merchantName"
+      @blur="touch('merchantName')"
+      required
+    />
+
+    <InputField
+      v-model="form.email"
+      type="email"
+      label="Email Notifikasi"
+      :error="errors.email"
+      @blur="touch('email')"
+      required
+    />
+
+    <InputField
+      v-model="form.phone"
+      type="tel"
+      label="Nomor WhatsApp"
+      :error="errors.phone"
+      @blur="touch('phone')"
+      required
+    />
+
+    <InputField
+      v-model="form.nominal"
+      type="currency"
+      currency
+      prefix="Rp"
+      label="Nominal Transaksi"
+      :error="errors.nominal"
+      @blur="touch('nominal')"
+      required
+    />
+
+    <InputField
+      v-model="form.pin"
+      type="otp"
+      masked
+      :length="6"
+      label="PIN Keamanan Transaksi"
+      :error="errors.pin"
+      required
+    />
+
+    <div class="flex gap-2">
+      <ButtonSubmit type="submit" variant="primary">Proses Pembayaran</ButtonSubmit>
+      <ButtonSubmit type="button" variant="outline" @click="reset">Reset</ButtonSubmit>
+    </div>
+  </form>
+</template>
+```
+
+#### 2. Integrasi dengan Inertia `useForm` & Error Laravel 422
+```javascript
+import { useForm } from '@inertiajs/vue3';
+import { useFormValidation } from '@/Composables/Pack/useFormValidation';
+
+const form = useForm({
+  account_number: '',
+  bank_code: '',
+});
+
+const rules = {
+  account_number: { required: true, numeric: true, minLength: 10, label: 'Nomor Rekening' },
+  bank_code: { required: true, label: 'Bank Penerima' },
+};
+
+const { errors, validate, setErrors } = useFormValidation(form, rules);
+
+const submitDisbursement = () => {
+  if (!validate()) return;
+
+  form.post('/disbursements', {
+    onError: (backendErrors) => {
+      // Sinkronkan response error 422 Laravel langsung ke composable
+      setErrors(backendErrors);
+    },
+  });
+};
+```
+
+---
+
+## 12. ⚠️ Ringkasan Perubahan Pemakaian (Release & Upgrade Notes)
+
+Berikut adalah panduan bagi pengembang mengenai fitur-fitur baru dan pembaruan pada Form Input Pack UI:
+
+| Komponen / Modul | Fitur Baru | Dampak Pemakaian | Cara Memakai |
+| :--- | :--- | :--- | :--- |
+| **`InputField.vue`** | Dukungan `type="otp"` dan `type="mask"` | **Tidak Breaking** | Tambahkan prop `type="otp"` untuk input PIN atau `type="mask"` untuk nomor kartu/NPWP |
+| **`InputTextarea.vue`** | Auto-Resize dinamis | **Tidak Breaking** | Berikan prop `auto-resize`, `:min-rows="2"`, `:max-rows="8"`. Tinggi textarea akan menyesuaikan otomatis |
+| **`InputCheckbox.vue`** | Indeterminate state & Group Mode | **Tidak Breaking** | Gunakan `:indeterminate="true"` untuk checkbox parsial. Gunakan `:options="[...]"` untuk checkbox grup |
+| **`InputSelect.vue`** | Option Grouping, Chips Display & Clearable | **Tidak Breaking** | Sertakan properti `group` pada array opsi untuk divider grup. Multi-select kini default menggunakan visual chips (`chip-display`) |
+| **`InputOtp.vue`** | Komponen baru | **Komponen Baru** | `<InputField v-model="pin" type="otp" :length="6" separator="-" :countdown="60" @complete="..." />` |
+| **`InputMask.vue`** | Komponen baru | **Komponen Baru** | `<InputField v-model="card" type="mask" preset="credit-card" />` (v-model otomatis mengikat raw digits murni) |
+| **`useFormValidation.js`** | Composable baru | **Composable Baru** | `const { errors, validate, touch } = useFormValidation(form, rules)` untuk validasi form level lengkap |
+

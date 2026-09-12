@@ -10,6 +10,8 @@ import InputFile from './Input/InputFile.vue';
 import InputColor from './Input/InputColor.vue';
 import InputRange from './Input/InputRange.vue';
 import InputDatePicker from './Input/InputDatePicker.vue';
+import InputOtp from './Input/InputOtp.vue';
+import InputMask from './Input/InputMask.vue';
 
 const props = defineProps({
     label: {
@@ -21,7 +23,8 @@ const props = defineProps({
         default: 'text',
         // 'text', 'email', 'password', 'number', 'tel', 'url', 'search',
         // 'date', 'time', 'datetime-local', 'month', 'week', 'currency',
-        // 'textarea', 'select', 'checkbox', 'radio', 'switch', 'file', 'color', 'range'
+        // 'textarea', 'select', 'checkbox', 'radio', 'switch', 'file', 'color', 'range',
+        // 'otp', 'mask'
     },
     name: {
         type: String,
@@ -99,6 +102,22 @@ const props = defineProps({
         type: [Number, String],
         default: 3,
     },
+    autoResize: {
+        type: Boolean,
+        default: false,
+    },
+    minRows: {
+        type: [Number, String],
+        default: null,
+    },
+    maxRows: {
+        type: [Number, String],
+        default: null,
+    },
+    resize: {
+        type: String,
+        default: 'vertical',
+    },
     options: {
         type: Array,
         default: () => [],
@@ -123,6 +142,10 @@ const props = defineProps({
     clearable: {
         type: Boolean,
         default: false,
+    },
+    chipDisplay: {
+        type: Boolean,
+        default: true,
     },
     loading: {
         type: Boolean,
@@ -168,10 +191,64 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    indeterminate: {
+        type: Boolean,
+        default: false,
+    },
+    value: {
+        type: [String, Number, Boolean],
+        default: null,
+    },
+    // OTP Props
+    length: {
+        type: Number,
+        default: 6,
+    },
+    integerOnly: {
+        type: Boolean,
+        default: true,
+    },
+    masked: {
+        type: Boolean,
+        default: false,
+    },
+    separator: {
+        type: String,
+        default: '',
+    },
+    separatorAfter: {
+        type: Number,
+        default: null,
+    },
+    countdown: {
+        type: Number,
+        default: 0,
+    },
+    resendText: {
+        type: String,
+        default: 'Kirim Ulang Kode OTP',
+    },
+    // Mask Props
+    mask: {
+        type: String,
+        default: '',
+    },
+    preset: {
+        type: String,
+        default: '',
+    },
+    slotChar: {
+        type: String,
+        default: '_',
+    },
+    emitRaw: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 const model = defineModel();
-defineEmits(['change', 'blur', 'focus', 'clear', 'error', 'cancel-upload', 'validate']);
+defineEmits(['change', 'blur', 'focus', 'clear', 'error', 'cancel-upload', 'validate', 'complete', 'resend']);
 
 // SSR Hydration-safe Unique ID generator (Vue 3.5+)
 const generatedId = useId();
@@ -253,9 +330,12 @@ defineExpose({
             ref="controlRef"
             :id="inputId"
             v-model="model"
+            :value="value"
             :name="name"
             :label="label"
             :subtext="subtext"
+            :options="options"
+            :indeterminate="indeterminate"
             :required="required"
             :disabled="disabled"
             :error="error"
@@ -307,6 +387,10 @@ defineExpose({
             v-model="model"
             :name="name"
             :rows="rows"
+            :auto-resize="autoResize"
+            :min-rows="minRows"
+            :max-rows="maxRows"
+            :resize="resize"
             :placeholder="placeholder"
             :required="required"
             :disabled="disabled"
@@ -329,6 +413,8 @@ defineExpose({
             :placeholder="placeholder"
             :options="options"
             :multiple="multiple"
+            :clearable="clearable"
+            :chip-display="chipDisplay"
             :required="required"
             :disabled="disabled"
             :readonly="readonly"
@@ -339,9 +425,60 @@ defineExpose({
             @change="$emit('change', $event)"
             @blur="$emit('blur', $event)"
             @focus="$emit('focus', $event)"
+            @clear="$emit('clear')"
         >
             <slot />
         </InputSelect>
+
+        <!-- OTP / PIN Input -->
+        <InputOtp
+            v-else-if="type === 'otp'"
+            ref="controlRef"
+            :id="inputId"
+            v-model="model"
+            :length="length"
+            :integer-only="integerOnly"
+            :masked="masked"
+            :separator="separator"
+            :separator-after="separatorAfter"
+            :countdown="countdown"
+            :resend-text="resendText"
+            :size="size"
+            :disabled="disabled"
+            :readonly="readonly"
+            :error="error"
+            @change="$emit('change', $event)"
+            @complete="$emit('complete', $event)"
+            @resend="$emit('resend')"
+        />
+
+        <!-- Masked Input (Credit Card, NPWP, NIK, dll) -->
+        <InputMask
+            v-else-if="type === 'mask'"
+            ref="controlRef"
+            :id="inputId"
+            v-model="model"
+            :name="name"
+            :mask="mask"
+            :preset="preset"
+            :placeholder="placeholder"
+            :slot-char="slotChar"
+            :emit-raw="emitRaw"
+            :required="required"
+            :disabled="disabled"
+            :readonly="readonly"
+            :icon="icon"
+            :icon-right="iconRight"
+            :prefix="prefix"
+            :suffix="suffix"
+            :size="size"
+            :clearable="clearable"
+            :error="error"
+            @change="$emit('change', $event)"
+            @blur="$emit('blur', $event)"
+            @focus="$emit('focus', $event)"
+            @clear="$emit('clear')"
+        />
 
         <!-- Color Picker -->
         <InputColor

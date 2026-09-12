@@ -54,7 +54,8 @@ class InstallPackCommand extends Command
                           !$status['blade_configured'] ||
                           !$status['app_js_configured'] ||
                           !$status['css_configured'] ||
-                          !$status['vite_configured'];
+                          !$status['vite_configured'] ||
+                          !$status['inertia_flash_configured'];
 
         if ($hasMissingDeps) {
             $shouldProceed = $autoAll || $this->confirm('Apakah Anda ingin otomatis memasang dan mengonfigurasi dependensi yang belum ada?', true);
@@ -93,6 +94,11 @@ class InstallPackCommand extends Command
                 // F. Vite Configuration (vite.config.js dengan alias ziggy-js & @)
                 if (!$status['vite_configured']) {
                     $this->configureVite();
+                }
+
+                // G. HandleInertiaRequests Flash Props (Auto-Sync Toast Notification)
+                if (!$status['inertia_flash_configured']) {
+                    $this->configureHandleInertiaRequests();
                 }
             } else {
                 $this->warn('⚠️ Pemasangan dependensi dilewati. Pastikan Anda memasangnya secara manual.');
@@ -148,6 +154,8 @@ class InstallPackCommand extends Command
         $viteConfig = $this->getViteConfigContent();
         $appBlade = $this->getAppBladeContent();
         $appJs = $this->getAppJsContent();
+        $middlewarePath = $this->getInertiaMiddlewarePath();
+        $middlewareContent = $this->getInertiaMiddlewareContent();
 
         $status = [
             'inertia_php' => isset($composerJson['require']['inertiajs/inertia-laravel']),
@@ -161,6 +169,7 @@ class InstallPackCommand extends Command
             'app_js_configured' => str_contains($appJs, 'createInertiaApp') && str_contains($appJs, 'ZiggyVue'),
             'css_configured' => str_contains($appCss, 'tailwindcss') && str_contains($appCss, 'material-symbols'),
             'vite_configured' => str_contains($viteConfig, '@tailwindcss/vite') && str_contains($viteConfig, '@vitejs/plugin-vue'),
+            'inertia_flash_configured' => File::exists($middlewarePath) && str_contains($middlewareContent, "'flash'") && str_contains($middlewareContent, "'success'"),
         ];
 
         $rows = [
@@ -175,6 +184,7 @@ class InstallPackCommand extends Command
             ['Vue Entrypoint (app.js)', $status['app_js_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang ZiggyVue</comment>'],
             ['Styling Import (app.css)', $status['css_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Dikonfigurasi</comment>'],
             ['Vite Config (vite.config.js)', $status['vite_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Dikonfigurasi</comment>'],
+            ['Inertia Flash Props (HandleInertiaRequests)', $status['inertia_flash_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang Session Flash</comment>'],
         ];
 
         $this->table(['Dependensi / Fitur', 'Status'], $rows);
@@ -579,5 +589,154 @@ JS;
     {
         $path = resource_path('js/app.js');
         return File::exists($path) ? File::get($path) : '';
+    }
+
+    protected function getInertiaMiddlewarePath(): string
+    {
+        return app_path('Http/Middleware/HandleInertiaRequests.php');
+    }
+
+    protected function getInertiaMiddlewareContent(): string
+    {
+        $path = $this->getInertiaMiddlewarePath();
+        return File::exists($path) ? File::get($path) : '';
+    }
+
+    /**
+     * Mengonfigurasi flash session props pada HandleInertiaRequests.php
+     * agar useNotification otomatis memicu toast notification dari redirect backend.
+     */
+    protected function configureHandleInertiaRequests(): void
+    {
+        $this->line('📝 Memeriksa dan mengonfigurasi <info>HandleInertiaRequests.php</info>...');
+
+        $middlewarePath = $this->getInertiaMiddlewarePath();
+        $flashSnippet = "            'flash' => [\n" .
+            "                'info' => fn() => \$request->session()->get('info'),\n" .
+            "                'success' => fn() => \$request->session()->get('success'),\n" .
+            "                'warning' => fn() => \$request->session()->get('warning'),\n" .
+            "                'error' => fn() => \$request->session()->get('error'),\n" .
+            "                'message' => fn() => \$request->session()->get('message'),\n" .
+            "                'alert' => fn() => \$request->session()->get('alert'),\n" .
+            "            ],\n";
+
+        if (!File::exists($middlewarePath)) {
+            File::ensureDirectoryExists(dirname($middlewarePath));
+
+            $template = "<?php\n\n" .
+                "namespace App\\Http\\Middleware;\n\n" .
+                "use Illuminate\\Http\\Request;\n" .
+                "use Inertia\\Middleware;\n\n" .
+                "class HandleInertiaRequests extends Middleware\n" .
+                "{\n" .
+                "    /**\n" .
+                "     * The root template that's loaded on the first page visit.\n" .
+                "     *\n" .
+                "     * @see https://inertiajs.com/server-side-setup#root-template\n" .
+                "     *\n" .
+                "     * @var string\n" .
+                "     */\n" .
+                "    protected \$rootView = 'app';\n\n" .
+                "    /**\n" .
+                "     * Determines the current asset version.\n" .
+                "     *\n" .
+                "     * @see https://inertiajs.com/asset-versioning\n" .
+                "     */\n" .
+                "    public function version(Request \$request): ?string\n" .
+                "    {\n" .
+                "        return parent::version(\$request);\n" .
+                "    }\n\n" .
+                "    /**\n" .
+                "     * Define the props that are shared by default.\n" .
+                "     *\n" .
+                "     * @see https://inertiajs.com/shared-data\n" .
+                "     *\n" .
+                "     * @return array<string, mixed>\n" .
+                "     */\n" .
+                "    public function share(Request \$request): array\n" .
+                "    {\n" .
+                "        return [\n" .
+                "            ...parent::share(\$request),\n" .
+                $flashSnippet .
+                "        ];\n" .
+                "    }\n" .
+                "}\n";
+
+            File::put($middlewarePath, $template);
+            $this->info('  ✓ Berkas HandleInertiaRequests.php berhasil dibuat dengan sharing flash session.');
+
+            $this->registerInertiaMiddlewareInBootstrap();
+            return;
+        }
+
+        $content = File::get($middlewarePath);
+
+        if (str_contains($content, "'flash'") && str_contains($content, "'success'")) {
+            $this->info('  ✓ HandleInertiaRequests.php sudah memiliki konfigurasi flash session.');
+            return;
+        }
+
+        $modified = false;
+        if (str_contains($content, '...parent::share($request),')) {
+            $content = str_replace(
+                '...parent::share($request),',
+                "...parent::share(\$request),\n" . $flashSnippet,
+                $content
+            );
+            $modified = true;
+        } elseif (str_contains($content, 'parent::share($request),')) {
+            $content = str_replace(
+                'parent::share($request),',
+                "parent::share(\$request),\n" . $flashSnippet,
+                $content
+            );
+            $modified = true;
+        } elseif (preg_match('/(public\s+function\s+share\s*\([^)]*\)\s*:\s*array\s*\{[^}]*return\s*\[)/s', $content, $matches)) {
+            $content = str_replace(
+                $matches[1],
+                $matches[1] . "\n" . $flashSnippet,
+                $content
+            );
+            $modified = true;
+        }
+
+        if ($modified) {
+            File::put($middlewarePath, $content);
+            $this->info('  ✓ Session flash props berhasil disinkronkan ke HandleInertiaRequests.php.');
+        } else {
+            $this->warn('  ⚠️ Tidak dapat menemukan titik injeksi otomatis pada method share() di HandleInertiaRequests.php.');
+            $this->line('     Silakan tambahkan array flash secara manual ke dalam return share():');
+            $this->comment("     'flash' => ['success' => fn() => \$request->session()->get('success'), ...]");
+        }
+    }
+
+    /**
+     * Mendaftarkan HandleInertiaRequests di bootstrap/app.php (Laravel 11/12) jika belum terdaftar.
+     */
+    protected function registerInertiaMiddlewareInBootstrap(): void
+    {
+        $bootstrapApp = base_path('bootstrap/app.php');
+        if (!File::exists($bootstrapApp)) return;
+
+        $content = File::get($bootstrapApp);
+        if (str_contains($content, 'HandleInertiaRequests::class')) return;
+
+        if (str_contains($content, '->withMiddleware(function (Middleware $middleware)')) {
+            $useStatement = "use App\\Http\\Middleware\\HandleInertiaRequests;\n";
+            if (!str_contains($content, 'use App\Http\Middleware\HandleInertiaRequests;')) {
+                $content = preg_replace('/(<\?php\s+)/', "$1\n" . $useStatement, $content, 1);
+            }
+
+            $appendMiddleware = "\n        \$middleware->web(append: [\n            HandleInertiaRequests::class,\n        ]);\n";
+            $content = preg_replace(
+                '/(->withMiddleware\(function\s*\(Middleware\s*\$middleware\)\s*(?::\s*void\s*)?\{\s*)/',
+                "$1" . $appendMiddleware,
+                $content,
+                1
+            );
+
+            File::put($bootstrapApp, $content);
+            $this->info('  ✓ Middleware HandleInertiaRequests berhasil didaftarkan di bootstrap/app.php.');
+        }
     }
 }
