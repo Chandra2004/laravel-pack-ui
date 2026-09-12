@@ -13,7 +13,7 @@ class InstallPackCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'pack:install 
+    protected $signature = 'pack:install
                             {--force : Timpa berkas komponen dan konfigurasi yang sudah ada}
                             {--all : Otomatis pasang seluruh dependensi prasyarat tanpa konfirmasi}';
 
@@ -44,12 +44,12 @@ class InstallPackCommand extends Command
         // 2. Setup Prasyarat yang Hilang
         $needsNpmInstall = false;
 
-        $hasMissingDeps = !$status['inertia_php'] || 
+        $hasMissingDeps = !$status['inertia_php'] ||
                           !$status['ziggy_php'] ||
-                          !$status['vue'] || 
-                          !$status['inertia_vue'] || 
+                          !$status['vue'] ||
+                          !$status['inertia_vue'] ||
                           !$status['ziggy_js'] ||
-                          !$status['tailwind'] || 
+                          !$status['tailwind'] ||
                           !$status['material_symbols'] ||
                           !$status['blade_configured'] ||
                           !$status['app_js_configured'] ||
