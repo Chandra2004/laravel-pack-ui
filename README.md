@@ -260,31 +260,36 @@ import ButtonTheme from '@/Components/Pack/ButtonTheme.vue';
 
 ---
 
-## 📚 Dokumentasi Lengkap Komponen (API Reference)
+## 📚 Dokumentasi Lengkap (Documentation Index)
 
-Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*props*), *events*, *slots*, *method expose*, aturan validasi, serta katalog ragam varian dropzone berkas dapat Anda baca pada berkas:
+Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*props*), *events*, *slots*, *method expose*, aturan validasi, serta contoh implementasi praktis telah dikelompokkan secara terstruktur dan modular di dalam direktori [`doc/`](doc/setup.md):
 
-👉 **[Buka Dokumentasi Lengkap: PACK-COMPONENT-LAYOUT.md](./PACK-COMPONENT-LAYOUT.md)**
+### 🛠️ Prasyarat & Instalasi
+* 📖 [**Panduan Setup & Instalasi (`doc/setup.md`)**](doc/setup.md) — Font Google Material Symbols, konfigurasi Tailwind CSS v4 / v3, konfigurasi backend Middleware Laravel `HandleInertiaRequests`, dan optimasi build bundler Vite.
 
-### Isi dari `PACK-COMPONENT-LAYOUT.md`:
-* 📌 **Setup & Prasyarat**: Font Google Material Symbols, konfigurasi Tailwind v4, dan Inertia Layout setup.
-* 📌 **Alert Component**: Varian styling (`solid`, `soft`, `outline`), penanganan event `dismiss`, dan custom icon slot.
-* 📌 **ToastNotification System**: Penggunaan composable `notify.success()`, `notify.error()`, `notify.warning()`, notifikasi dengan tombol aksi (*action callback*), serta pengaturan timer auto-close.
-* 📌 **TableComponent**: Konfigurasi header dinamis, sorting, kolom checkbox selection, multi-column skeleton loader, ekspor CSV bawaan, dan kustomisasi baris.
-* 📌 **Pagination Component**: Parameter pagination Laravel `LengthAwarePaginator`, mode client-side, dynamic rendering, dan jump-to-page.
-* 📌 **Modal Overlay**: Ukuran lebar responsif (`sm`, `md`, `lg`, `xl`, `full`), posisi dialog (center, top, bottom sheet), varian status badge, dan custom footer action.
-* 📌 **ButtonTheme**: Mode segmented 3-arah, switch toggle pill, tombol teks, dan persistensi tema.
-* 📌 **ButtonSubmit**: Varian tombol polimorfik (Primary, Danger, Success, Warning, Soft, Ghost), posisi ikon, dan status loading spinner.
-* 📌 **InputField Deep-Dive**: Bedah tuntas 10 sub-komponen input form:
-  * Text, Email & Telepon (dengan live validation & formatting)
-  * Password (dengan checklist kriteria keamanan & strength score)
-  * Currency (auto rupiah formatting `id-ID`)
-  * Select & Autocomplete Search (dropdown popover)
-  * File Upload 4 Varian: `avatar`, `dropzone`, `grid`, dan `list`
-  * Date & Time Picker (kalender popover bahasa Indonesia)
-  * Color Picker (swatch & eyedropper screen API)
-  * Range Slider (kustomisasi formatter & track)
-  * Checkbox, Radio Group & Switch Toggle
+### 🧩 Komponen UI (Components)
+* 🔔 [**Alert (`Alert.vue`)**](doc/components/alert.md) — Inline banner alert dengan auto-close, progress countdown bar, varian (`soft`, `solid`, `outline`), & dismissible.
+* 👤 [**Avatar (`Avatar.vue`)**](doc/components/avatar.md) — Foto profil, inisial nama otomatis dengan warna deterministik, presence status dot tanpa terpotong mask, & avatar group stack.
+* 🧭 [**Breadcrumb (`Breadcrumb.vue`)**](doc/components/breadcrumb.md) — Navigasi breadcrumb terintegrasi Inertia Link dengan auto-collapse ellipsis & penjajaran presisi ikon.
+* 🔘 [**ButtonSubmit (`ButtonSubmit.vue`)**](doc/components/button-submit.md) — Tombol polimorfik (`button`, `Link`, `a`) dengan varian warna, ikon, dan animasi loading spinner.
+* 🌓 [**ButtonTheme (`ButtonTheme.vue`)**](doc/components/button-theme.md) — Tombol pengubah mode gelap/terang (varian `icon`, `button`, `switch`, `segmented`) tersinkronisasi OS & localStorage.
+* 🃏 [**Card (`Card.vue`)**](doc/components/card.md) — Kontainer kartu universal dengan animasi collapsible mulus, varian kartu, dan loading overlay.
+* 🔽 [**Dropdown (`Dropdown.vue`)**](doc/components/dropdown.md) — Menu aksi popover dengan navigasi keyboard lengkap (ARIA compliant) & click-outside dismissal.
+* 📝 [**InputField & Sub-Komponen (`InputField.vue`)**](doc/components/input-field.md) — Facade universal form input mendelegasikan 12 sub-komponen: Text, Password, DatePicker, File (Dropzone), Select, Color, Radio, Checkbox, Textarea, Range, Switch, OTP, & Mask.
+* 🪟 [**Modal (`Modal.vue`)**](doc/components/modal.md) — Dialog overlay via `<Teleport>` dengan Focus Trap, ukuran responsif (`sm` hingga `full`), posisi dialog, & Expose API.
+* 📄 [**Pagination (`Pagination.vue`)**](doc/components/pagination.md) — Komponen navigasi halaman kompatibel Laravel `LengthAwarePaginator` dan mode client-side.
+* 📑 [**Sidebar & SidebarItem (`Sidebar.vue`)**](doc/components/sidebar.md) — Bilah samping responsif dengan menu bertingkat (*nested dropdown*), mobile drawer backdrop blur & scroll-lock, serta floating circular collapse button.
+* 💀 [**Skeleton (`Skeleton.vue`)**](doc/components/skeleton.md) — Kerangka placeholder loader dengan efek animasi shimmer wave modern untuk teks, avatar, kartu, dan tabel.
+* 🪜 [**Stepper (`Stepper.vue`)**](doc/components/stepper.md) — Penunjuk alur wizard multi-langkah horizontal/vertikal, mode sekuensial linear, & penanda status error.
+* 📊 [**TableComponent (`TableComponent.vue`)**](doc/components/table.md) — Wrapper data table lengkap dengan sorting dinamis, kolom checkbox bulk action, skeleton loader, & ekspor CSV.
+* 💬 [**ToastNotification (`ToastNotification.vue`)**](doc/components/toast.md) — Floating toast notification system dengan real-time progress countdown, 6 posisi sudut layar, & multi-toast stack.
+
+### ⚙️ Composables
+* 🎯 [**`useClickOutside`**](doc/composables/use-click-outside.md) — Hook pendeteksi interaksi klik di luar elemen target (dropdown, popover, modal).
+* 🛡️ [**`useFormValidation`**](doc/composables/use-form-validation.md) — Validasi skema form reaktif dengan preset rules (`required`, `email`, `min`, `max`, `confirmed`, dll) serta sinkronisasi galat Laravel.
+* 💬 [**`useNotification`**](doc/composables/use-notification.md) — State manager & trigger API toast notification (`notify.success`, `notify.error`, `notify.promise`, aksi undo callback).
+* 🌓 [**`useTheme`**](doc/composables/use-theme.md) — State manager pengatur tema gelap/terang, sinkronisasi OS mediaQuery, & class `.dark` Tailwind CSS.
+
 
 ---
 
