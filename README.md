@@ -15,7 +15,8 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 
 ## 🌟 Mengapa Memilih Laravel Pack UI?
 
-* 🚀 **Smart Auto-Installer**: Mendeteksi secara cerdas apakah project Anda sudah memiliki Vue, Inertia, Tailwind v4, atau Google Icons, dan otomatis memasangnya jika belum tersedia.
+* 🚀 **Smart Auto-Installer**: Mendeteksi secara cerdas apakah project Anda sudah memiliki Vue 3, Inertia.js, Ziggy Router, Tailwind v4, atau Google Icons, dan otomatis mengonfigurasinya dari nol jika belum tersedia.
+* 🧭 **Ziggy Router Terintegrasi**: Pemasangan otomatis `tightenco/ziggy` dan `ziggy-js` lengkap dengan penyuntikan directive `@routes` pada blade dan plugin `ZiggyVue` pada Vue entrypoint (`route('nama.rute')`).
 * 🎨 **Desain Modern & Konsisten**: Standar border-radius harmonis (`rounded-xl` untuk input dan `rounded-2xl` untuk card/dialog), shadow lembut (`shadow-2xs`), serta tipografi Google Material Symbols.
 * 🔒 **Sistem Form & Validasi Tangguh**: `InputField.vue` universal mencakup 10+ tipe input (email regex, phone auto-hyphen, currency mask `Rp 1.500.000`, 4-tahap password strength meter, autocomplete search).
 * 📁 **Rich File Upload & Lightbox**: Mendukung 4 varian unggah berkas (`avatar`, `dropzone` hero, `grid` galeri multi-foto, dan `list` tabel dokumen) lengkap dengan pembersih memory leak blob dan modal preview resolusi penuh.
@@ -68,16 +69,21 @@ php artisan pack:install
 
 #### 💡 Apa Saja yang Dilakukan Smart Auto-Installer?
 Perintah ini akan memeriksa lingkungan project Anda secara otomatis:
-1. **Pemeriksaan Vue 3 & Inertia.js**:
-   - Jika project belum memiliki `inertiajs/inertia-laravel`, installer otomatis mengeksekusi `composer require inertiajs/inertia-laravel`.
-   - Jika `vue`, `@inertiajs/vue3`, dan `@vitejs/plugin-vue` belum ada di `package.json`, installer otomatis menambahkannya.
-2. **Pemasangan Tailwind CSS v4 & Google Icons**:
-   - Memastikan `tailwindcss` (^4.0.0) dan `@tailwindcss/vite` terpasang di `devDependencies`.
-   - Memastikan `material-symbols` terpasang di `dependencies`.
-3. **Konfigurasi Otomatis `app.css` & `vite.config.js`**:
-   - Menyisipkan directive `@import 'tailwindcss';` dan `@import 'material-symbols';` ke `resources/css/app.css`.
-   - Mengonfigurasi plugin `vue()`, `tailwindcss()`, dan path alias `'@'` di `vite.config.js`.
-4. **Penerbitan Komponen**:
+1. **Pemeriksaan & Instalasi Otomatis Backend (Composer)**:
+   - Jika project belum memiliki `inertiajs/inertia-laravel`, installer mengeksekusi `composer require inertiajs/inertia-laravel`.
+   - Jika project belum memiliki `tightenco/ziggy`, installer mengeksekusi `composer require tightenco/ziggy`.
+2. **Pemeriksaan & Instalasi Frontend (Node.js/npm)**:
+   - Memastikan `vue` (^3.5) dan `@vitejs/plugin-vue` (^5.0) terpasang.
+   - Memastikan `@inertiajs/vue3` (^2.0) terpasang.
+   - Memastikan `ziggy-js` (^2.4) terpasang untuk navigasi rute Laravel di Vue.
+   - Memastikan `tailwindcss` (^4.0) dan `@tailwindcss/vite` terpasang.
+   - Memastikan `material-symbols` (^0.47) terpasang.
+3. **Konfigurasi Otomatis Template & Entrypoint**:
+   - **`resources/views/app.blade.php`**: Menyisipkan directive `@routes`, `@inertiaHead`, dan `@inertia` secara otomatis.
+   - **`resources/js/app.js`**: Mengonfigurasi `createInertiaApp` dan mendaftarkan plugin `ZiggyVue` (`createApp().use(ZiggyVue)`).
+   - **`resources/css/app.css`**: Menyisipkan directive `@import 'tailwindcss';` dan `@import 'material-symbols';`.
+   - **`vite.config.js`**: Mengonfigurasi plugin `vue()`, `tailwindcss()`, dan path alias `'ziggy-js'` serta `'@'`.
+4. **Penerbitan Komponen & Composables**:
    - Menyalin seluruh file komponen ke `resources/js/Components/Pack/`.
    - Menyalin seluruh file composable ke `resources/js/Composables/Pack/`.
 
@@ -116,7 +122,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post('/users');
+    form.post(route('users.store'));
 };
 </script>
 

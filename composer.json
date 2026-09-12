@@ -1,6 +1,6 @@
 {
     "name": "chandra2004/laravel-pack-ui",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Enterprise Pack UI Components & Composables for Laravel Inertia Vue 3 with Tailwind CSS",
     "type": "library",
     "license": "MIT",
