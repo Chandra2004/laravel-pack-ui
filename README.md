@@ -49,6 +49,7 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 | **`Tabs.vue`** | Navigasi tab responsif (underline, pills, segmented, enclosed) dengan slot dinamis, orientasi vertikal/horizontal, badge, dan aksesibilitas keyboard. |
 | **`FileDropzone.vue`** | Area drag-and-drop file upload mandiri (hero banner, galeri foto grid, dokumen list, avatar) lengkap dengan validasi MIME/ukuran, thumbnail lightbox, dan pencegahan memory leak blob. |
 | **`FilterToolbar.vue`** | Bilah filter data tabel dinamis dengan pencarian debounced, tombol preset tanggal cepat, dropdown status, reset filter aktif ber-counter badge, dan integrasi otomatis `useServerTable.js`. |
+| **`ProductGallery.vue`** | Galeri produk & media modular dengan penampil foto hero, thumbnail berlabel caption, floating badges, dan modal lightbox zoom layar penuh. |
 
 ### 🧩 Composables (State Helpers)
 * **`useClipboard.js`** – Helper penyalinan teks ke clipboard dengan status `copied` reaktif dan fallback legacy browser.
@@ -363,6 +364,7 @@ Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*pro
 * 📑 [**Tabs (`Tabs.vue`)**](doc/components/tabs.md) — Navigasi tab responsif (varian `underline`, `pills`, `segmented`, `enclosed`), orientasi vertikal/horizontal, badge, & ARIA keyboard navigation.
 * 📁 [**FileDropzone (`FileDropzone.vue`)**](doc/components/file-dropzone.md) — Area unggah berkas drag-and-drop mandiri dengan 4 varian tata letak, pratinjau thumbnail, progress bar, validasi otomatis, dan pembersih memori blob URL.
 * 🔍 [**FilterToolbar (`FilterToolbar.vue`)**](doc/components/filter-toolbar.md) — Bilah penyaringan data tabel terpadu dengan pencarian debounced, tombol preset tanggal cepat, dropdown status, tombol reset dinamis ber-counter badge, dan integrasi otomatis `useServerTable.js`.
+* 🖼️ [**ProductGallery (`ProductGallery.vue`)**](doc/components/product-gallery.md) — Galeri foto produk modular untuk e-commerce/showroom dengan kartu thumbnail caption, floating badges status, counter foto, & modal lightbox zoom.
 * 💬 [**ToastNotification (`ToastNotification.vue`)**](doc/components/toast.md) — Floating toast notification system dengan real-time progress countdown, 6 posisi sudut layar, & multi-toast stack.
 
 ### ⚙️ Composables
