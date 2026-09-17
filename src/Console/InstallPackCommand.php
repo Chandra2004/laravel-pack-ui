@@ -51,6 +51,7 @@ class InstallPackCommand extends Command
                           !$status['ziggy_js'] ||
                           !$status['tailwind'] ||
                           !$status['material_symbols'] ||
+                          !$status['tiptap'] ||
                           !$status['blade_configured'] ||
                           !$status['app_js_configured'] ||
                           !$status['css_configured'] ||
@@ -130,10 +131,11 @@ class InstallPackCommand extends Command
         $this->info('🎉 Instalasi selesai! Pack UI siap digunakan.');
         $this->line('  📁 Komponen UI : <comment>resources/js/Components/Pack</comment>');
         $this->line('  📁 Composables : <comment>resources/js/Composables/Pack</comment>');
+        $this->line('  📁 Layouts     : <comment>resources/js/Layouts</comment>');
         $this->newLine();
         $this->comment('Contoh Pemakaian di Halaman Vue:');
         $this->line('  <info>import InputField from "@/Components/Pack/InputField.vue";</info>');
-        $this->line('  <info>import ButtonSubmit from "@/Components/Pack/ButtonSubmit.vue";</info>');
+        $this->line('  <info>import DashboardLayout from "@/Layouts/DashboardLayout.vue";</info>');
         $this->line('  <info>import { useNotification } from "@/Composables/Pack/useNotification.js";</info>');
         $this->line('  <info>// Routing Ziggy: route("dashboard.index")</info>');
         $this->newLine();
@@ -165,6 +167,8 @@ class InstallPackCommand extends Command
             'ziggy_js' => isset($packageJson['dependencies']['ziggy-js']) || isset($packageJson['devDependencies']['ziggy-js']),
             'tailwind' => isset($packageJson['devDependencies']['tailwindcss']) || isset($packageJson['dependencies']['tailwindcss']) || isset($packageJson['devDependencies']['@tailwindcss/vite']),
             'material_symbols' => isset($packageJson['dependencies']['material-symbols']) || isset($packageJson['devDependencies']['material-symbols']),
+            'tiptap' => isset($packageJson['dependencies']['@tiptap/vue-3']) || isset($packageJson['devDependencies']['@tiptap/vue-3']),
+            'leaflet' => isset($packageJson['dependencies']['leaflet']) || isset($packageJson['devDependencies']['leaflet']),
             'blade_configured' => str_contains($appBlade, '@routes') && str_contains($appBlade, '@inertia'),
             'app_js_configured' => str_contains($appJs, 'createInertiaApp') && str_contains($appJs, 'ZiggyVue'),
             'css_configured' => str_contains($appCss, 'tailwindcss') && str_contains($appCss, 'material-symbols'),
@@ -180,6 +184,8 @@ class InstallPackCommand extends Command
             ['Ziggy JS Client (route() helper)', $status['ziggy_js'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
             ['Tailwind CSS v4 Engine', $status['tailwind'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
             ['Google Material Symbols Font', $status['material_symbols'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
+            ['Tiptap Rich Text Editor Engine', $status['tiptap'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
+            ['Leaflet OpenStreetMap Map Engine', ($status['leaflet'] ?? false) ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
             ['Root Layout (app.blade.php)', $status['blade_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang @routes</comment>'],
             ['Vue Entrypoint (app.js)', $status['app_js_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang ZiggyVue</comment>'],
             ['Styling Import (app.css)', $status['css_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Dikonfigurasi</comment>'],
@@ -256,6 +262,22 @@ class InstallPackCommand extends Command
 
         if (!$status['material_symbols']) {
             $packageJson['dependencies']['material-symbols'] = '^0.47.0';
+            $modified = true;
+        }
+
+        if (!$status['tiptap']) {
+            $packageJson['dependencies']['@tiptap/vue-3'] = '^2.11.0';
+            $packageJson['dependencies']['@tiptap/starter-kit'] = '^2.11.0';
+            $packageJson['dependencies']['@tiptap/extension-link'] = '^2.11.0';
+            $packageJson['dependencies']['@tiptap/extension-image'] = '^2.11.0';
+            $packageJson['dependencies']['@tiptap/extension-underline'] = '^2.11.0';
+            $packageJson['dependencies']['@tiptap/extension-text-align'] = '^2.11.0';
+            $packageJson['dependencies']['@tiptap/extension-placeholder'] = '^2.11.0';
+            $modified = true;
+        }
+
+        if (!($status['leaflet'] ?? false)) {
+            $packageJson['dependencies']['leaflet'] = '^1.9.4';
             $modified = true;
         }
 

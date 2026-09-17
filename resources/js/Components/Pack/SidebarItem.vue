@@ -7,7 +7,6 @@ const props = defineProps({
     item: {
         type: Object,
         required: true,
-        // { label, icon, href, badge, badgeVariant, children: [], separator, heading, active, disabled }
     },
     depth: {
         type: Number,
@@ -25,6 +24,30 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    colorTheme: {
+        type: Object,
+        default: () => ({
+            indicator: 'bg-blue-600 dark:bg-blue-500',
+            soft: 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 font-semibold',
+            solid: 'text-white bg-blue-600 dark:bg-blue-600 font-semibold shadow-xs shadow-blue-600/20',
+            outline: 'text-blue-600 dark:text-blue-400 border border-blue-500/60 dark:border-blue-400/50 font-semibold bg-transparent',
+            iconActive: 'text-blue-600 dark:text-blue-400',
+            iconSolid: 'text-white',
+            badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+        }),
+    },
+    itemStyle: {
+        type: String,
+        default: 'soft',
+    },
+    radiusClass: {
+        type: String,
+        default: 'rounded-xl',
+    },
+    size: {
+        type: String,
+        default: 'md',
+    },
 });
 
 const emit = defineEmits(['navigate']);
@@ -33,7 +56,6 @@ const hasChildren = computed(() => {
     return Array.isArray(props.item.children) && props.item.children.length > 0;
 });
 
-// Check if this item is active
 const isSelfActive = computed(() => {
     if (props.item.active) return true;
     if (props.activeRoute && props.item.href) {
@@ -42,7 +64,6 @@ const isSelfActive = computed(() => {
     return false;
 });
 
-// Recursively check if any descendant child is active
 const hasActiveDescendant = (item) => {
     if (!item.children || item.children.length === 0) return false;
     return item.children.some((child) => {
@@ -60,7 +81,6 @@ const isChildActive = computed(() => {
     return hasActiveDescendant(props.item);
 });
 
-// Auto-expand if a descendant is active
 const isOpen = ref(isChildActive.value || props.item.expanded === true);
 
 watch(isChildActive, (val) => {
@@ -71,7 +91,7 @@ const toggleOpen = () => {
     isOpen.value = !isOpen.value;
 };
 
-// Popover flyout state for collapsed mode
+// Popover flyout untuk mode diciutkan (desktop)
 const flyoutRef = ref(null);
 const isFlyoutOpen = ref(false);
 
@@ -102,12 +122,52 @@ const handleNavigate = (navItem) => {
     isFlyoutOpen.value = false;
 };
 
-// Indentation padding based on depth for expanded mode
+// Skala ukuran dinamis
+const sizeClass = computed(() => {
+    switch (props.size) {
+        case 'sm':
+            return {
+                item: 'py-1.5 text-[11px] gap-2',
+                icon: props.depth === 0 ? 'text-base' : 'text-[15px]',
+                badge: 'text-[9px] px-1.5 py-0.2',
+                collapsed: 'h-8 w-8',
+            };
+        case 'lg':
+            return {
+                item: 'py-2.5 text-sm gap-3',
+                icon: props.depth === 0 ? 'text-xl' : 'text-lg',
+                badge: 'text-xs px-2 py-0.5',
+                collapsed: 'h-11 w-11',
+            };
+        case 'md':
+        default:
+            return {
+                item: 'py-2 text-xs gap-2.5',
+                icon: props.depth === 0 ? 'text-lg' : 'text-base',
+                badge: 'text-[10px] px-1.5 py-0.5',
+                collapsed: 'h-10 w-10',
+            };
+    }
+});
+
+// Indentasi padding kedalaman bertingkat
 const depthPaddingClass = computed(() => {
     if (props.depth === 0) return 'px-3';
     if (props.depth === 1) return 'pl-9 pr-3';
     if (props.depth === 2) return 'pl-12 pr-3';
     return 'pl-14 pr-3';
+});
+
+// Kelas aktif berdasarkan gaya pewarnaan item
+const activeItemClasses = computed(() => {
+    const t = props.colorTheme;
+    if (props.itemStyle === 'solid') {
+        return t.solid;
+    }
+    if (props.itemStyle === 'outline') {
+        return t.outline;
+    }
+    return t.soft;
 });
 
 // Badge variant styling
@@ -121,7 +181,7 @@ const badgeClass = computed(() => {
             return 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/40';
         case 'primary':
         default:
-            return 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/40';
+            return props.colorTheme.badge || 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/40';
     }
 });
 </script>
@@ -150,7 +210,7 @@ const badgeClass = computed(() => {
         />
     </div>
 
-    <!-- 3. PARENT MENU ITEM (WITH CHILDREN / SUB-MENU) -->
+    <!-- 3. PARENT MENU ITEM (DENGAN ANAK SUB-MENU) -->
     <div
         v-else-if="hasChildren"
         ref="flyoutRef"
@@ -165,18 +225,21 @@ const badgeClass = computed(() => {
             :aria-expanded="isCollapsed && !isMobile ? isFlyoutOpen : isOpen"
             :title="isCollapsed && !isMobile ? item.label : undefined"
             :class="[
-                'w-full flex items-center gap-2.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer select-none text-left group',
+                'w-full flex items-center font-medium transition-all duration-150 cursor-pointer select-none text-left group',
+                radiusClass,
+                sizeClass.item,
                 depthPaddingClass,
                 isSelfActive || isChildActive
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-blue-950/30 font-semibold'
+                    ? activeItemClasses
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200',
-                isCollapsed && !isMobile ? 'justify-center px-0 h-10 w-10 mx-auto' : '',
+                isCollapsed && !isMobile ? `justify-center px-0 mx-auto ${sizeClass.collapsed}` : '',
             ]"
         >
             <!-- Left Active Indicator Bar -->
             <span
-                v-if="(!isCollapsed || isMobile) && (isSelfActive || isChildActive) && depth === 0"
-                class="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 dark:bg-blue-500 rounded-r-full"
+                v-if="(!isCollapsed || isMobile) && (isSelfActive || isChildActive) && depth === 0 && itemStyle !== 'solid'"
+                class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full"
+                :class="colorTheme.indicator"
             />
 
             <!-- Icon -->
@@ -184,9 +247,9 @@ const badgeClass = computed(() => {
                 v-if="item.icon"
                 class="material-symbols-outlined shrink-0 select-none transition-colors"
                 :class="[
-                    depth === 0 ? 'text-lg' : 'text-base',
-                    isSelfActive || isChildActive
-                        ? 'text-blue-600 dark:text-blue-400'
+                    sizeClass.icon,
+                    (isSelfActive || isChildActive)
+                        ? (itemStyle === 'solid' ? colorTheme.iconSolid : colorTheme.iconActive)
                         : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                 ]"
                 aria-hidden="true"
@@ -194,11 +257,11 @@ const badgeClass = computed(() => {
                 {{ item.icon }}
             </span>
 
-            <!-- Sub-level Dot when no icon is present -->
+            <!-- Sub-level Dot saat tidak ada icon -->
             <span
                 v-else-if="depth > 0 && (!isCollapsed || isMobile)"
                 class="w-1.5 h-1.5 rounded-full shrink-0 select-none transition-all"
-                :class="isSelfActive || isChildActive ? 'bg-blue-600 dark:bg-blue-400 ring-2 ring-blue-200 dark:ring-blue-900' : 'bg-slate-300 dark:bg-slate-600'"
+                :class="(isSelfActive || isChildActive) ? colorTheme.indicator : 'bg-slate-300 dark:bg-slate-600'"
             />
 
             <!-- Label -->
@@ -209,8 +272,8 @@ const badgeClass = computed(() => {
             <!-- Optional Badge -->
             <span
                 v-if="item.badge && (!isCollapsed || isMobile)"
-                class="text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0 select-none"
-                :class="badgeClass"
+                class="font-bold rounded-md shrink-0 select-none"
+                :class="[sizeClass.badge, badgeClass]"
             >
                 {{ item.badge }}
             </span>
@@ -219,19 +282,19 @@ const badgeClass = computed(() => {
             <span
                 v-if="!isCollapsed || isMobile"
                 class="material-symbols-outlined text-sm leading-none transition-transform duration-200 text-slate-400 dark:text-slate-500 shrink-0 select-none"
-                :class="isOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''"
+                :class="isOpen ? 'rotate-180 text-current' : ''"
             >
                 expand_more
             </span>
         </button>
 
-        <!-- A. EXPANDED ACCORDION SUB-ITEMS (Level 1, 2, 3...) -->
+        <!-- A. EXPANDED ACCORDION SUB-ITEMS -->
         <div
             v-if="!isCollapsed || isMobile"
             v-show="isOpen"
             class="relative space-y-0.5 my-0.5"
         >
-            <!-- Continuous Vertical Branch Line for Depth Guides -->
+            <!-- Garis Percabangan Hirarki -->
             <div
                 class="absolute top-0 bottom-0 border-l border-slate-200/80 dark:border-slate-800/80 pointer-events-none"
                 :style="{ left: depth === 0 ? '1.35rem' : `${1.35 + depth * 0.75}rem` }"
@@ -246,11 +309,15 @@ const badgeClass = computed(() => {
                 :is-collapsed="false"
                 :is-mobile="isMobile"
                 :active-route="activeRoute"
+                :color-theme="colorTheme"
+                :item-style="itemStyle"
+                :radius-class="radiusClass"
+                :size="size"
                 @navigate="handleNavigate"
             />
         </div>
 
-        <!-- B. COLLAPSED FLYOUT POPOVER (Desktop Mode Only) -->
+        <!-- B. COLLAPSED FLYOUT POPOVER (Desktop Mode Saja) -->
         <Transition
             enter-active-class="transition duration-150 ease-out"
             enter-from-class="opacity-0 scale-95 -translate-x-1"
@@ -267,7 +334,8 @@ const badgeClass = computed(() => {
                 <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 mb-1 flex items-center gap-2">
                     <span
                         v-if="item.icon"
-                        class="material-symbols-outlined text-base text-blue-600 dark:text-blue-400 select-none"
+                        class="material-symbols-outlined text-base select-none"
+                        :class="colorTheme.iconActive"
                     >
                         {{ item.icon }}
                     </span>
@@ -283,7 +351,7 @@ const badgeClass = computed(() => {
                     </span>
                 </div>
 
-                <!-- Flyout Recursive Sub-items -->
+                <!-- Flyout Sub-items -->
                 <div class="space-y-0.5 max-h-72 overflow-y-auto pr-0.5">
                     <SidebarItem
                         v-for="(child, cIdx) in item.children"
@@ -293,6 +361,10 @@ const badgeClass = computed(() => {
                         :is-collapsed="false"
                         :is-mobile="false"
                         :active-route="activeRoute"
+                        :color-theme="colorTheme"
+                        :item-style="itemStyle"
+                        :radius-class="radiusClass"
+                        :size="size"
                         @navigate="handleNavigate"
                     />
                 </div>
@@ -300,27 +372,31 @@ const badgeClass = computed(() => {
         </Transition>
     </div>
 
-    <!-- 4. LEAF MENU ITEM (LINK / BUTTON) -->
+    <!-- 4. LEAF MENU ITEM (LINK ATAU BUTTON TANPA ANAK) -->
     <div v-else class="relative group">
         <component
             :is="item.href ? Link : 'button'"
             :href="item.href || undefined"
             :type="item.href ? undefined : 'button'"
+            :target="item.target || undefined"
             @click="handleNavigate(item)"
             :title="isCollapsed && !isMobile ? item.label : undefined"
             :class="[
-                'w-full flex items-center gap-2.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer select-none text-left',
+                'w-full flex items-center font-medium transition-all duration-150 cursor-pointer select-none text-left',
+                radiusClass,
+                sizeClass.item,
                 depthPaddingClass,
                 isSelfActive
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 font-semibold'
+                    ? activeItemClasses
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200',
-                isCollapsed && !isMobile ? 'justify-center px-0 h-10 w-10 mx-auto' : '',
+                isCollapsed && !isMobile ? `justify-center px-0 mx-auto ${sizeClass.collapsed}` : '',
             ]"
         >
             <!-- Left Active Indicator Bar (Desktop Expanded) -->
             <span
-                v-if="(!isCollapsed || isMobile) && isSelfActive && depth === 0"
-                class="absolute left-0 top-1.5 bottom-1.5 w-1 bg-blue-600 dark:bg-blue-500 rounded-r-full"
+                v-if="(!isCollapsed || isMobile) && isSelfActive && depth === 0 && itemStyle !== 'solid'"
+                class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full"
+                :class="colorTheme.indicator"
             />
 
             <!-- Icon -->
@@ -328,9 +404,9 @@ const badgeClass = computed(() => {
                 v-if="item.icon"
                 class="material-symbols-outlined shrink-0 select-none transition-colors"
                 :class="[
-                    depth === 0 ? 'text-lg' : 'text-base',
+                    sizeClass.icon,
                     isSelfActive
-                        ? 'text-blue-600 dark:text-blue-400'
+                        ? (itemStyle === 'solid' ? colorTheme.iconSolid : colorTheme.iconActive)
                         : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                 ]"
                 aria-hidden="true"
@@ -338,11 +414,11 @@ const badgeClass = computed(() => {
                 {{ item.icon }}
             </span>
 
-            <!-- Sub-level Dot when no icon is present -->
+            <!-- Sub-level Dot saat tidak ada icon -->
             <span
                 v-else-if="depth > 0 && (!isCollapsed || isMobile)"
                 class="w-1.5 h-1.5 rounded-full shrink-0 select-none transition-all"
-                :class="isSelfActive ? 'bg-blue-600 dark:bg-blue-400 ring-2 ring-blue-200 dark:ring-blue-900' : 'bg-slate-300 dark:bg-slate-600'"
+                :class="isSelfActive ? colorTheme.indicator : 'bg-slate-300 dark:bg-slate-600'"
             />
 
             <!-- Label -->
@@ -353,14 +429,14 @@ const badgeClass = computed(() => {
             <!-- Badge -->
             <span
                 v-if="item.badge && (!isCollapsed || isMobile)"
-                class="text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0 select-none"
-                :class="badgeClass"
+                class="font-bold rounded-md shrink-0 select-none"
+                :class="[sizeClass.badge, badgeClass]"
             >
                 {{ item.badge }}
             </span>
         </component>
 
-        <!-- Hover Tooltip for Collapsed Leaf Items -->
+        <!-- Hover Tooltip saat mode diciutkan -->
         <div
             v-if="isCollapsed && !isMobile"
             class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50 hidden group-hover:flex items-center px-2.5 py-1 text-xs font-semibold text-white bg-slate-900 dark:bg-slate-800 rounded-lg shadow-lg whitespace-nowrap"
@@ -368,11 +444,11 @@ const badgeClass = computed(() => {
             {{ item.label }}
             <span
                 v-if="item.badge"
-                class="ml-1.5 px-1.5 py-0.2 text-[9px] rounded-md bg-blue-600 text-white"
+                class="ml-1.5 px-1.5 py-0.2 text-[9px] rounded-md"
+                :class="badgeClass"
             >
                 {{ item.badge }}
             </span>
         </div>
     </div>
 </template>
-

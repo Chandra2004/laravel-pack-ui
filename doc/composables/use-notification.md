@@ -25,6 +25,8 @@ const notify = useNotification();
 | `notify.warning()` | `(message: string, options?: Object)` | `string` (id) | Menampilkan toast peringatan amber dengan ikon warning |
 | `notify.info()` | `(message: string, options?: Object)` | `string` (id) | Menampilkan toast informasi biru |
 | `notify.neutral()` | `(message: string, options?: Object)` | `string` (id) | Menampilkan toast slate netral |
+| `notify.purple()` | `(message: string, options?: Object)` | `string` (id) | Menampilkan toast ungu premium / brand dengan ikon bintang |
+| `notify.dark()` | `(message: string, options?: Object)` | `string` (id) | Menampilkan toast gelap monochrome / sistem dengan ikon terminal |
 | `notify.promise()` | `(promiseOrFn, messages, options?)` | `Promise<any>` | Otomatis menampilkan status loading $\to$ sukses / galat |
 | `notify.add()` | `(options: Object \| string)` | `string` (id) | Menambahkan notifikasi kustom tingkat lanjut |
 | `notify.update()` | `(id: string, options: Object)` | `Object \| null` | Memperbarui properti toast aktif secara reaktif |
@@ -42,11 +44,18 @@ Objek opsi yang dapat dikirimkan ke `notify.add()` atau method pintas:
 | :--- | :--- | :--- | :--- |
 | `message` | `String` | `''` | Pesan utama notifikasi (**Wajib**) |
 | `title` | `String` | `''` | Judul tebal di atas pesan notifikasi (Opsional) |
-| `type` | `String` | `'info'` | Jenis: `'success'`, `'error'`, `'warning'`, `'info'`, `'neutral'` |
+| `type` | `String` | `'info'` | Jenis: `'success'`, `'error'`, `'warning'`, `'info'`, `'neutral'`, `'purple'`, `'dark'` |
 | `variant` | `String` | `'default'` | Desain kartu: `'default'`, `'soft'`, `'solid'`, `'outline'` |
+| `size` | `String` | `'md'` | Ukuran skala: `'sm'`, `'md'`, `'lg'` |
+| `radius` | `String` | `'2xl'` | Kelengkungan border: `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'full'` |
 | `duration` | `Number` | `4000` | Durasi tampil dalam milidetik (`0` = permanen tanpa auto-close) |
 | `position` | `String` | `'top-right'` | Sudut layar: `'top-right'`, `'top-left'`, `'top-center'`, `'bottom-right'`, `'bottom-left'`, `'bottom-center'` |
-| `icon` | `String` | `null` | Ikon kustom dari Google Material Symbols (misal `'verified'`, `'send'`) |
+| `icon` | `String` | `null` | Ikon kustom dari Google Material Symbols (misal `'auto_awesome'`, `'verified'`) |
+| `iconPosition` | `String` | `'left'` | Penempatan ikon: `'left'` atau `'right'` |
+| `showIcon` | `Boolean` | `true` | Menampilkan atau menyembunyikan kotak ikon |
+| `showTypeLabel` | `Boolean` | `true` | Menampilkan atau menyembunyikan teks label kategori tipe |
+| `showIndicatorBar` | `Boolean` | `true` | Menampilkan atau menyembunyikan garis aksen warna tebal di sisi kiri |
+| `showProgressBar` | `Boolean` | `true` | Menampilkan atau menyembunyikan baris progress countdown |
 | `isSpinning` | `Boolean` | `false` | Menambahkan animasi putar berkesinambungan pada ikon |
 | `dedupe` | `Boolean` | `false` | Jika `true`, pesan & tipe identik tidak akan bertumpuk melainkan mereset durasi |
 | `dismissible` | `Boolean` | `true` | Menampilkan tombol silang `(X)` penutup |

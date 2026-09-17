@@ -1,4 +1,4 @@
-﻿import { ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
 const notifications = ref([]);
@@ -77,7 +77,9 @@ export function useNotification() {
         const item = {
             id,
             type,
-            variant: options.variant || 'default', // 'default', 'soft', 'solid', 'outline'
+            variant: options.variant || undefined, // 'default', 'soft', 'solid', 'outline'
+            size: options.size || undefined, // 'sm', 'md', 'lg'
+            radius: options.radius || undefined, // 'none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'
             title: options.title || '',
             message,
             duration,
@@ -86,6 +88,11 @@ export function useNotification() {
             paused: false,
             position,
             icon: options.icon || null,
+            iconPosition: options.iconPosition || 'left', // 'left' | 'right'
+            showIcon: options.showIcon !== undefined ? options.showIcon : undefined,
+            showTypeLabel: options.showTypeLabel !== undefined ? options.showTypeLabel : undefined,
+            showIndicatorBar: options.showIndicatorBar !== undefined ? options.showIndicatorBar : undefined,
+            showProgressBar: options.showProgressBar !== undefined ? options.showProgressBar : undefined,
             isSpinning: !!options.isSpinning,
             customStyle: options.customStyle || null,
             action: options.action || null, // { label, icon, autoDismiss, onClick }
@@ -119,6 +126,8 @@ export function useNotification() {
     const warning = (message, options = {}) => add({ ...options, type: 'warning', message });
     const info = (message, options = {}) => add({ ...options, type: 'info', message });
     const neutral = (message, options = {}) => add({ ...options, type: 'neutral', message });
+    const purple = (message, options = {}) => add({ ...options, type: 'purple', message });
+    const dark = (message, options = {}) => add({ ...options, type: 'dark', message });
 
     /**
      * Menangani async promise dengan transisi state otomatis:
@@ -218,6 +227,8 @@ export function useNotification() {
         warning,
         info,
         neutral,
+        purple,
+        dark,
         promise,
         initFlashWatcher,
     };

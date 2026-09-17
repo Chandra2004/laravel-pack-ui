@@ -75,17 +75,19 @@ const { can, hasRole, canAny, isSuperAdmin } = usePermission();
 
 | Method / Property | Parameter | Return | Deskripsi |
 | :--- | :--- | :--- | :--- |
-| `can(permission)` | `(permission: string)` | `boolean` | Memeriksa apakah user memiliki 1 izin spesifik. Mendukung wildcard (misal `'users.*'`). |
-| `canAny(permissions)` | `(permissions: string[])` | `boolean` | Mengembalikan `true` jika user memiliki **salah satu** izin dalam array. |
-| `canAll(permissions)` | `(permissions: string[])` | `boolean` | Mengembalikan `true` jika user memiliki **seluruh** izin dalam array. |
-| `hasRole(role)` | `(role: string)` | `boolean` | Memeriksa apakah user memiliki 1 nama role tertentu. |
-| `hasAnyRole(roles)` | `(roles: string[])` | `boolean` | Mengembalikan `true` jika user memiliki **salah satu** role dalam array. |
-| `hasAllRoles(roles)` | `(roles: string[])` | `boolean` | Mengembalikan `true` jika user memiliki **seluruh** role dalam array. |
+| `can(permission)` | `(permission: string)` | `boolean` | Memeriksa apakah user memiliki 1 izin spesifik dengan lookup $O(1)$. Mendukung wildcard (misal `'users.*'` atau `'*'`). |
+| `cannot(permission)` | `(permission: string)` | `boolean` | Kebalikan dari `can(...)`: mengembalikan `true` jika user **tidak** memiliki izin tersebut. |
+| `canAny(permissions)` | `(permissions: string[] \| string)` | `boolean` | Mengembalikan `true` jika user memiliki salah satu izin. Mendukung array `['a', 'b']` atau pipa string `'a\|b'`. |
+| `canAll(permissions)` | `(permissions: string[] \| string)` | `boolean` | Mengembalikan `true` jika user memiliki seluruh izin dalam daftar. Mendukung array atau pipa string. |
+| `cannotAny(permissions)` | `(permissions: string[] \| string)` | `boolean` | Mengembalikan `true` jika user kehilangan minimal salah satu izin (`!canAll(...)`). |
+| `hasRole(role)` | `(role: string)` | `boolean` | Memeriksa apakah user memiliki 1 nama role tertentu ($O(1)$ Set lookup). |
+| `hasAnyRole(roles)` | `(roles: string[] \| string)` | `boolean` | Mengembalikan `true` jika user memiliki salah satu role. Mendukung array atau pipa string. |
+| `hasAllRoles(roles)` | `(roles: string[] \| string)` | `boolean` | Mengembalikan `true` jika user memiliki seluruh role dalam daftar. |
 | `isSuperAdmin` | — | `Computed<boolean>` | Otomatis `true` jika user memiliki role `'super-admin'`, `'superadmin'`, atau `'Super Admin'`. |
 | `user` | — | `Computed<Object>` | Data user aktif dari `page.props.auth.user`. |
 | `roles` | — | `Computed<string[]>` | Daftar nama role yang dimiliki user. |
 | `permissions` | — | `Computed<string[]>` | Daftar nama permission yang dimiliki user. |
-| `mock(data)` | `({ user, roles, permissions })` | `void` | Menyuntikkan simulasi role/permission untuk kebutuhan unit testing atau preview UI tanpa login backend. |
+| `mock(data)` | `({ user, roles, permissions, append })` | `void` | Menyuntikkan simulasi role/permission untuk unit testing atau preview UI tanpa login backend. |
 | `resetMock()` | — | `void` | Mereset state mock kembali ke data autentikasi asli Inertia. |
 
 ---

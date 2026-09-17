@@ -2,158 +2,144 @@
 
 [← Kembali ke Dokumentasi Utama](../../README.md) | [Komponen Table](table.md)
 
+Komponen navigasi paginasi enterprise responsif (*Enterprise Responsive Pagination*) berbasis Vue 3 dan Tailwind CSS yang telah menerapkan **5 Pilar Standar UI (Warna, Bentuk, Teks Konten, Icon, & Responsif)**. Komponen ini dirancang untuk bekerja secara transparan dengan objek `LengthAwarePaginator` dari Laravel (InertiaJS) maupun data array lokal di sisi klien (*client-side*).
+
+Untuk menghindari tampilan yang monoton, komponen menyediakan **5 variasi desain visual**: **`joined`** (*Segmented Toolbar*), **`pills`** (*Floating Rounded*), **`flat`** (*Ghost Minimalist*), **`card`** (*Container Card*), dan **`default`** (*Separated*).
+
 ---
 
-## 4. Pagination Component (`Pagination.vue`)
+## 🏛️ Penerapan 5 Pilar UI (`peraturan.md`)
 
-Komponen navigasi paginasi responsif berbasis **Tailwind CSS** dan ikon **Google Material Symbols**. Komponen ini dirancang untuk bekerja langsung dengan objek `LengthAwarePaginator` dari Laravel (InertiaJS), serta mendukung mode paginasi sisi klien (*client-side*) dan mode ringkas (*simple mode*).
+1. **Warna (`colorTheme`)**:
+   - Mendukung 8 tema warna resmi Pack UI: `'primary'`, `'indigo'`, `'emerald'`, `'purple'`, `'amber'`, `'rose'`, `'cyan'`, dan `'dark'`.
+   - Mengatur warna tombol aktif, ring fokus aksen, efek bayangan lembut (*colored shadow-sm*), dan tombol aksi lompat (*jump*).
+   - Mendukung mode gelap (*dark mode*) dan terang (*light mode*) dengan kontras tinggi sesuai standar WCAG.
 
-### Lokasi File
+2. **Bentuk & Desain Anti-Monoton (`variant`, `radius`, `size`)**:
+   - **`variant`**:
+     - `'joined'`: Tombol bersatu dalam satu *segmented toolbar* dengan garis pemisah (*divider*), gaya modern ala Stripe/GitHub/Linear.
+     - `'pills'`: Tombol berbentuk kapsul/lingkaran bulat penuh (*rounded-full*) melayang modern.
+     - `'flat'`: Tombol minimalis tanpa border luar (*ghost button*), latar belakang halus hanya muncul saat disentuh/aktif.
+     - `'card'`: Komponen dibungkus dalam kontainer kartu (*elevated card*) dengan efek *backdrop blur* dan bayangan elevasi.
+     - `'default'`: Tombol individual terpisah dengan border halus.
+   - **`radius`**: Pilihan kelengkungan sudut (`'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'3xl'`, `'full'`).
+   - **`size`**: Pilihan dimensi ukuran tombol (`'sm'`, `'md'`, `'lg'`).
 
-* **Component**: `Pagination.vue`
+3. **Teks Konten**:
+   - Kustomisasi teks ringkasan informasi data: `showInfo`, `itemName`, serta scoped slot `#info`.
+   - Kustomisasi label tombol navigasi: `prevText`, `nextText`, `firstText`, `lastText`.
+   - Opsi `showButtonText: Boolean` untuk menyembunyikan teks label tombol dan hanya menampilkan ikon (berguna untuk antarmuka padat).
+   - Dropdown pemilih jumlah data per halaman (`showPerPage`, `perPageOptions`).
+   - Input langsung lompat ke nomor halaman (*jump to page*).
+   - Scoped slots: `#info`, `#prev`, `#next`, `#first`, `#last`, `#page`, `#per-page`, `#jump`.
 
-### Fitur Desain & Styling:
-* **Tailwind CSS Utility Classes**: Desain tombol modern (`rounded-xl`, `border border-slate-200 dark:border-slate-700`, `bg-white dark:bg-slate-800`), status aktif (`bg-blue-600 text-white font-bold`), dan status nonaktif (`opacity-60 cursor-not-allowed`).
-* **Google Material Symbols**: Ikon chevron navigasi `chevron_left` dan `chevron_right` yang terpusat dan presisi.
-* **Intelligent Windowing & Ellipsis**: Dihitung melalui `computed(paginationPages)` secara efisien, menyisipkan `...` secara otomatis ketika jumlah halaman banyak.
-* **Dua Mode Operasi**:
-  * **Server-side Mode (Default)**: Menggunakan komponen Inertia `<Link>` dengan atribut `preserve-scroll` dan `preserve-state`.
-  * **Client-side Mode (`client-side: true`)**: Menggunakan elemen `<button>` yang memancarkan event `@change(page)` untuk pemrosesan data lokal di Vue.
-* **Simple Mode**: Opsi menampilkan tombol *Sebelumnya* dan *Selanjutnya* disertai indikator posisi halaman (`Hal. X / Y`) tanpa deretan angka.
-* **Per-Page Selector**: Dropdown pilihan jumlah data per halaman (`showPerPage`, `perPageOptions`, `v-model:perPage`).
-* **Jump to Page**: Input cepat langsung menuju nomor halaman tertentu (`showJump`).
-* **Loading State**: Prop `loading` untuk menonaktifkan seluruh tombol navigasi saat proses asinkron/transisi halaman berlangsung.
+4. **Icon & Navigasi Mendalam**:
+   - Ikon Google Material Symbols: `chevron_left`, `chevron_right`.
+   - Tombol Halaman Pertama (`first_page`) dan Terakhir (`last_page`) melalui prop `showFirstLast`.
+   - Kustomisasi ikon via props: `prevIcon`, `nextIcon`, `firstIcon`, `lastIcon`.
+   - Mikro-animasi sentuh `active:scale-95` dan transisi warna halus.
 
-### Component Props API (`<Pagination />`)
+5. **Responsif**:
+   - Tata letak otomatis menyesuaikan ruang: vertikal berurutan pada layar smartphone (`flex-col sm:flex-row`).
+   - *Intelligent Windowing*: Paginasi menyesuaikan batas rentang angka halaman agar tidak terjadi luapan horizontal (*overflow*) pada perangkat seluler.
+   - Target area sentuhan (*touch target*) yang ramah jari dengan dimensi terstandarisasi.
+
+---
+
+## ⚙️ Component Props API (`<Pagination />`)
 
 | Prop | Tipe Data | Default | Deskripsi / Pilihan Nilai |
 | :--- | :--- | :--- | :--- |
-| `data` | `Object` | `() => ({})` | Objek pagination (struktur Laravel Paginator seperti `current_page`, `last_page`, `from`, `to`, `total`, dll.) |
-| `itemName` | `String` | `'Data'` | Label nama entitas data pada teks ringkasan (contoh: `'transaksi'`, `'pengguna'`) |
+| `data` | `Object` | `() => ({})` | Objek paginator Laravel (`current_page`, `last_page`, `from`, `to`, `total`, `prev_page_url`, dll.) |
+| `colorTheme` | `String` | `'primary'` | Tema warna: `'primary'`, `'indigo'`, `'emerald'`, `'purple'`, `'amber'`, `'rose'`, `'cyan'`, `'dark'` |
+| `variant` | `String` | `'default'` | Gaya visual: `'default'`, `'joined'`, `'pills'`, `'flat'`, `'card'` |
+| `radius` | `String` | `'xl'` | Kelengkungan sudut: `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'3xl'`, `'full'` |
+| `size` | `String` | `'md'` | Ukuran tombol: `'sm'`, `'md'`, `'lg'` |
+| `itemName` | `String` | `'Data'` | Label entitas data (contoh: `'transaksi'`, `'pengguna'`, `'invoice'`) |
 | `showInfo` | `Boolean` | `true` | Menampilkan atau menyembunyikan teks ringkasan "Menampilkan x-y dari z Data" |
-| `simple` | `Boolean` | `false` | Menampilkan tombol Sebelumnya, Selanjutnya, dan indikator `Hal. X / Y` (*Simple Pagination*) |
-| `clientSide` | `Boolean` | `false` | Mengaktifkan mode interaksi lokal berbasis tombol `<button>` dan event `@change` alih-alih navigasi `<Link>` Inertia |
-| `path` | `String` | `''` | Prefix URL kustom untuk link halaman |
-| `preserveScroll`| `Boolean` | `true` | Mempertahankan posisi scroll saat berpindah halaman (Inertia Link) |
-| `preserveState` | `Boolean` | `true` | Mempertahankan state komponen saat berpindah halaman (Inertia Link) |
-| `loading` | `Boolean` | `false` | Menonaktifkan interaksi klik pada tombol paginasi saat proses pemuatan berlangsung |
-| `showPerPage` | `Boolean` | `false` | Menampilkan dropdown pemilih jumlah data per halaman |
+| `simple` | `Boolean` | `false` | Mode ringkas (hanya tombol Sebelumnya / Selanjutnya dan indikator `Hal. X / Y`) |
+| `clientSide` | `Boolean` | `false` | Mode interaksi lokal Vue (menggunakan elemen `<button>` & emit `@change`) |
+| `showFirstLast` | `Boolean` | `false` | Menampilkan tombol pintas Halaman Pertama dan Halaman Terakhir |
+| `showButtonText` | `Boolean` | `true` | Menampilkan teks label di samping ikon pada tombol navigasi |
+| `prevText` | `String` | `'Sebelumnya'` | Teks tombol Sebelumnya |
+| `nextText` | `String` | `'Selanjutnya'` | Teks tombol Selanjutnya |
+| `firstText` | `String` | `'Awal'` | Teks tombol Halaman Pertama |
+| `lastText` | `String` | `'Akhir'` | Teks tombol Halaman Terakhir |
+| `prevIcon` | `String` | `'chevron_left'` | Ikon Material Symbols tombol Sebelumnya |
+| `nextIcon` | `String` | `'chevron_right'` | Ikon Material Symbols tombol Selanjutnya |
+| `firstIcon` | `String` | `'first_page'` | Ikon Material Symbols tombol Pertama |
+| `lastIcon` | `String` | `'last_page'` | Ikon Material Symbols tombol Terakhir |
+| `showPerPage` | `Boolean` | `false` | Menampilkan dropdown pilihan jumlah baris data per halaman |
 | `perPage` | `Number` | `10` | Nilai data per halaman aktif (mendukung `v-model:perPage`) |
-| `perPageOptions`| `Array` | `[10, 25, 50, 100]`| Pilihan jumlah data pada dropdown `showPerPage` |
-| `showJump` | `Boolean` | `false` | Menampilkan input untuk lompat langsung ke nomor halaman tertentu |
+| `perPageOptions` | `Array` | `[10, 25, 50, 100]` | Pilihan jumlah data pada dropdown `showPerPage` |
+| `showJump` | `Boolean` | `false` | Menampilkan input lompat ke halaman tertentu |
+| `align` | `String` | `'between'` | Perataan kontainer: `'between'`, `'center'`, `'start'`, `'end'` |
+| `loading` | `Boolean` | `false` | Menonaktifkan klik seluruh tombol saat transisi/fetching data |
+| `path` | `String` | `''` | Prefix URL kustom untuk link Inertia |
+| `preserveScroll` | `Boolean` | `true` | Mempertahankan posisi scroll halaman saat navigasi |
+| `preserveState` | `Boolean` | `true` | Mempertahankan state komponen saat navigasi |
 
-### Events API (`<Pagination />`)
+---
+
+## 📢 Events API (`<Pagination />`)
 
 | Event Name | Parameter | Deskripsi |
 | :--- | :--- | :--- |
-| `@change` | `page: Number` | Dipancarkan saat user berpindah halaman via tombol nomor, panah, atau jump input |
-| `@update:perPage` | `value: Number` | Dipancarkan saat user mengubah dropdown per halaman (`v-model:perPage`) |
-| `@per-page-change`| `value: Number` | Dipancarkan saat user memilih opsi jumlah data per halaman |
+| `@change` | `page: Number` | Dipancarkan saat pengguna mengklik halaman, panah, atau jump input |
+| `@update:perPage` | `value: Number` | Dipancarkan saat pengguna mengubah dropdown per halaman (`v-model:perPage`) |
+| `@per-page-change` | `value: Number` | Dipancarkan saat user memilih opsi jumlah data per halaman |
 
-### Struktur Data Paginator Laravel
-Objek `data` yang dikirim dari controller Laravel melalui `LengthAwarePaginator` (contoh: `User::paginate(10)`):
+---
 
-```json
-{
-  "current_page": 2,
-  "last_page": 10,
-  "from": 11,
-  "to": 20,
-  "total": 100,
-  "prev_page_url": "https://example.com/users?page=1",
-  "next_page_url": "https://example.com/users?page=3",
-  "links": [...]
-}
-```
+## 🧩 Scoped Slots
 
-### Contoh Penggunaan Pagination
+| Slot Name | Props Tersedia | Deskripsi |
+| :--- | :--- | :--- |
+| `#info` | `{ from, to, total, itemName, currentPage, lastPage }` | Kustomisasi template teks ringkasan halaman |
+| `#per-page` | `{ perPage, options, loading }` | Kustomisasi elemen pemilih baris per halaman |
+| `#jump` | `{ currentPage, lastPage, handleJump }` | Kustomisasi input lompat nomor halaman |
 
-#### 1. Server-side Inertia Pagination di dalam TableComponent
+---
+
+## 🚀 Contoh Penggunaan
+
+### 1. Gaya Joined / Segmented Toolbar (Stripe / GitHub Dashboard Style)
 ```vue
 <script setup>
-import TableComponent from '@/Components/Pack/TableComponent.vue';
+import { ref } from 'vue';
 import Pagination from '@/Components/Pack/Pagination.vue';
 
-// Props yang diterima dari Controller Laravel Inertia
 defineProps({
-  users: Object, // Laravel LengthAwarePaginator
+  transactions: Object, // Laravel LengthAwarePaginator
 });
 </script>
 
 <template>
-  <TableComponent :items="users.data">
-    <template #headers>
-      <th>Nama</th>
-      <th>Email</th>
-      <th>Role</th>
-    </template>
-
-    <template #row="{ item }">
-      <td>{{ item.name }}</td>
-      <td>{{ item.email }}</td>
-      <td>{{ item.role }}</td>
-    </template>
-
-    <!-- Paginasi di Footer Tabel -->
-    <template #footer>
-      <Pagination :data="users" item-name="pengguna" />
-    </template>
-  </TableComponent>
-</template>
-```
-
-#### 2. Client-side Pagination (Data Lokal / Filter Frontend)
-```vue
-<script setup>
-import { ref, computed } from 'vue';
-import Pagination from '@/Components/Pack/Pagination.vue';
-
-const currentPage = ref(1);
-const allItems = ref([...]); // 50 items
-const perPage = 10;
-
-const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * perPage;
-  return allItems.value.slice(start, start + perPage);
-});
-
-const paginatorData = computed(() => ({
-  current_page: currentPage.value,
-  last_page: Math.ceil(allItems.value.length / perPage),
-  from: (currentPage.value - 1) * perPage + 1,
-  to: Math.min(currentPage.value * perPage, allItems.value.length),
-  total: allItems.value.length,
-}));
-</script>
-
-<template>
-  <div>
-    <!-- Render paginatedItems di sini -->
-
-    <!-- Pagination Client-side -->
-    <Pagination
-      :data="paginatorData"
-      item-name="transaksi"
-      client-side
-      @change="(page) => currentPage = page"
-    />
-  </div>
-</template>
-```
-
-#### 3. Simple Pagination (Mode Ringkas)
-```vue
-<template>
-  <!-- Hanya tombol Sebelumnya / Selanjutnya -->
   <Pagination
     :data="transactions"
     item-name="transaksi"
-    simple
+    variant="joined"
+    color-theme="indigo"
+    radius="xl"
   />
 </template>
 ```
 
-#### 4. Pagination Lanjutan (Per-Page Selector & Jump to Page)
+### 2. Gaya Pills (Floating Round Modern)
+```vue
+<template>
+  <Pagination
+    :data="orders"
+    item-name="pesanan"
+    variant="pills"
+    color-theme="emerald"
+    client-side
+    @change="(p) => fetchPage(p)"
+  />
+</template>
+```
+
+### 3. Fitur Lengkap Enterprise (First/Last, Per-Page, & Jump)
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -161,14 +147,14 @@ import { router } from '@inertiajs/vue3';
 import Pagination from '@/Components/Pack/Pagination.vue';
 
 defineProps({
-  settlements: Object, // Laravel LengthAwarePaginator
+  settlements: Object,
 });
 
-const currentPerPage = ref(25);
+const perPage = ref(25);
 
-const handlePerPageChange = (newPerPage) => {
-  currentPerPage.value = newPerPage;
-  router.get(route('settlements.index'), { per_page: newPerPage }, {
+const handlePerPageChange = (val) => {
+  perPage.value = val;
+  router.get(route('settlements.index'), { per_page: val }, {
     preserveState: true,
     preserveScroll: true,
   });
@@ -176,12 +162,14 @@ const handlePerPageChange = (newPerPage) => {
 </script>
 
 <template>
-  <!-- Paginasi lengkap dengan pemilih per halaman & lompat langsung ke nomor halaman -->
   <Pagination
     :data="settlements"
     item-name="penyelesaian dana"
+    variant="card"
+    color-theme="primary"
+    show-first-last
     show-per-page
-    :per-page="currentPerPage"
+    :per-page="perPage"
     :per-page-options="[10, 25, 50, 100]"
     show-jump
     @update:per-page="handlePerPageChange"
@@ -189,4 +177,14 @@ const handlePerPageChange = (newPerPage) => {
 </template>
 ```
 
----
+### 4. Mode Ringkas (Simple Pagination)
+```vue
+<template>
+  <Pagination
+    :data="invoices"
+    item-name="faktur"
+    simple
+    color-theme="amber"
+  />
+</template>
+```

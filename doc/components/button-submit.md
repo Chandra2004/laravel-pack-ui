@@ -2,138 +2,206 @@
 
 [← Kembali ke Dokumentasi Utama](../../README.md)
 
+Komponen tombol aksi universal dan polimorfik bertenaga **Tailwind CSS** dan ikon **Google Material Symbols**. Dapat bertindak sebagai tombol form standar (`button`), navigasi Inertia (`<Link>`), maupun tag tautan (`<a>`), serta kini dilengkapi model interaktif kaya media sosial: **YouTube Segmented Like/Dislike**, **YouTube Subscribe dengan Lonceng Notifikasi**, **Instagram Heart Like dengan Animasi Pop**, **Instagram Follow/Following**, **Vibrant Gradient**, dan **Ambient Glow Aura** sesuai panduan **5 Pilar UI (`peraturan.md`)**.
+
 ---
 
-## 7. ButtonSubmit Component (`ButtonSubmit.vue`)
+## 🏛️ Evaluasi & Penerapan 5 Pilar Desain (`peraturan.md`)
 
-Komponen tombol aksi universal dan polimorfik berbasis **Tailwind CSS** dan ikon **Google Material Symbols**. Dapat bertindak sebagai elemen `<button>`, navigasi Inertia `<Link>`, maupun tag tautan `<a>`, dengan dukungan terintegrasi untuk *loading spinner*, varian warna lengkap, skala ukuran fleksibel, dan mikro-interaksi responsif.
+| Pilar Desain | Penerapan pada Komponen `ButtonSubmit` |
+| :--- | :--- |
+| **1. Warna** | 9 preset palet tema (`colorTheme`: `default`, `primary`, `indigo`, `emerald`, `purple`, `amber`, `rose`, `cyan`, `dark`), efek pendaran ambient `glow`, varian gradien dinamis (`gradient`), efek frosted glass (`glass`), serta varian resmi brand (`youtube`, `instagram`). Seluruh varian soft pastel (`soft-primary`, `soft-danger`, dll.) tetap didukung penuh. |
+| **2. Bentuk** | Kapsul segmented (`model="split-like"` ala YouTube), kontrol kelengkungan sudut (`rounded`: `none`, `sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `full`), dan *shorthand* `pill` untuk bentuk kapsul membulat sempurna. |
+| **3. Teks Konten** | Transisi teks dinamis sesuai status (`label` $\to$ `activeLabel`, misal: *"Follow"* $\to$ *"Following"* atau *"Subscribe"* $\to$ *"Subscribed"*), format kalkulasi counter otomatis (`count` / `displayCount`: misal `1420` $\to$ `"1.4k"` atau `+1` saat di-like), serta pencegahan teks patah dengan `truncate`. |
+| **4. Icon** | Ikon Google Material Symbols terintegrasi dengan dukungan status terisi (*filled icon* via `font-variation-settings: 'FILL' 1`), animasi mikro mekar kursor (*heart pop bounce*) pada like Instagram, dan getaran lonceng (*bell shake ring*) pada subscribe YouTube. |
+| **5. Responsif** | *Mobile-first touch target* minimum 38px/44px, efek kompresi sentuh interaktif (`active:scale-95`), serta dukungan penuh lebar kontainer (`fullWidth`). |
 
-### Lokasi File
+---
 
-* **Component**: `ButtonSubmit.vue`
+## 🚀 Model Khusus Media Sosial ("Engagement Models")
 
-### Fitur Desain & Styling:
-* **Murni Tailwind CSS**: Desain tombol modern dengan status fokus aksesibel (`focus-visible:ring-2`), efek klik halus (`active:scale-98`), dan transisi warna cepat.
-* **Polimorfik Tag (`as`) dengan Safe Fallback**: Secara dinamis merender tag `<button>`, komponen Inertia `<Link>`, atau tautan `<a>`. Jika `as="Link"` atau `as="a"` dipakai tanpa `href`, otomatis fallback ke tombol `<button>` disertai peringatan dev console.
-* **Inert Disabled Link**: Menghapus atribut `href` dan memblokir event navigasi saat tombol dalam kondisi `disabled` atau `loading`, mencegah navigasi tak sengaja melalui tombol keyboard Enter pada tag `<a>` / `<Link>`.
-* **WCAG AAA Contrast Warning Variant**: Varian `warning` menggunakan warna teks kontras tinggi `text-slate-950` di atas `bg-amber-500` (rasio kontras > 10:1, lolos uji WCAG AAA).
-* **Ekspansi Varian Soft Pastel**: Mendukung varian lembut untuk berbagai status: `soft` / `soft-primary`, `soft-danger`, `soft-success`, `soft-warning`, dan `soft-secondary`.
-* **Kontrol Radius Fleksibel & Pill Mode**: Mendukung kustomisasi kelengkungan sudut melalui prop `rounded` (`none`, `sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `full`) atau shorthand prop `pill` untuk bentuk kapsul penuh.
-* **Konsistensi State `active:`**: Seluruh varian memiliki penegasan warna status aktif (*active background tone*) saat ditekan.
-* **Google Material Symbols**: Terintegrasi langsung dengan ikon Google (`material-symbols-outlined`), mendukung penempatan di sebelah kiri (`icon-position="left"`), kanan (`icon-position="right"`), atau ikon saja (`size="icon"`).
-* **State Loading Interaktif**: Menampilkan animasi spinner `progress_activity` secara otomatis saat `loading: true`, sekaligus menonaktifkan interaksi klik ganda (*prevent double submit*).
+1. **`model="split-like"` (YouTube Style Segmented Like & Dislike Pill)**:
+   Tombol kapsul terintegrasi yang membagi aksi Suka (*thumbs up* + angka like reaktif) dan Tidak Suka (*thumbs down*) dengan garis pemisah tipis di tengah. Jika status dislike ditekan saat like aktif, like otomatis dinonaktifkan dan sebaliknya.
+2. **`model="subscribe"` (YouTube Style Subscribe Button)**:
+   Tombol tebal tegas (*bold dark/red*) saat belum berlangganan, bertransformasi menjadi kapsul abu-abu lembut bertuliskan *"Subscribed"* dengan ikon lonceng notifikasi interaktif yang bergetar saat diklik.
+3. **`model="like"` (Instagram Style Heart Like Button)**:
+   Ikon hati dengan mikro-animasi mekar (*heart pop bounce*) saat diaktifkan, warna berubah menjadi merah/rose pendaran penuh, dan counter like otomatis bertambah 1 angka.
+4. **`model="follow"` (Instagram Style Follow Button)**:
+   Tombol biru terang *"Follow"* yang bertransisi menjadi tombol abu-abu berbingkai halus *"Following"* saat pengguna mulai mengikuti.
+5. **`model="bookmark"` (Instagram/TikTok Style Save Button)**:
+   Tombol simpan postingan dengan ikon pita pembatas buku yang otomatis terisi penuh (*filled*) saat disimpan.
 
-### Component Props API (`<ButtonSubmit />`)
+---
+
+## 📋 Component Props API (`<ButtonSubmit />`)
 
 | Prop | Tipe Data | Default | Deskripsi / Pilihan Nilai |
 | :--- | :--- | :--- | :--- |
+| `model` | `String` | `'default'` | Model interaksi tombol: `'default'`, `'like'`, `'subscribe'`, `'follow'`, `'split-like'`, `'bookmark'` |
+| `variant` | `String` | `'primary'` | Gaya visual: `'primary'`, `'secondary'`, `'danger'`, `'success'`, `'warning'`, `'outline'`, `'ghost'`, `'soft'`, `'soft-danger'`, `'soft-success'`, `'soft-warning'`, `'soft-secondary'`, `'gradient'`, `'glass'`, `'youtube'`, `'instagram'` |
+| `colorTheme` | `String` | `'default'` | Palet tema: `'default'`, `'primary'`, `'indigo'`, `'emerald'`, `'purple'`, `'amber'`, `'rose'`, `'cyan'`, `'dark'` |
+| `glow` | `Boolean` | `false` | Memberikan bayangan pendaran berwarna (*ambient glowing aura*) sesuai tema |
+| `social` | `String` | `'none'` | Preset gaya sosial: `'none'`, `'youtube'`, `'instagram'` |
+| `active` | `Boolean` | `false` | Status aktif/toggled (mendukung `v-model:active`) |
+| `activeLabel` | `String` | `''` | Label teks saat status aktif (contoh: `'Subscribed'`, `'Following'`) |
+| `activeIcon` | `String` | `''` | Ikon khusus saat status aktif (contoh: `'notifications_active'`, `'check'`) |
+| `count` | `Number\|String` | `null` | Angka counter (otomatis bertambah +1 saat di-like) |
+| `showCount` | `Boolean` | `true` | Menampilkan indikator angka di dalam tombol |
+| `disliked` | `Boolean` | `false` | Status dislike pada `model="split-like"` (mendukung `v-model:disliked`) |
 | `as` | `String` | `'button'` | Tag elemen yang dirender: `'button'`, `'Link'` (Inertia), `'a'` (HTML link) |
 | `href` | `String` | `null` | URL tujuan jika prop `as` bernilai `'Link'` atau `'a'` |
 | `type` | `String` | `'submit'` | Atribut tipe tombol HTML: `'submit'`, `'button'`, `'reset'` |
-| `variant` | `String` | `'primary'` | Varian warna: `'primary'`, `'secondary'`, `'danger'`, `'success'`, `'warning'`, `'outline'`, `'ghost'`, `'soft'`, `'soft-danger'`, `'soft-success'`, `'soft-warning'`, `'soft-secondary'` |
 | `size` | `String` | `'md'` | Skala ukuran tombol: `'xs'`, `'sm'`, `'md'`, `'lg'`, `'icon'` |
 | `rounded` | `String` | `'default'` | Radius sudut: `'default'`, `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'3xl'`, `'full'` |
 | `pill` | `Boolean` | `false` | Pintasan bentuk kapsul bulat penuh (*shorthand* untuk `rounded="full"`) |
 | `loading` | `Boolean` | `false` | Menampilkan spinner loading dan mengunci interaksi tombol |
 | `disabled` | `Boolean` | `false` | Menonaktifkan tombol secara visual dan fungsional |
 | `loadingText` | `String` | `''` | Teks alternatif yang ditampilkan saat state loading aktif |
-| `icon` | `String` | `''` | Nama Google Material Icon (contoh: `'add'`, `'download'`, `'send'`) |
+| `icon` | `String` | `''` | Nama Google Material Symbols (contoh: `'send'`, `'download'`, `'favorite'`) |
 | `iconPosition` | `String` | `'left'` | Posisi ikon terhadap teks: `'left'`, `'right'` |
 | `fullWidth` | `Boolean` | `false` | Membuat tombol melebar 100% kontainer (`w-full`) |
 | `preserveScroll`| `Boolean` | `true` | Mempertahankan posisi scroll saat `as="Link"` |
 | `preserveState` | `Boolean` | `true` | Mempertahankan state komponen saat `as="Link"` |
 
-### Slots API (`<ButtonSubmit />`)
+---
 
-| Slot Name | Deskripsi |
-| :--- | :--- |
-| `default` | Konten teks atau elemen label di dalam tombol |
+## 🔔 Events API (`<ButtonSubmit />`)
 
-### Contoh Penggunaan ButtonSubmit
+| Event Name | Parameter | Deskripsi |
+| :--- | :--- | :--- |
+| `@click` | `event: MouseEvent` | Dipancarkan saat tombol diklik |
+| `@update:active` | `val: Boolean` | Sinkronisasi dua arah `v-model:active` |
+| `@toggle` | `val: Boolean` | Dipancarkan saat status tombol berganti aktif/non-aktif |
+| `@like` | `val: Boolean` | Dipancarkan saat tombol Like atau sisi Like pada Split-Like diklik |
+| `@dislike` | `val: Boolean` | Dipancarkan saat sisi Dislike pada Split-Like diklik |
+| `@update:disliked`| `val: Boolean` | Sinkronisasi dua arah `v-model:disliked` |
+| `@subscribe` | `val: Boolean` | Dipancarkan saat tombol Subscribe diklik |
 
-#### 1. Tombol Submit Form dengan Loading State
+---
+
+## 💡 Ragam Contoh Penggunaan
+
+### 1. YouTube Segmented Like & Dislike Pill
 ```vue
 <script setup>
-import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
 
-const form = useForm({ email: '', password: '' });
-
-const submit = () => {
-  form.post('/login');
-};
+const isLiked = ref(false);
+const isDisliked = ref(false);
+const totalLikes = ref(1420);
 </script>
 
 <template>
-  <form @submit.prevent="submit">
-    <!-- Form Inputs... -->
-
-    <ButtonSubmit
-      type="submit"
-      variant="primary"
-      size="md"
-      :loading="form.processing"
-      loading-text="Memverifikasi..."
-      full-width
-    >
-      Masuk ke Akun
-    </ButtonSubmit>
-  </form>
-</template>
-```
-
-#### 2. Tombol Navigasi Inertia Link (`as="Link"`)
-```vue
-<template>
-  <!-- Berperilaku sebagai Inertia Link dengan tampilan tombol -->
   <ButtonSubmit
-    as="Link"
-    href="/dashboard/products/create"
-    variant="primary"
-    icon="add"
-    icon-position="left"
-    size="sm"
-  >
-    Tambah Produk Baru
-  </ButtonSubmit>
-</template>
-```
-
-#### 3. Tombol Ikon Saja & Tombol Bahaya (Danger Variant)
-```vue
-<template>
-  <!-- Tombol Khusus Ikon -->
-  <ButtonSubmit
-    size="icon"
-    variant="ghost"
-    icon="delete"
-    class="text-rose-500 hover:text-rose-600"
-    title="Hapus Baris Data"
-    @click="deleteItem"
+    model="split-like"
+    v-model:active="isLiked"
+    v-model:disliked="isDisliked"
+    :count="totalLikes"
+    glow
+    color-theme="primary"
   />
+</template>
+```
 
-  <!-- Tombol Bahaya dengan Teks -->
+### 2. YouTube Subscribe Button dengan Lonceng Notifikasi
+```vue
+<script setup>
+import { ref } from 'vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+
+const isSubscribed = ref(false);
+</script>
+
+<template>
   <ButtonSubmit
-    variant="danger"
-    icon="delete_forever"
-    size="sm"
-    @click="confirmDelete"
+    model="subscribe"
+    v-model:active="isSubscribed"
+    :count="24800"
+    social="youtube"
+    @subscribe="(val) => console.log('Subscribed:', val)"
+  />
+</template>
+```
+
+### 3. Instagram Heart Like Pop Button dengan Counter
+```vue
+<script setup>
+import { ref } from 'vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+
+const isLiked = ref(false);
+</script>
+
+<template>
+  <ButtonSubmit
+    model="like"
+    social="instagram"
+    v-model:active="isLiked"
+    :count="3840"
+    glow
+    color-theme="rose"
+    pill
   >
-    Hapus Akun
+    Like
   </ButtonSubmit>
 </template>
 ```
 
-#### 4. Varian Soft Pastel & Mode Pill (Bentuk Kapsul)
+### 4. Instagram Follow / Following Button
+```vue
+<script setup>
+import { ref } from 'vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+
+const isFollowing = ref(false);
+</script>
+
+<template>
+  <ButtonSubmit
+    model="follow"
+    v-model:active="isFollowing"
+    size="sm"
+  />
+</template>
+```
+
+### 5. Tombol Form Standar dengan Loading State & Ikon
+```vue
+<script setup>
+import { ref } from 'vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+
+const isLoading = ref(false);
+</script>
+
+<template>
+  <ButtonSubmit
+    type="submit"
+    variant="primary"
+    icon="save"
+    :loading="isLoading"
+    loading-text="Menyimpan Data..."
+    glow
+  >
+    Simpan Perubahan
+  </ButtonSubmit>
+</template>
+```
+
+### 6. Vibrant Gradient & Ambient Glow Button
 ```vue
 <template>
-  <div class="flex flex-wrap gap-2">
-    <ButtonSubmit variant="soft-primary" pill icon="check">Selesai</ButtonSubmit>
-    <ButtonSubmit variant="soft-danger" pill icon="close">Tolak</ButtonSubmit>
-    <ButtonSubmit variant="soft-warning" pill icon="schedule">Tertunda</ButtonSubmit>
-    <ButtonSubmit variant="soft-success" pill icon="verified">Terverifikasi</ButtonSubmit>
+  <div class="flex gap-3">
+    <ButtonSubmit variant="gradient" color-theme="purple" glow icon="auto_awesome">
+      Purple Magic
+    </ButtonSubmit>
+    <ButtonSubmit variant="gradient" color-theme="emerald" glow icon="savings">
+      Emerald Mint
+    </ButtonSubmit>
+    <ButtonSubmit variant="instagram" icon="camera_alt">
+      Instagram Gradient
+    </ButtonSubmit>
   </div>
 </template>
 ```
-
----

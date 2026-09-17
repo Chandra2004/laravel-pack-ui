@@ -26,10 +26,11 @@ class PackUiServiceProvider extends ServiceProvider
                 InstallPackCommand::class,
             ]);
 
-            // Mendaftarkan Tag Publish untuk Komponen dan Composables
+            // Mendaftarkan Tag Publish untuk Komponen, Composables, dan Layouts
             $this->publishes([
                 __DIR__ . '/../resources/js/Components/Pack' => resource_path('js/Components/Pack'),
                 __DIR__ . '/../resources/js/Composables/Pack' => resource_path('js/Composables/Pack'),
+                __DIR__ . '/../resources/js/Layouts' => resource_path('js/Layouts'),
             ], 'pack-ui');
 
             // Tag terpisah jika pengguna hanya ingin publish komponen
@@ -41,6 +42,11 @@ class PackUiServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../resources/js/Composables/Pack' => resource_path('js/Composables/Pack'),
             ], 'pack-ui-composables');
+
+            // Tag terpisah jika pengguna hanya ingin publish layout
+            $this->publishes([
+                __DIR__ . '/../resources/js/Layouts' => resource_path('js/Layouts'),
+            ], 'pack-ui-layouts');
         }
     }
 }

@@ -12,6 +12,8 @@ import InputRange from './Input/InputRange.vue';
 import InputDatePicker from './Input/InputDatePicker.vue';
 import InputOtp from './Input/InputOtp.vue';
 import InputMask from './Input/InputMask.vue';
+import InputLocation from './Input/InputLocation.vue';
+import InputTag from './Input/InputTag.vue';
 
 const props = defineProps({
     label: {
@@ -24,7 +26,7 @@ const props = defineProps({
         // 'text', 'email', 'password', 'number', 'tel', 'url', 'search',
         // 'date', 'time', 'datetime-local', 'month', 'week', 'currency',
         // 'textarea', 'select', 'checkbox', 'radio', 'switch', 'file', 'color', 'range',
-        // 'otp', 'mask'
+        // 'otp', 'mask', 'location', 'tag', 'tags'
     },
     name: {
         type: String,
@@ -245,10 +247,59 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    // Tag Props
+    allowCustom: {
+        type: Boolean,
+        default: true,
+    },
+    separatorKeys: {
+        type: Array,
+        default: () => ['Tab', 'Enter', ','],
+    },
+    allowDuplicates: {
+        type: Boolean,
+        default: false,
+    },
+    maxTags: {
+        type: Number,
+        default: null,
+    },
+    tagVariant: {
+        type: String,
+        default: 'default',
+    },
+    pasteSeparators: {
+        type: [RegExp, String],
+        default: () => /[,;\n\t]+/,
+    },
+    addOnBlur: {
+        type: Boolean,
+        default: true,
+    },
+    removeOnBackspace: {
+        type: Boolean,
+        default: true,
+    },
+    lowercase: {
+        type: Boolean,
+        default: false,
+    },
+    tagStyle: {
+        type: String,
+        default: 'soft',
+    },
+    tagIcon: {
+        type: String,
+        default: '',
+    },
+    radius: {
+        type: String,
+        default: 'xl',
+    },
 });
 
 const model = defineModel();
-defineEmits(['change', 'blur', 'focus', 'clear', 'error', 'cancel-upload', 'validate', 'complete', 'resend']);
+defineEmits(['change', 'blur', 'focus', 'clear', 'error', 'cancel-upload', 'validate', 'complete', 'resend', 'tag-add', 'tag-remove', 'max-reached']);
 
 // SSR Hydration-safe Unique ID generator (Vue 3.5+)
 const generatedId = useId();
@@ -532,6 +583,58 @@ defineExpose({
             @change="$emit('change', $event)"
             @error="$emit('error', $event)"
             @cancel-upload="$emit('cancel-upload')"
+        />
+
+        <!-- Location Picker (Leaflet + OpenStreetMap & GPS) -->
+        <InputLocation
+            v-else-if="type === 'location'"
+            ref="controlRef"
+            :id="inputId"
+            v-model="model"
+            :name="name"
+            :placeholder="placeholder"
+            :required="required"
+            :disabled="disabled"
+            :readonly="readonly"
+            :error="error"
+            @change="$emit('change', $event)"
+        />
+
+        <!-- Tag / Tags Input (Random & Preset Options) -->
+        <InputTag
+            v-else-if="['tag', 'tags'].includes(type)"
+            ref="controlRef"
+            :id="inputId"
+            v-model="model"
+            :name="name"
+            :options="options"
+            :allow-custom="allowCustom"
+            :separator-keys="separatorKeys"
+            :allow-duplicates="allowDuplicates"
+            :max-tags="maxTags"
+            :tag-variant="tagVariant"
+            :tag-style="tagStyle"
+            :tag-icon="tagIcon"
+            :icon="icon"
+            :radius="radius"
+            :paste-separators="pasteSeparators"
+            :add-on-blur="addOnBlur"
+            :remove-on-backspace="removeOnBackspace"
+            :lowercase="lowercase"
+            :placeholder="placeholder"
+            :required="required"
+            :disabled="disabled"
+            :readonly="readonly"
+            :clearable="clearable"
+            :size="size"
+            :error="error"
+            @change="$emit('change', $event)"
+            @blur="$emit('blur', $event)"
+            @focus="$emit('focus', $event)"
+            @clear="$emit('clear')"
+            @tag-add="$emit('tag-add', $event)"
+            @tag-remove="$emit('tag-remove', $event)"
+            @max-reached="$emit('max-reached', $event)"
         />
 
         <!-- Date, Time & Datetime-Local Picker (PrimeVue Custom Popover) -->

@@ -17,6 +17,7 @@ import { router } from '@inertiajs/vue3';
  * @param {boolean} [options.preserveScroll] - Pertahankan posisi scroll window (default: true)
  * @param {boolean} [options.replace] - Ganti history state browser tanpa menambah riwayat baru (default: true)
  * @param {Array<string>} [options.only] - Partial reload prop Inertia tertentu
+ * @param {boolean} [options.mock] - Mode simulasi/mock query sync tanpa memicu HTTP request Inertia (default: false)
  * @param {Function} [options.onStart] - Callback saat request dimulai
  * @param {Function} [options.onFinish] - Callback saat request selesai
  */
@@ -32,6 +33,7 @@ export function useServerTable(options = {}) {
         preserveScroll = true,
         replace = true,
         only = [],
+        mock = false,
         onStart = null,
         onFinish = null,
     } = options;
@@ -134,6 +136,20 @@ export function useServerTable(options = {}) {
 
         isLoading.value = true;
         if (typeof onStart === 'function') onStart();
+
+        if (mock) {
+            if (typeof window !== 'undefined') {
+                const searchParams = new URLSearchParams(data);
+                const queryString = searchParams.toString();
+                const newUrl = `${url}${queryString ? '?' + queryString : ''}`;
+                window.history.replaceState(null, '', newUrl);
+            }
+            setTimeout(() => {
+                isLoading.value = false;
+                if (typeof onFinish === 'function') onFinish();
+            }, 250);
+            return;
+        }
 
         router.get(url, data, {
             preserveState,

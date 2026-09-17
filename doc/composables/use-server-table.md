@@ -53,6 +53,7 @@ const {
 | `preserveScroll` | `Boolean` | `true` | Mencegah window melompat ke atas (*scroll jump*) saat data tabel diperbarui. |
 | `replace` | `Boolean` | `true` | Mengganti (*replace*) history state browser agar tidak menumpuk riwayat URL saat mencari. |
 | `only` | `Array<string>` | `[]` | Parsial reload hanya untuk props tertentu pada response Inertia (misal `['transactions']`). |
+| `mock` | `Boolean` | `false` | Mode simulasi/mock query sync tanpa memicu HTTP request Inertia (hanya sinkronkan query string browser via `replaceState`). Sangat berguna untuk testing/storybook/playground. |
 | `onStart` | `Function` | `null` | Callback yang dipanggil sesaat sebelum request Inertia dimulai. |
 | `onFinish` | `Function` | `null` | Callback yang dipanggil setelah request Inertia selesai (sukses/gagal). |
 

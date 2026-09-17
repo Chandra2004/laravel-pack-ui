@@ -2,13 +2,70 @@
 
 [← Kembali ke Dokumentasi Utama](../../README.md)
 
-Komponen navigasi tab reaktif serbaguna (*responsive tabs*) yang dirancang untuk memecah form panjang, dashboard analitik, dan halaman pengaturan menjadi panel-panel konten modular. Dilengkapi dukungan Google Material Symbols, badge counter, 4 varian visual, orientasi vertikal/horizontal, serta navigasi keyboard (aksesibilitas ARIA).
+Komponen navigasi panel konten modular (*responsive tabs*) *enterprise-grade* berbasis Vue 3 dan Tailwind CSS v4. Dirancang ulang dengan estetika modern, taktil, dan bersih, menerapkan penuh **5 Pilar Kustomisasi UI** (`peraturan.md`): **Warna**, **Bentuk**, **Teks Konten**, **Icon**, dan **Responsif**.
+
+Mendukung 4 gaya tata letak tab (*underline*, *pills*, *segmented controller* ala macOS/iOS, dan *enclosed folder card*), tombol geser panah halus (*scrollable arrow controls*), tab dua baris dengan deskripsi (*dual-line subtitle*), posisi ikon fleksibel (*left* atau *top*), serta navigasi keyboard presisi WAI-ARIA.
 
 ---
 
-## 🚀 Import & Penggunaan Dasar
+## 🎨 5 Pilar Kustomisasi (`peraturan.md`)
 
-Semua komponen dapat langsung di-import menggunakan path alias `@/Components/Pack/Tabs.vue`:
+### 1. Warna (Color & Style)
+* **Pilihan Palet Warna (`color`)**:
+  - `'primary'` / `'blue'`: Biru enterprise modern
+  - `'indigo'`: Indigo elegan
+  - `'emerald'` / `'success'`: Hijau sukses
+  - `'purple'` / `'violet'`: Ungu kreatif
+  - `'amber'` / `'warning'`: Kuning emas peringatan
+  - `'rose'` / `'danger'`: Merah risiko
+  - `'cyan'` / `'sky'`: Cyan teal cerah
+  - `'dark'` / `'slate'`: Hitam/putih kontras tinggi
+* **Gaya Visual Pewarnaan (`tabStyle`)**:
+  - `'soft'` (Default): Background lembut bertransparansi dengan teks kontras semantik.
+  - `'solid'`: Warna pekat kontras tinggi dengan teks putih dan bayangan lembut.
+  - `'outline'`: Border tegas beraksen warna dengan latar transparan.
+
+### 2. Bentuk (Shape, Variant, & Size)
+* **Varian Tata Letak (`variant`)**:
+  - `'underline'`: Garis bawah aktif mengambang (*floating bar indicator*) dengan soft hover rounded.
+  - `'pills'`: Tombol kapsul independen yang dapat dipadukan dengan gaya `soft`, `solid`, maupun `outline`.
+  - `'segmented'`: Kontrol tersegmentasi ala macOS/iOS dengan kedalaman taktil (*shadow-inner* container & elevasi tombol aktif).
+  - `'enclosed'`: Tab kartu bertingkat (*folder card*) dengan garis aksen warna di sisi atas.
+* **Kelengkungan Sudut (`radius`)**:
+  - `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'full'` (misal: `radius="full"` untuk *capsule segmented* atau *capsule pills*).
+* **Skala Ukuran (`size`)**:
+  - `'xs'`: Tab ultra ringkas untuk toolbar filter data tabel.
+  - `'sm'`: Tab ringkas untuk filter card.
+  - `'md'`: Standar dashboard enterprise (default).
+  - `'lg'`: Tab menonjol untuk master data.
+  - `'xl'`: Tab hero besar untuk landing/checkout page.
+
+### 3. Teks Konten (Content, Subtitle, & Slots)
+* **Tab Dua Baris (*Dual-line Label & Description*)**: Properti `description` pada item tab memungkinkan menampilkan subjudul ringkas di bawah label utama (sangat ideal untuk tab pengaturan & metode pembayaran).
+* **Status Dot Bulat (`dot: true`)**: Menampilkan penanda titik status berwarna di samping label tab.
+* **Badge Counter / Label (`badge`)**: Mendukung angka atau teks dengan varian status (`badgeVariant: 'primary' | 'warning' | 'danger' | 'success'`).
+* **Scoped Slot `#tab`**: Kustomisasi total tombol pemicu tab.
+* **Named Slot `#[tab.id]`**: Konten panel modular sesuai ID masing-masing tab.
+* **Slot `#extra`**: Konten tambahan di sudut kanan tab bar (misal: tombol CTA *Ekspor Data*).
+
+### 4. Icon & Perataan Vertikal (Iconography & Precision Alignment)
+* **Google Material Symbols**: Terintegrasi langsung via properti `icon: 'nama_ikon'`.
+* **Posisi Ikon (`iconPosition`)**:
+  - `'left'` (Default): Ikon sejajar di sebelah kiri teks.
+  - `'top'`: Ikon bertumpuk di atas teks (sangat cocok untuk navigasi aksi cepat atau tampilan mobile).
+* **Perataan Vertikal Sempurna**: Menggunakan `inline-flex items-center justify-center font-medium leading-none` sehingga huruf, ikon, dan badge berada tepat sejajar di tengah tanpa pergeseran baseline font.
+
+### 5. Responsif & Aksesibilitas (Responsiveness & ARIA)
+* **Scrollable Arrow Controls (`scrollable="true"`)**: Otomatis memunculkan tombol panah kiri (`chevron_left`) dan kanan (`chevron_right`) saat tab melebihi lebar layar.
+* **Touch Swipe & Auto-Scroll**: Klik pada tab otomatis menggulirkan tab tersebut ke area pandang tengah (*auto-center scrollIntoView*).
+* **Orientasi Vertikal Responsif (`orientation="vertical"`)**: Menjadi menu samping di desktop (`w-64`) dan otomatis beralih ramah-sentuh di perangkat seluler.
+* **Navigasi Keyboard ARIA**: Navigasi menggunakan tombol panah Kiri/Kanan (horizontal), Atas/Bawah (vertikal), `Home`, dan `End`.
+
+---
+
+## 🚀 Cara Penggunaan
+
+### 1. Varian Underline Modern (Horizontal Standard)
 
 ```vue
 <script setup>
@@ -16,32 +73,27 @@ import { ref } from 'vue';
 import Tabs from '@/Components/Pack/Tabs.vue';
 
 const activeTab = ref('overview');
-
-const tabsList = [
-  { id: 'overview', label: 'Ringkasan', icon: 'dashboard' },
-  { id: 'transactions', label: 'Transaksi', icon: 'receipt_long', badge: '14', badgeVariant: 'primary' },
-  { id: 'settings', label: 'Pengaturan', icon: 'settings' },
+const tabs = [
+  { id: 'overview', label: 'Ringkasan Eksekutif', icon: 'monitoring' },
+  { id: 'transactions', label: 'Transaksi Masuk', icon: 'receipt_long', badge: '28', badgeVariant: 'primary' },
+  { id: 'disbursement', label: 'Disbursement', icon: 'payments', badge: 'Pending', badgeVariant: 'warning' },
+  { id: 'audit', label: 'Audit Trail', icon: 'history', disabled: true },
 ];
 </script>
 
 <template>
-  <Tabs :tabs="tabsList" v-model="activeTab">
-    <!-- Konten per Tab ID menggunakan Named Slot -->
+  <Tabs :tabs="tabs" v-model="activeTab" variant="underline" color="primary">
+    <!-- Konten Tab Ringkasan -->
     <template #overview>
       <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-        <p class="text-sm text-slate-600 dark:text-slate-300">Konten Ringkasan Dashboard.</p>
+        <p class="text-sm">Ringkasan transaksi bulan berjalan.</p>
       </div>
     </template>
 
+    <!-- Konten Tab Transaksi -->
     <template #transactions>
       <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-        <p class="text-sm text-slate-600 dark:text-slate-300">Daftar riwayat 14 transaksi terkini.</p>
-      </div>
-    </template>
-
-    <template #settings>
-      <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-        <p class="text-sm text-slate-600 dark:text-slate-300">Form konfigurasi akun merchant.</p>
+        <p class="text-sm">28 transaksi siap diproses.</p>
       </div>
     </template>
   </Tabs>
@@ -50,111 +102,210 @@ const tabsList = [
 
 ---
 
-## 📋 Props API (`<Tabs />`)
+### 2. Varian Segmented Control (macOS/iOS Style)
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import Tabs from '@/Components/Pack/Tabs.vue';
+
+const period = ref('monthly');
+const periodTabs = [
+  { id: 'daily', label: 'Harian' },
+  { id: 'weekly', label: 'Mingguan' },
+  { id: 'monthly', label: 'Bulanan' },
+  { id: 'yearly', label: 'Tahunan' },
+];
+</script>
+
+<template>
+  <Tabs
+    :tabs="periodTabs"
+    v-model="period"
+    variant="segmented"
+    color="primary"
+    radius="xl"
+    size="sm"
+  >
+    <template #default="{ activeTab }">
+      <p class="text-xs text-slate-500">Filter terpilih: {{ activeTab.label }}</p>
+    </template>
+  </Tabs>
+</template>
+```
+
+---
+
+### 3. Varian Pills Capsule (Soft / Solid Style)
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import Tabs from '@/Components/Pack/Tabs.vue';
+
+const activeChannel = ref('qris');
+const channels = [
+  { id: 'qris', label: 'QRIS Dinamis', icon: 'qr_code_scanner' },
+  { id: 'va', label: 'Virtual Account', icon: 'account_balance', badge: '12 Bank' },
+  { id: 'ewallet', label: 'E-Wallet', icon: 'account_balance_wallet' },
+];
+</script>
+
+<template>
+  <!-- Pills Soft Kapsul -->
+  <Tabs
+    :tabs="channels"
+    v-model="activeChannel"
+    variant="pills"
+    tab-style="soft"
+    color="indigo"
+    radius="full"
+    size="sm"
+  />
+
+  <!-- Pills Solid Kapsul -->
+  <Tabs
+    :tabs="channels"
+    v-model="activeChannel"
+    variant="pills"
+    tab-style="solid"
+    color="emerald"
+    radius="full"
+  />
+</template>
+```
+
+---
+
+### 4. Varian Enclosed & Scrollable Arrow Controls
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import Tabs from '@/Components/Pack/Tabs.vue';
+
+const activeBank = ref('bca');
+const bankTabs = [
+  { id: 'bca', label: 'BCA VA', icon: 'account_balance' },
+  { id: 'mandiri', label: 'Mandiri Livin', icon: 'account_balance' },
+  { id: 'bni', label: 'BNI VA', icon: 'account_balance' },
+  { id: 'bri', label: 'BRI BRIVA', icon: 'account_balance' },
+  { id: 'cimb', label: 'CIMB Niaga', icon: 'account_balance' },
+  { id: 'permata', label: 'Permata Bank', icon: 'account_balance' },
+  { id: 'bsi', label: 'BSI Hasanah', icon: 'account_balance' },
+];
+</script>
+
+<template>
+  <Tabs
+    :tabs="bankTabs"
+    v-model="activeBank"
+    variant="enclosed"
+    color="emerald"
+    scrollable
+  >
+    <template #default="{ activeTab }">
+      <div class="p-4 bg-white dark:bg-slate-900 border border-t-0 border-slate-200 dark:border-slate-800 rounded-b-xl">
+        Detail Virtual Account untuk {{ activeTab.label }}.
+      </div>
+    </template>
+  </Tabs>
+</template>
+```
+
+---
+
+### 5. Orientasi Vertikal dengan Deskripsi Dua Baris (*Dual-line Settings*)
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import Tabs from '@/Components/Pack/Tabs.vue';
+
+const activeMenu = ref('security');
+const settingsTabs = [
+  { id: 'profile', label: 'Profil Usaha', description: 'Legalitas & kontak penanggung jawab', icon: 'person' },
+  { id: 'security', label: 'Keamanan & 2FA', description: 'Kata sandi & Google Authenticator', icon: 'lock', badge: 'Wajib', badgeVariant: 'danger' },
+  { id: 'webhook', label: 'Webhook', description: 'Callback endpoint URL payload', icon: 'webhook' },
+  { id: 'billing', label: 'Biaya & Settlement', description: 'Rekening pencairan dana otomatis', icon: 'payments' },
+];
+</script>
+
+<template>
+  <Tabs
+    :tabs="settingsTabs"
+    v-model="activeMenu"
+    orientation="vertical"
+    variant="underline"
+    color="primary"
+  >
+    <template #profile>
+      <div class="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <h3 class="text-sm font-bold">Informasi Profil</h3>
+      </div>
+    </template>
+
+    <template #security>
+      <div class="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <h3 class="text-sm font-bold">Pengaturan 2FA</h3>
+      </div>
+    </template>
+  </Tabs>
+</template>
+```
+
+---
+
+## 🛠️ API Reference
+
+### Props
 
 | Prop | Tipe Data | Default | Pilihan Nilai / Deskripsi |
 | :--- | :--- | :--- | :--- |
-| `tabs` | `Array` | **Wajib** | Daftar tab. Format objek: `{ id, label, icon, badge, badgeVariant, disabled }` atau array string: `['Tab A', 'Tab B']` |
-| `modelValue` | `String` \| `Number` | `null` | ID tab yang sedang aktif (*mendukung `v-model`*) |
-| `variant` | `String` | `'underline'` | Gaya visual tab bar: `'underline'`, `'pills'`, `'segmented'`, `'enclosed'` |
-| `orientation` | `String` | `'horizontal'` | Orientasi susunan tab: `'horizontal'`, `'vertical'` |
-| `size` | `String` | `'md'` | Skala ukuran tombol & teks tab: `'sm'`, `'md'`, `'lg'` |
-| `color` | `String` | `'blue'` | Aksen warna aktif: `'blue'`, `'indigo'`, `'emerald'`, `'violet'`, `'amber'`, `'rose'`, `'slate'` |
-| `fullWidth` | `Boolean` | `false` | Meratakan tab membentang memenuhi lebar kontainer (*flex-1*) |
-| `align` | `String` | `'left'` | Perataan tab horizontal: `'left'`, `'center'`, `'right'` |
-| `showIcon` | `Boolean` | `true` | Menampilkan ikon Google Material Symbols jika didefinisikan pada tab |
-| `showBadge` | `Boolean` | `true` | Menampilkan badge label/counter jika didefinisikan pada tab |
-| `lazy` | `Boolean` | `false` | Jika `true`, panel konten yang tidak aktif tidak akan di-render ke DOM |
+| `tabs` | `Array` | **Wajib** | Format item: `{ id, label, description, icon, badge, badgeVariant, dot, disabled }` atau array string `['Tab 1', 'Tab 2']`. |
+| `modelValue` | `String \| Number` | `null` | ID tab yang sedang aktif (`v-model`). |
+| `variant` | `String` | `'underline'` | Gaya tata letak: `'underline'`, `'pills'`, `'segmented'`, `'enclosed'`. |
+| `tabStyle` | `String` | `'soft'` | Gaya pewarnaan: `'soft'`, `'solid'`, `'outline'`. |
+| `color` | `String` | `'primary'` | Aksen warna: `'primary'`, `'blue'`, `'indigo'`, `'emerald'`, `'success'`, `'violet'`, `'purple'`, `'amber'`, `'warning'`, `'rose'`, `'danger'`, `'cyan'`, `'sky'`, `'dark'`, `'slate'`. |
+| `radius` | `String` | `'xl'` | Kelengkungan sudut: `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'full'`. |
+| `size` | `String` | `'md'` | Skala ukuran: `'xs'`, `'sm'`, `'md'`, `'lg'`, `'xl'`. |
+| `orientation` | `String` | `'horizontal'` | Susunan tab: `'horizontal'`, `'vertical'`. |
+| `iconPosition` | `String` | `'left'` | Posisi ikon: `'left'` (samping), `'top'` (atas teks). |
+| `fullWidth` | `Boolean` | `false` | Membentang memenuhi lebar container (`flex-1`). |
+| `align` | `String` | `'left'` | Perataan horizontal: `'left'`, `'center'`, `'right'`. |
+| `showIcon` | `Boolean` | `true` | Menampilkan ikon jika didefinisikan pada tab. |
+| `showBadge` | `Boolean` | `true` | Menampilkan badge jika didefinisikan pada tab. |
+| `scrollable` | `Boolean` | `false` | Menampilkan tombol panah navigasi saat konten tab horizontal meluap. |
+| `lazy` | `Boolean` | `false` | Menunda render panel konten yang tidak aktif ke DOM. |
 
 ---
 
-## 🎨 Pilihan Varian Gaya (`variant`)
+### Slots
 
-### 1. Varian `underline` (Garis Bawah Aktif - Standar Dashboard)
-Cocok untuk navigasi utama di halaman master data, profil, atau detail pesanan:
-```vue
-<Tabs :tabs="myTabs" variant="underline" color="indigo" />
-```
-
-### 2. Varian `pills` (Tombol Kapsul Modern)
-Tombol oval dengan latar belakang warna solid ketika aktif:
-```vue
-<Tabs :tabs="myTabs" variant="pills" color="emerald" />
-```
-
-### 3. Varian `segmented` (Segmented Control Pill)
-Tombol tab berada di dalam wadah berlatar abu-abu netral (`bg-slate-100 dark:bg-slate-800`), mirip toggle iOS / macOS:
-```vue
-<Tabs :tabs="myTabs" variant="segmented" color="blue" />
-```
-
-### 4. Varian `enclosed` (Tab Boxed / Folders)
-Desain tab yang menyatu langsung dengan batas atas kartu konten di bawahnya:
-```vue
-<Tabs :tabs="myTabs" variant="enclosed" color="slate" />
-```
-
----
-
-## ↕️ Orientasi Vertikal (`orientation="vertical"`)
-
-Sangat ideal untuk halaman **Pengaturan / Akun (Settings Page)** dengan sidebar menu di kiri dan formulir di kanan:
-
-```vue
-<Tabs
-  :tabs="[
-    { id: 'profile', label: 'Profil Saya', icon: 'person' },
-    { id: 'security', label: 'Keamanan & 2FA', icon: 'lock' },
-    { id: 'notifications', label: 'Preferensi Notifikasi', icon: 'notifications' },
-    { id: 'billing', label: 'Metode Pembayaran', icon: 'credit_card' },
-  ]"
-  orientation="vertical"
-  variant="underline"
-  color="blue"
->
-  <template #profile>
-    <div class="space-y-4">
-      <h3 class="font-bold text-base">Informasi Biodata</h3>
-      <!-- Form InputField -->
-    </div>
-  </template>
-
-  <template #security>
-    <div class="space-y-4">
-      <h3 class="font-bold text-base">Ubah Kata Sandi</h3>
-      <!-- Form Password -->
-    </div>
-  </template>
-</Tabs>
-```
-
----
-
-## 🧩 Slots API
-
-| Slot Name | Parameter Slot | Penjelasan |
+| Slot Name | Scope Props | Deskripsi |
 | :--- | :--- | :--- |
-| `[tab.id]` | `{ tab, active, index }` | Named slot dinamis untuk merender isi panel per-ID tab (*contoh: `#overview`, `#security`*) |
-| `default` | `{ tab, activeTab, activeIndex }` | Fallback slot umum jika named slot tidak disediakan |
-| `tab` | `{ tab, active, index }` | Kustomisasi elemen tombol tab (menggantikan icon & label default) |
-| `extra` | — | Konten tambahan di sisi kanan header tab horizontal (misal: tombol CTA) |
+| `[tab.id]` | `{ tab, active, index }` | Named slot dinamis per ID tab (misal `#overview`, `#security`). |
+| `default` | `{ tab, activeTab, activeIndex }` | Fallback slot umum jika named slot tidak didefinisikan. |
+| `tab` | `{ tab, active, index }` | Kustomisasi elemen pemicu tab (mengganti teks, ikon, dan badge). |
+| `extra` | — | Konten tambahan di ujung kanan header horizontal (misal tombol aksi CTA). |
 
 ---
 
-## 📢 Events
+### Events
 
-| Event Name | Parameter | Penjelasan |
+| Event Name | Parameter | Deskripsi |
 | :--- | :--- | :--- |
-| `update:modelValue` | `tabId: String \| Number` | Dipancarkan saat tab aktif berubah (*v-model*) |
-| `change` | `{ tab: Object, index: Number }` | Dipancarkan saat pengguna mengklik tab aktif baru |
+| `update:modelValue` | `tabId: String \| Number` | Dipancarkan saat tab aktif berubah (`v-model`). |
+| `change` | `{ tab: Object, index: Number }` | Dipancarkan saat pengguna memilih tab baru. |
 
 ---
 
-## ♿ Aksesibilitas & Keyboard Navigation
+## ♿ Aksesibilitas & Navigasi Keyboard
 
-* Komponen telah menerapkan standar atribut WAI-ARIA (`role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, `role="tabpanel"`).
-* **Navigasi Panah Keyboard**:
-  * Orientasi horizontal: Panah Kiri (`ArrowLeft`) & Kanan (`ArrowRight`) berpindah antar tab.
-  * Orientasi vertikal: Panah Atas (`ArrowUp`) & Bawah (`ArrowDown`) berpindah antar tab.
-  * Tombol `Home` melompat ke tab pertama, tombol `End` melompat ke tab terakhir.
-  * Tab dengan status `disabled: true` otomatis dilewati saat navigasi keyboard.
+- Standar atribut WAI-ARIA lengkap: `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, `role="tabpanel"`.
+- **Navigasi Panah**:
+  - Horizontal: `ArrowRight` & `ArrowLeft` berpindah antar tab.
+  - Vertikal: `ArrowDown` & `ArrowUp` berpindah antar tab.
+  - `Home`: Melompat langsung ke tab pertama yang aktif.
+  - `End`: Melompat langsung ke tab terakhir yang aktif.
+  - Tab dengan status `disabled: true` otomatis dilewati saat navigasi keyboard.
