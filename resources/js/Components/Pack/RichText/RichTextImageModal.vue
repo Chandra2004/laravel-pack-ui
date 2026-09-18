@@ -152,11 +152,9 @@ const processFile = (file) => {
 
     selectedFile.value = file;
     if (!imageAlt.value) {
-        // Ambil nama file tanpa ekstensi untuk default alt text
         imageAlt.value = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
     }
 
-    // Buat pratinjau lokal
     const reader = new FileReader();
     reader.onload = (e) => {
         filePreviewUrl.value = e.target.result;
@@ -202,10 +200,8 @@ const handleApply = async () => {
             let finalSrc = '';
 
             if (props.imageUploadHandler && typeof props.imageUploadHandler === 'function') {
-                // Handler kustom dari developer (misal request ke server Laravel)
                 finalSrc = await props.imageUploadHandler(selectedFile.value);
             } else {
-                // Fallback otomatis: gunakan Base64 Data URL
                 finalSrc = filePreviewUrl.value;
             }
 

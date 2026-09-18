@@ -309,4 +309,3 @@ const sizeClasses = computed(() => {
         </div>
     </div>
 </template>
-

@@ -65,7 +65,13 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 * **`useDebounce.js`** – Pengontrol jeda eksekusi fungsi berat, debounce form pencarian realtime, dan auto-save draft.
 * **`useThrottle.js`** – Pembatas frekuensi eksekusi fungsi (*rate limiting*) untuk event window scroll, resize, dan pencegahan spam klik.
 * **`useExportTable.js`** – Ekspor array data tabel ke format CSV (BOM UTF-8 siap Microsoft Excel), format JSON, atau cetak dokumen terisolasi.
-* **`useFormat.js`** – Helper pemformatan terstandarisasi untuk ekosistem Indonesia (Rupiah, tanggal bahasa Indonesia, relative time, telepon +62, file size, dan sensor data sensitif).
+* **`useInitials.js`** – Helper ekstraksi inisial nama reaktif (pembersihan gelar, email parser, multi-kata) terintegrasi pembuatan warna avatar deterministik konsisten (DJB2 hash), gradient Tailwind, dan props siap pakai untuk Avatar UI.
+* **`useFormat.js`** – Helper pemformatan lengkap & terstandarisasi: Rupiah IDR, tanggal Indonesia, relative time, telepon +62, byte size, PCI-DSS sensitive data masking, inisial nama & warna avatar, slugify URL SEO, pemotongan teks (word-boundary truncate), format angka ringkas (K/M/B), kalkulasi durasi, case converters (camel/snake/kebab/title), dan strip HTML.
+* **`useDateFormat.js`** – Helper pemformatan tanggal Indonesia terstandarisasi, relative time ('5 menit yang lalu'), durasi waktu (digital, human, short), dan parsing tanggal.
+* **`useNumberFormat.js`** – Helper pemformatan angka finansial: Rupiah IDR (`formatRupiah`), angka desimal/ribuan, persentase, compact numbers (K/M/B), ordinal ('ke-3'), dan konversi ukuran bytes.
+* **`useStringFormat.js`** – Helper manipulasi teks: slugify URL SEO ramah simbol, word-boundary truncate dengan ellipsis, casing converters (titleCase, camelCase, snakeCase, kebabCase), dan pembersih stripHtml.
+* **`useMask.js`** – Helper proteksi privasi & sensor data sensitif (PCI-DSS): masking nomor kartu bank, email, nomor HP, NIK KTP, serta pemformatan nomor telepon internasional/nasional.
+* **`useFormat.js`** – Aggregator barrel hook yang menggabungkan seluruh modul pemformatan di atas (`useDateFormat`, `useNumberFormat`, `useStringFormat`, `useMask`, `useInitials`) dalam satu antarmuka praktis & 100% backward compatible.
 * **`useLocalStorage.js`** – Sinkronisasi state reaktif Vue dengan `localStorage` browser dilengkapi auto JSON parsing dan sinkronisasi lintas-tab.
 * **`useNetworkStatus.js`** – Pemantau status koneksi internet browser (`online`/`offline`) dan estimasi kecepatan jaringan.
 * **`useServerTable.js`** – State manager penyinkron data tabel (search query, sorting asc/desc, custom filter, dan paginasi) dengan URL query string Inertia secara otomatis.
@@ -106,7 +112,7 @@ Perintah ini akan memeriksa lingkungan project Anda secara otomatis:
    - Jika project belum memiliki `inertiajs/inertia-laravel`, installer mengeksekusi `composer require inertiajs/inertia-laravel`.
    - Jika project belum memiliki `tightenco/ziggy`, installer mengeksekusi `composer require tightenco/ziggy`.
 2. **Pemeriksaan & Instalasi Frontend (Node.js/npm)**:
-   - Memastikan `vue` (^3.5) dan `@vitejs/plugin-vue` (^5.0) terpasang.
+   - Memastikan `vue` (^3.5) dan `@vitejs/plugin-vue` (^6.0) terpasang.
    - Memastikan `@inertiajs/vue3` (^2.0) terpasang.
    - Memastikan `ziggy-js` (^2.4) terpasang untuk navigasi rute Laravel di Vue.
    - Memastikan `tailwindcss` (^4.0) dan `@tailwindcss/vite` terpasang.
@@ -391,7 +397,8 @@ Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*pro
 * ⏱️ [**`useDebounce`**](doc/composables/use-debounce.md) — Pengontrol laju eksekusi fungsi penundaan input realtime dan ref reaktif tertunda.
 * ⚡ [**`useThrottle`**](doc/composables/use-throttle.md) — Pembatas frekuensi pemanggilan fungsi (*rate limiting*) untuk scroll, resize, dan anti-spam click.
 * 📤 [**`useExportTable`**](doc/composables/use-export-table.md) — Ekspor array data tabel ke format CSV Excel (BOM UTF-8), JSON, dan print preview.
-* 🇮🇩 [**`useFormat`**](doc/composables/use-format.md) — Utilitas formatting standar Indonesia (Rupiah, tanggal lokal, relative time, telepon, byte, & masking).
+* 🔤 [**`useInitials`**](doc/composables/use-initials.md) — Ekstraksi inisial nama reaktif pintar, pembersihan gelar, dan warna avatar deterministik konsisten berbasis hashing string.
+* 🇮🇩 [**`useFormat`**](doc/composables/use-format.md) — Utilitas formatting standar Indonesia (Rupiah, tanggal lokal, relative time, telepon, byte, masking, inisial, slugify, truncate, durasi, compact number, & case converters).
 * 🛡️ [**`useFormValidation`**](doc/composables/use-form-validation.md) — Validasi skema form reaktif dengan preset rules (`required`, `email`, `min`, `max`, `confirmed`, dll) serta sinkronisasi galat Laravel.
 * 💾 [**`useLocalStorage`**](doc/composables/use-local-storage.md) — Penyimpanan state reaktif di localStorage dengan sinkronisasi lintas-tab.
 * 🌐 [**`useNetworkStatus`**](doc/composables/use-network-status.md) — Pemantau konektivitas jaringan internet (online/offline) & kecepatan.

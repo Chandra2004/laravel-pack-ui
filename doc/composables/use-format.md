@@ -59,6 +59,18 @@ const maskedCard = maskSensitive('4000123456789010', 'card');
 | `formatBytes()` | `(bytes, decimals = 2)` | `decimals: 2` | `formatBytes(14942208)` $\to$ **`14.25 MB`** |
 | `maskSensitive()` | `(text, type = 'card')` | `'card'` | `maskSensitive('user@domain.com', 'email')` $\to$ **`u****r@domain.com`** |
 | `formatPercent()` | `(value, decimals = 2, isFraction = false)` | `isFraction: false` | `formatPercent(12.5)` $\to$ **`12.50%`** |
+| `formatInitials()` | `(name, length = 2, options = {})` | `length: 2` | `formatInitials('Chandra Tri Antomo')` $\to$ **`CA`** / **`CTA`** |
+| `formatAvatarColor()` | `(seed, options = {})` | `{}` | `formatAvatarColor('Chandra')` $\to$ **`{ hex, bgClass, ... }`** |
+| `slugify()` | `(text, separator = '-')` | `'-'` | `slugify('Judul Berita & Promo!')` $\to$ **`judul-berita-promo`** |
+| `truncate()` | `(text, length = 100, options = {})` | `length: 100` | `truncate(text, 50, { wordBoundary: true })` $\to$ **`Teks rapi...`** |
+| `formatCompactNumber()` | `(number, options = {})` | `decimals: 1` | `formatCompactNumber(2500000)` $\to$ **`2,5 jt`** / **`2.5M`** |
+| `formatDuration()` | `(seconds, options = {})` | `format: 'digital'` | `formatDuration(3725)` $\to$ **`01:02:05`** / **`1 jam 2 menit`** |
+| `titleCase()` | `(text)` | — | `titleCase('laporan transaksi harian')` $\to$ **`Laporan Transaksi Harian`** |
+| `camelCase()` | `(text)` | — | `camelCase('user-profile-id')` $\to$ **`userProfileId`** |
+| `snakeCase()` | `(text)` | — | `snakeCase('userProfileId')` $\to$ **`user_profile_id`** |
+| `kebabCase()` | `(text)` | — | `kebabCase('userProfileId')` $\to$ **`user-profile-id`** |
+| `stripHtml()` | `(html)` | — | `stripHtml('<p>Halo <b>Dunia</b></p>')` $\to$ **`Halo Dunia`** |
+| `formatOrdinal()` | `(number, locale = 'id')` | `'id'` | `formatOrdinal(3)` $\to$ **`ke-3`** (ID) / **`3rd`** (EN) |
 
 ---
 
@@ -121,3 +133,103 @@ maskSensitive('081234567890', 'phone');     // "0812 **** 7890"
 // NIK / KTP (4 digit awal & 4 digit akhir)
 maskSensitive('3201012345670001', 'nik');   // "3201 ******** 0001"
 ```
+
+### 6. Pembuatan Inisial Nama Pintar (`formatInitials`)
+Mengekstrak inisial nama secara cerdas dari nama lengkap, email, atau teks perusahaan:
+```javascript
+// Default: first_last strategy (2 karakter)
+formatInitials('Chandra Tri Antomo');        // "CA"
+formatInitials('Chandra Tri Antomo', 3);     // "CTA"
+formatInitials('Budi');                      // "BU" (fallback 2 huruf pertama jika 1 kata)
+
+// Otomatis mengenali & memotong alamat email
+formatInitials('dewi.lestari@speedpay.id');  // "DL"
+
+// Pembersihan gelar profesional & kehormatan
+formatInitials('Dr. Sarah Smith, Sp.A');     // "SS"
+formatInitials('PT Maju Bersama');           // "MB"
+
+// Pilihan strategi:
+// 'first_last' (default): huruf pertama dari kata awal & kata akhir
+// 'first_consecutive': kata-kata berurutan dari depan
+// 'first_only': hanya 1 huruf kata pertama
+formatInitials('Chandra Tri Antomo', 2, { strategy: 'first_consecutive' }); // "CT"
+```
+
+### 7. Warna Avatar Deterministik (`formatAvatarColor`)
+Menghasilkan warna solid, gradien Tailwind, dan warna teks kontras yang selalu konsisten untuk satu nama/ID menggunakan algoritma DJB2 hash:
+```javascript
+const color = formatAvatarColor('Chandra Tri Antomo');
+// {
+//   hex: '#0284c7',
+//   bgClass: 'bg-sky-600',
+//   gradientClass: 'bg-gradient-to-tr from-sky-600 to-indigo-600',
+//   textColor: '#ffffff',
+//   ringClass: 'ring-sky-200 dark:ring-sky-900',
+//   name: 'sky'
+// }
+```
+
+### 8. Pembuat Slug URL SEO (`slugify`)
+Mengubah teks sembarang menjadi slug URL ramah SEO, membersihkan simbol khusus dan karakter aksen:
+```javascript
+slugify('Panduan Integrasi Payment Gateway & Webhook v1.7!');
+// "panduan-integrasi-payment-gateway-webhook-v17"
+
+slugify('Kategori Produk Elektronik', '_');
+// "kategori_produk_elektronik"
+```
+
+### 9. Pemotongan Teks Pintar (`truncate`)
+Memotong teks panjang dengan opsi mempertahankan batas kata (*word boundary*) agar kata tidak terpotong di tengah:
+```javascript
+const text = 'Laravel Pack UI menyediakan kumpulan komponen enterprise Vue 3 Tailwind.';
+
+// Default
+truncate(text, 25);
+// "Laravel Pack UI menyediak..."
+
+// Word boundary aktif (memotong di spasi terdekat)
+truncate(text, 25, { wordBoundary: true });
+// "Laravel Pack UI..."
+
+// Kustom suffix
+truncate(text, 20, { suffix: ' [Baca Selengkapnya]' });
+```
+
+### 10. Format Angka Ringkas (`formatCompactNumber`)
+Mengonversi angka besar ke format singkatan yang ramah dashboard (`K`, `M`, `B` untuk EN; `rb`, `jt`, `M` untuk ID):
+```javascript
+formatCompactNumber(2500000);              // "2,5 jt" (locale 'id')
+formatCompactNumber(1250000000);           // "1,25 Miliar"
+formatCompactNumber(2500000, { locale: 'en' }); // "2.5M"
+formatCompactNumber(15400, { decimals: 0 });    // "15 rb"
+```
+
+### 11. Format Durasi Waktu (`formatDuration`)
+Mengubah durasi detik menjadi tampilan digital jam menit detik atau teks manusiawi:
+```javascript
+// Digital (hh:mm:ss atau mm:ss)
+formatDuration(3725);                         // "01:02:05"
+formatDuration(125);                          // "02:05"
+
+// Human (Bahasa Indonesia / Inggris)
+formatDuration(3725, { format: 'human' });    // "1 jam 2 menit"
+formatDuration(3725, { format: 'human', locale: 'en' }); // "1 hr 2 mins"
+
+// Short (Format ringkas)
+formatDuration(3725, { format: 'short' });    // "1j 2m"
+```
+
+### 12. Utilitas Teks & Case Converters
+Transformasi format penamaan string dan sanitasi HTML:
+```javascript
+titleCase('laporan transaksi harian');        // "Laporan Transaksi Harian"
+camelCase('user_profile_id');                 // "userProfileId"
+snakeCase('userProfileId');                   // "user_profile_id"
+kebabCase('userProfileId');                   // "user-profile-id"
+stripHtml('<p>Teks <strong>tebal</strong></p>'); // "Teks tebal"
+formatOrdinal(1);                             // "ke-1" (ID)
+formatOrdinal(3, 'en');                       // "3rd" (EN)
+```
+

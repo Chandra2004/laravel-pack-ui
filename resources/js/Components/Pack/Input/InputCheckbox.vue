@@ -50,7 +50,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'change']);
 
-const toggle = () => {
 const hasOptions = computed(() => Array.isArray(props.options) && props.options.length > 0);
 
 // Single checkbox input element ref to sync native indeterminate property
@@ -83,9 +82,6 @@ const isSingleChecked = computed(() => {
 
 const toggleSingle = () => {
     if (props.disabled) return;
-    const newVal = !props.modelValue;
-    emit('update:modelValue', newVal);
-    emit('change', newVal);
 
     if (Array.isArray(props.modelValue)) {
         const current = [...props.modelValue];
@@ -192,10 +188,8 @@ defineExpose({
         v-else
         class="flex items-start gap-3 cursor-pointer select-none group pt-0.5"
         :class="{ 'opacity-50 cursor-not-allowed': disabled }"
-        @click.prevent="toggle"
         @click.prevent="toggleSingle"
     >
-        <!-- Custom PrimeVue Checkbox Indicator -->
         <!-- Custom Checkbox Indicator -->
         <div class="relative flex items-center justify-center pt-0.5">
             <input
@@ -203,7 +197,6 @@ defineExpose({
                 :id="id"
                 type="checkbox"
                 :name="name"
-                :checked="!!modelValue"
                 :checked="isSingleChecked"
                 :required="required"
                 :disabled="disabled"
@@ -213,7 +206,6 @@ defineExpose({
             <div
                 class="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-150"
                 :class="[
-                    modelValue
                     (isSingleChecked || indeterminate)
                         ? 'bg-blue-600 border-blue-600 text-white shadow-xs ring-4 ring-blue-500/15'
                         : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 group-hover:border-slate-400 dark:group-hover:border-slate-500',
@@ -231,7 +223,6 @@ defineExpose({
                 <span
                     v-else
                     class="material-symbols-outlined text-sm font-bold leading-none transition-transform duration-150 ease-out"
-                    :class="modelValue ? 'scale-100 opacity-100' : 'scale-0 opacity-0'"
                     :class="isSingleChecked ? 'scale-100 opacity-100' : 'scale-0 opacity-0'"
                 >
                     check
@@ -254,4 +245,3 @@ defineExpose({
         </div>
     </div>
 </template>
-

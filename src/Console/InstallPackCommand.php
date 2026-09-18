@@ -159,10 +159,17 @@ class InstallPackCommand extends Command
         $middlewarePath = $this->getInertiaMiddlewarePath();
         $middlewareContent = $this->getInertiaMiddlewareContent();
 
+        $hasVue = isset($packageJson['dependencies']['vue']) || isset($packageJson['devDependencies']['vue']);
+        $hasPluginVue = isset($packageJson['dependencies']['@vitejs/plugin-vue']) || isset($packageJson['devDependencies']['@vitejs/plugin-vue']);
+        $viteVersion = $packageJson['devDependencies']['vite'] ?? $packageJson['dependencies']['vite'] ?? '';
+        $isVite7Plus = str_contains($viteVersion, '7') || str_contains($viteVersion, '8') || preg_match('/[~^]?[78]\./', $viteVersion);
+        $pluginVueVersion = $packageJson['dependencies']['@vitejs/plugin-vue'] ?? $packageJson['devDependencies']['@vitejs/plugin-vue'] ?? '';
+        $isPluginVueIncompatible = $isVite7Plus && $pluginVueVersion && str_starts_with(ltrim($pluginVueVersion, '^~'), '5');
+
         $status = [
             'inertia_php' => isset($composerJson['require']['inertiajs/inertia-laravel']),
             'ziggy_php' => isset($composerJson['require']['tightenco/ziggy']),
-            'vue' => isset($packageJson['dependencies']['vue']) || isset($packageJson['devDependencies']['vue']),
+            'vue' => $hasVue && $hasPluginVue && !$isPluginVueIncompatible,
             'inertia_vue' => isset($packageJson['dependencies']['@inertiajs/vue3']) || isset($packageJson['devDependencies']['@inertiajs/vue3']),
             'ziggy_js' => isset($packageJson['dependencies']['ziggy-js']) || isset($packageJson['devDependencies']['ziggy-js']),
             'tailwind' => isset($packageJson['devDependencies']['tailwindcss']) || isset($packageJson['dependencies']['tailwindcss']) || isset($packageJson['devDependencies']['@tailwindcss/vite']),
@@ -176,10 +183,17 @@ class InstallPackCommand extends Command
             'inertia_flash_configured' => File::exists($middlewarePath) && str_contains($middlewareContent, "'flash'") && str_contains($middlewareContent, "'success'"),
         ];
 
+        $vueStatusLabel = '<comment>Belum Ada</comment>';
+        if ($isPluginVueIncompatible) {
+            $vueStatusLabel = '<comment>Perlu Upgrade Plugin Vue (^6.0 untuk Vite 7)</comment>';
+        } elseif ($status['vue']) {
+            $vueStatusLabel = '<info>Terpasang ✓</info>';
+        }
+
         $rows = [
             ['Inertia.js (Laravel Backend)', $status['inertia_php'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
             ['Tighten Ziggy (Laravel Backend)', $status['ziggy_php'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Vue 3 & Vite Plugin', $status['vue'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
+            ['Vue 3 & Vite Plugin', $vueStatusLabel],
             ['Inertia.js (Vue 3 Client)', $status['inertia_vue'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
             ['Ziggy JS Client (route() helper)', $status['ziggy_js'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
             ['Tailwind CSS v4 Engine', $status['tailwind'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
@@ -243,11 +257,28 @@ class InstallPackCommand extends Command
 
         $modified = false;
 
+        $viteVersion = $packageJson['devDependencies']['vite'] ?? $packageJson['dependencies']['vite'] ?? '';
+        $isVite7Plus = str_contains($viteVersion, '7') || str_contains($viteVersion, '8') || preg_match('/[~^]?[78]\./', $viteVersion);
+
         // Dependencies
         if (!$status['vue']) {
             $packageJson['dependencies']['vue'] = '^3.5.0';
-            $packageJson['dependencies']['@vitejs/plugin-vue'] = '^5.0.0';
+            $packageJson['dependencies']['@vitejs/plugin-vue'] = '^6.0.0';
             $modified = true;
+        } else {
+            if (!isset($packageJson['dependencies']['@vitejs/plugin-vue']) && !isset($packageJson['devDependencies']['@vitejs/plugin-vue'])) {
+                $packageJson['dependencies']['@vitejs/plugin-vue'] = '^6.0.0';
+                $modified = true;
+            } elseif ($isVite7Plus) {
+                if (isset($packageJson['dependencies']['@vitejs/plugin-vue']) && str_starts_with(ltrim($packageJson['dependencies']['@vitejs/plugin-vue'], '^~'), '5')) {
+                    $packageJson['dependencies']['@vitejs/plugin-vue'] = '^6.0.0';
+                    $modified = true;
+                }
+                if (isset($packageJson['devDependencies']['@vitejs/plugin-vue']) && str_starts_with(ltrim($packageJson['devDependencies']['@vitejs/plugin-vue'], '^~'), '5')) {
+                    $packageJson['devDependencies']['@vitejs/plugin-vue'] = '^6.0.0';
+                    $modified = true;
+                }
+            }
         }
 
         if (!$status['inertia_vue']) {
@@ -393,6 +424,9 @@ createInertiaApp({
             .use(ZiggyVue)
             .mount(el);
     },
+    progress: {
+        color: '#4B5563',
+    },
 });
 JS;
             File::ensureDirectoryExists(dirname($appJsPath));
@@ -402,6 +436,36 @@ JS;
         }
 
         $content = File::get($appJsPath);
+
+        // Jika app.js belum memiliki createInertiaApp (misal fresh Laravel hanya berisi import './bootstrap';)
+        if (!str_contains($content, 'createInertiaApp')) {
+            $template = <<<'JS'
+import './bootstrap';
+import { createApp, h } from 'vue';
+import { createInertiaApp } from '@inertiajs/vue3';
+import { ZiggyVue } from 'ziggy-js';
+
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
+        return pages[`./Pages/${name}.vue`];
+    },
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .use(ZiggyVue)
+            .mount(el);
+    },
+    progress: {
+        color: '#4B5563',
+    },
+});
+JS;
+            File::put($appJsPath, $template . PHP_EOL);
+            $this->info('  ✓ resources/js/app.js berhasil dikonfigurasi dengan createInertiaApp & ZiggyVue.');
+            return;
+        }
+
         $modified = false;
 
         // Tambahkan import ZiggyVue jika belum ada

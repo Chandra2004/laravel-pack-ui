@@ -83,7 +83,6 @@ useClickOutside(containerRef, () => {
     }
 });
 
-// Normalize options to uniform array of objects: { value, label, subtext, disabled }
 // Normalize options to uniform array of objects: { value, label, subtext, group, disabled }
 const normalizedOptions = computed(() => {
     return props.options.map((opt) => {
@@ -111,8 +110,6 @@ const filteredOptions = computed(() => {
     if (!searchQuery.value.trim()) return normalizedOptions.value;
     const query = searchQuery.value.toLowerCase();
     return normalizedOptions.value.filter(opt =>
-        opt.label.toLowerCase().includes(query) ||
-        opt.subtext.toLowerCase().includes(query)
         String(opt.label).toLowerCase().includes(query) ||
         String(opt.subtext).toLowerCase().includes(query) ||
         String(opt.group).toLowerCase().includes(query)
@@ -149,7 +146,6 @@ const isSearchVisible = computed(() => {
     return normalizedOptions.value.length > 5;
 });
 
-// Selected label for display in trigger
 // Selected label for display in trigger (when not using chips or in single mode)
 const selectedLabel = computed(() => {
     if (props.multiple && Array.isArray(props.modelValue)) {
@@ -298,7 +294,6 @@ const sizeClasses = computed(() => {
             };
         case 'lg':
             return {
-                trigger: 'px-3.5 py-2.5 text-base min-h-[44px]',
                 trigger: 'px-3.5 py-2 text-base min-h-[44px]',
                 icon: 'text-xl',
                 chip: 'text-xs px-2.5 py-1',
@@ -336,20 +331,16 @@ defineExpose({
             type="hidden"
             :name="name"
             :value="Array.isArray(modelValue) ? modelValue.join(',') : modelValue"
-            :required="required && !modelValue"
             :required="required && !hasValue"
         />
 
         <!-- PrimeVue Styled Dropdown Trigger Button -->
-        <button
         <div
             ref="triggerButtonRef"
-            type="button"
             role="combobox"
             tabindex="0"
             :aria-expanded="isOpen"
             :aria-controls="`listbox-${id}`"
-            :disabled="disabled || loading"
             :aria-disabled="disabled || loading"
             @click="toggleDropdown"
             class="w-full flex items-center justify-between text-left rounded-xl bg-white dark:bg-slate-900 border shadow-2xs transition-all duration-150 select-none focus:outline-hidden cursor-pointer"
@@ -360,7 +351,6 @@ defineExpose({
                 error
                     ? 'border-rose-500 dark:border-rose-500 focus:border-rose-600 focus:ring-4 focus:ring-rose-500/15 bg-rose-50/10 dark:bg-rose-950/10'
                     : !isOpen ? 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15' : '',
-                disabled || loading ? 'opacity-60 bg-slate-100 dark:bg-slate-800/60 cursor-not-allowed' : '',
                 disabled || loading ? 'opacity-60 bg-slate-100 dark:bg-slate-800/60 cursor-not-allowed pointer-events-none' : '',
                 readonly ? 'bg-slate-50 dark:bg-slate-800/40 cursor-default' : '',
             ]"
@@ -373,13 +363,6 @@ defineExpose({
                 <span class="material-symbols-outlined leading-none" :class="sizeClasses.icon">{{ icon }}</span>
             </div>
 
-            <!-- Value / Placeholder Text -->
-            <span
-                class="truncate flex-1 mr-2"
-                :class="selectedLabel ? 'text-slate-800 dark:text-slate-100 font-medium' : 'text-slate-400 dark:text-slate-500'"
-            >
-                {{ selectedLabel || placeholder }}
-            </span>
             <!-- Value Display: Chips Mode (Multiple) or Label Mode (Single / Fallback) -->
             <div class="flex-1 min-w-0 mr-2">
                 <!-- Mode Chips untuk Multiple Select -->
@@ -406,7 +389,6 @@ defineExpose({
                     </span>
                 </div>
 
-            <!-- Right Icon (Chevron / Loading Spinner) -->
                 <!-- Text Display / Placeholder -->
                 <span
                     v-else
@@ -447,7 +429,6 @@ defineExpose({
                     expand_more
                 </span>
             </div>
-        </button>
         </div>
 
         <!-- PrimeVue Styled Floating Popover Panel -->
@@ -465,7 +446,6 @@ defineExpose({
                 role="listbox"
                 class="absolute left-0 right-0 z-50 mt-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden"
             >
-                <!-- Search Filter Input (PrimeVue Header Filter) -->
                 <!-- Search Filter Input -->
                 <div v-if="isSearchVisible" class="p-2 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50">
                     <div class="relative flex items-center">
@@ -491,21 +471,8 @@ defineExpose({
                     </div>
                 </div>
 
-                <!-- Options List Container (Smooth Scrollable) -->
                 <!-- Options List Container with Option Grouping Support -->
                 <ul class="max-h-60 overflow-y-auto overscroll-contain p-1.5 space-y-0.5 focus:outline-hidden divide-y divide-transparent">
-                    <li
-                        v-for="(opt, idx) in filteredOptions"
-                        :key="idx"
-                        role="option"
-                        :aria-selected="isSelected(opt.value)"
-                        @click.stop="selectOption(opt)"
-                        class="relative flex items-center justify-between px-3 py-2 text-xs sm:text-sm rounded-lg cursor-pointer select-none transition-colors duration-100"
-                        :class="[
-                            isSelected(opt.value)
-                                ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold'
-                                : highlightedIndex === idx
-                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
                     <template v-for="(groupObj, gIdx) in groupedFilteredOptions" :key="gIdx">
                         <!-- Group Header Divider -->
                         <li
@@ -527,13 +494,6 @@ defineExpose({
                                 isSelected(opt.value)
                                     ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold'
                                     : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80',
-                            opt.disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : '',
-                        ]"
-                    >
-                        <div class="space-y-0.5 min-w-0 flex-1 mr-2">
-                            <div class="truncate">{{ opt.label }}</div>
-                            <div v-if="opt.subtext" class="text-[11px] text-slate-400 dark:text-slate-500 truncate">
-                                {{ opt.subtext }}
                                 opt.disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : '',
                             ]"
                         >
@@ -543,16 +503,7 @@ defineExpose({
                                     {{ opt.subtext }}
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Checkmark Indicator -->
-                        <span
-                            v-if="isSelected(opt.value)"
-                            class="material-symbols-outlined text-base text-blue-600 dark:text-blue-400 leading-none shrink-0"
-                        >
-                            check
-                        </span>
-                    </li>
                             <!-- Checkmark Indicator -->
                             <span
                                 v-if="isSelected(opt.value)"

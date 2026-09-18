@@ -330,4 +330,3 @@ const sizeClasses = computed(() => {
         </span>
     </div>
 </template>
-

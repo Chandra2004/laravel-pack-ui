@@ -1,5 +1,4 @@
 <script setup>
-import { ref, computed } from 'vue';
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 
 const props = defineProps({
@@ -66,7 +65,6 @@ const props = defineProps({
     },
 });
 
-defineEmits(['update:modelValue', 'change', 'blur', 'focus']);
 const emit = defineEmits(['update:modelValue', 'change', 'blur', 'focus']);
 
 const textareaRef = ref(null);
@@ -182,7 +180,6 @@ const resizeClass = computed(() => {
             :disabled="disabled"
             :readonly="readonly"
             :maxlength="maxlength"
-            @input="$emit('update:modelValue', $event.target.value)"
             @input="handleInput"
             @change="$emit('change', $event)"
             @blur="$emit('blur', $event)"
@@ -200,4 +197,3 @@ const resizeClass = computed(() => {
         />
     </div>
 </template>
-

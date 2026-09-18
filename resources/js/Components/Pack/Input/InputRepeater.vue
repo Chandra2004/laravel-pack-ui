@@ -61,6 +61,14 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    draggable: {
+        type: Boolean,
+        default: true,
+    },
+    dragHandleOnly: {
+        type: Boolean,
+        default: true,
+    },
     deletable: {
         type: Boolean,
         default: true,
@@ -117,6 +125,8 @@ const emit = defineEmits([
     'item-duplicate',
     'item-move',
     'max-reached',
+    'drag-start',
+    'drag-end',
 ]);
 
 // Unique ID generator for FLIP transition tracking
@@ -156,6 +166,11 @@ const items = ref([]);
 // Visual animation indicators
 const justAddedId = ref(null);
 const movingId = ref(null);
+
+// Drag and Drop state
+const draggedIndex = ref(null);
+const dragOverIndex = ref(null);
+const dropPosition = ref(null); // 'before' | 'after'
 
 // Track collapsed state keyed by item unique ID
 const collapsedStates = ref({});
@@ -394,7 +409,7 @@ const moveUp = (index) => {
     items.value.splice(index - 1, 0, moved);
     emit('update:modelValue', items.value);
     emit('change', items.value);
-    emit('item-move', { fromIndex: index, toIndex: index - 1 });
+    emit('item-move', { fromIndex: index, toIndex: index - 1, method: 'button' });
 };
 
 const moveDown = (index) => {
@@ -411,7 +426,7 @@ const moveDown = (index) => {
     items.value.splice(index + 1, 0, moved);
     emit('update:modelValue', items.value);
     emit('change', items.value);
-    emit('item-move', { fromIndex: index, toIndex: index + 1 });
+    emit('item-move', { fromIndex: index, toIndex: index + 1, method: 'button' });
 };
 
 const removeItem = (index) => {
@@ -431,6 +446,105 @@ const removeItem = (index) => {
     emit('update:modelValue', items.value);
     emit('change', items.value);
     emit('item-remove', { item: removed, index });
+};
+
+// Drag & Drop Handlers
+const handleDragStart = (e, index) => {
+    if (props.disabled || props.readonly || !props.reorderable || !props.draggable) return;
+    draggedIndex.value = index;
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(index));
+    }
+    emit('drag-start', { index, item: items.value[index] });
+};
+
+const handleDragOver = (e, index) => {
+    if (draggedIndex.value === null) return;
+    if (draggedIndex.value === index) {
+        dragOverIndex.value = null;
+        dropPosition.value = null;
+        return;
+    }
+
+    dragOverIndex.value = index;
+    const targetRect = e.currentTarget.getBoundingClientRect();
+    const midY = targetRect.top + targetRect.height / 2;
+    dropPosition.value = e.clientY < midY ? 'before' : 'after';
+
+    if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'move';
+    }
+};
+
+const handleDragEnter = (e, index) => {
+    if (draggedIndex.value === null || draggedIndex.value === index) return;
+    dragOverIndex.value = index;
+};
+
+const handleDragLeave = (e, index) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (
+        e.clientX <= rect.left ||
+        e.clientX >= rect.right ||
+        e.clientY <= rect.top ||
+        e.clientY >= rect.bottom
+    ) {
+        if (dragOverIndex.value === index) {
+            dragOverIndex.value = null;
+            dropPosition.value = null;
+        }
+    }
+};
+
+const handleDrop = (e, index) => {
+    if (draggedIndex.value === null || draggedIndex.value === index) {
+        handleDragEnd();
+        return;
+    }
+
+    const fromIndex = draggedIndex.value;
+    let toIndex = index;
+
+    if (dropPosition.value === 'after' && fromIndex < toIndex) {
+        // dropping below target when dragging downwards stays at target index
+    } else if (dropPosition.value === 'before' && fromIndex > toIndex) {
+        // dropping above target when dragging upwards stays at target index
+    } else if (dropPosition.value === 'after' && fromIndex > toIndex) {
+        toIndex = toIndex + 1;
+    } else if (dropPosition.value === 'before' && fromIndex < toIndex) {
+        toIndex = toIndex - 1;
+    }
+
+    toIndex = Math.max(0, Math.min(items.value.length - 1, toIndex));
+
+    if (fromIndex !== toIndex) {
+        const movedItem = items.value[fromIndex];
+        movingId.value = movedItem._repeater_id;
+        setTimeout(() => {
+            if (movingId.value === movedItem._repeater_id) {
+                movingId.value = null;
+            }
+        }, 450);
+
+        const [moved] = items.value.splice(fromIndex, 1);
+        items.value.splice(toIndex, 0, moved);
+
+        emit('update:modelValue', items.value);
+        emit('change', items.value);
+        emit('item-move', { fromIndex, toIndex, method: 'drag' });
+    }
+
+    handleDragEnd();
+};
+
+const handleDragEnd = () => {
+    if (draggedIndex.value !== null) {
+        emit('drag-end', { index: draggedIndex.value });
+    }
+    draggedIndex.value = null;
+    dragOverIndex.value = null;
+    dropPosition.value = null;
 };
 
 // Lock dimensions and position on item leave for seamless FLIP transitions
@@ -502,7 +616,7 @@ const getColSpanClass = (field) => {
             </slot>
         </div>
 
-        <!-- Repeated Items List with Buttery-Smooth FLIP TransitionGroup -->
+        <!-- Repeated Items List with Drag & Drop and FLIP TransitionGroup -->
         <TransitionGroup
             tag="div"
             enter-active-class="repeater-enter-active"
@@ -518,14 +632,41 @@ const getColSpanClass = (field) => {
             <div
                 v-for="(item, index) in items"
                 :key="getItemKey(item, index)"
-                class="rounded-2xl transition-all duration-300 relative"
+                class="rounded-2xl transition-all duration-300 relative group/repeater-card"
                 :class="[
                     cardVariantClass,
                     size === 'sm' ? 'p-3' : (size === 'lg' ? 'p-5' : 'p-4'),
                     justAddedId === item._repeater_id ? 'ring-2 ring-blue-500/60 shadow-md shadow-blue-500/15' : '',
                     movingId === item._repeater_id ? 'z-10 shadow-lg ring-1 ring-blue-500/40 -translate-y-0.5' : '',
+                    draggedIndex === index ? 'opacity-40 scale-[0.98] border-dashed border-blue-400 dark:border-blue-500 bg-blue-50/40 dark:bg-blue-950/20 shadow-none' : '',
+                    dragOverIndex === index && draggedIndex !== index ? 'ring-2 ring-blue-500/40' : '',
                 ]"
+                :draggable="!dragHandleOnly && reorderable && draggable && items.length > 1 && !disabled && !readonly"
+                @dragstart="!dragHandleOnly && handleDragStart($event, index)"
+                @dragover.prevent="handleDragOver($event, index)"
+                @dragenter.prevent="handleDragEnter($event, index)"
+                @dragleave="handleDragLeave($event, index)"
+                @drop.prevent="handleDrop($event, index)"
+                @dragend="handleDragEnd"
             >
+                <!-- Drop Indicator Line (Top) -->
+                <div
+                    v-if="dragOverIndex === index && dropPosition === 'before' && draggedIndex !== index"
+                    class="absolute -top-2 left-3 right-3 h-1 bg-blue-600 dark:bg-blue-500 rounded-full z-20 shadow-sm flex items-center justify-between pointer-events-none transition-all duration-150"
+                >
+                    <span class="w-2.5 h-2.5 -ml-1 rounded-full bg-blue-600 dark:bg-blue-500 ring-2 ring-white dark:ring-slate-900 shadow-xs" />
+                    <span class="w-2.5 h-2.5 -mr-1 rounded-full bg-blue-600 dark:bg-blue-500 ring-2 ring-white dark:ring-slate-900 shadow-xs" />
+                </div>
+
+                <!-- Drop Indicator Line (Bottom) -->
+                <div
+                    v-if="dragOverIndex === index && dropPosition === 'after' && draggedIndex !== index"
+                    class="absolute -bottom-2 left-3 right-3 h-1 bg-blue-600 dark:bg-blue-500 rounded-full z-20 shadow-sm flex items-center justify-between pointer-events-none transition-all duration-150"
+                >
+                    <span class="w-2.5 h-2.5 -ml-1 rounded-full bg-blue-600 dark:bg-blue-500 ring-2 ring-white dark:ring-slate-900 shadow-xs" />
+                    <span class="w-2.5 h-2.5 -mr-1 rounded-full bg-blue-600 dark:bg-blue-500 ring-2 ring-white dark:ring-slate-900 shadow-xs" />
+                </div>
+
                 <!-- Item Card Header -->
                 <div
                     class="flex items-center justify-between gap-3 select-none transition-all duration-200"
@@ -540,8 +681,27 @@ const getColSpanClass = (field) => {
                         :can-remove="canRemove"
                         :toggle-collapse="() => toggleCollapse(item)"
                         :is-collapsed="isItemCollapsed(item, index)"
+                        :drag-handle-props="{
+                            draggable: true,
+                            onDragstart: (e) => handleDragStart(e, index),
+                            onDragend: handleDragEnd,
+                        }"
+                        :is-dragging="draggedIndex === index"
+                        :is-drag-over="dragOverIndex === index"
                     >
-                        <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <!-- Drag Handle Indicator -->
+                            <div
+                                v-if="reorderable && draggable && items.length > 1 && !disabled && !readonly"
+                                draggable="true"
+                                @dragstart.stop="handleDragStart($event, index)"
+                                @dragend.stop="handleDragEnd"
+                                class="w-6 h-6 rounded-lg flex items-center justify-center text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 cursor-grab active:cursor-grabbing transition-colors select-none shrink-0"
+                                title="Tarik & lepas untuk mengubah posisi (Drag & Drop)"
+                            >
+                                <span class="material-symbols-outlined text-base leading-none pointer-events-none">drag_indicator</span>
+                            </div>
+
                             <!-- Index Badge Pill -->
                             <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-black font-mono bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 shrink-0 transition-colors">
                                 {{ index + 1 }}
@@ -558,9 +718,9 @@ const getColSpanClass = (field) => {
                             </div>
                         </div>
 
-                        <!-- Action Controls (Reorder, Duplicate, Collapse, Delete) -->
+                        <!-- Action Controls (Reorder Buttons, Duplicate, Collapse, Delete) -->
                         <div class="flex items-center gap-1 shrink-0">
-                            <!-- Move Up -->
+                            <!-- Move Up (Button Reorder) -->
                             <button
                                 v-if="reorderable && items.length > 1"
                                 type="button"
@@ -572,7 +732,7 @@ const getColSpanClass = (field) => {
                                 <span class="material-symbols-outlined text-base leading-none">arrow_upward</span>
                             </button>
 
-                            <!-- Move Down -->
+                            <!-- Move Down (Button Reorder) -->
                             <button
                                 v-if="reorderable && items.length > 1"
                                 type="button"
