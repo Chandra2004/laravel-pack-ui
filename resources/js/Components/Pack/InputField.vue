@@ -14,6 +14,7 @@ import InputOtp from './Input/InputOtp.vue';
 import InputMask from './Input/InputMask.vue';
 import InputLocation from './Input/InputLocation.vue';
 import InputTag from './Input/InputTag.vue';
+import InputRepeater from './Input/InputRepeater.vue';
 
 const props = defineProps({
     label: {
@@ -296,10 +297,100 @@ const props = defineProps({
         type: String,
         default: 'xl',
     },
+    // Repeater / Multiple Form Props
+    fields: {
+        type: Array,
+        default: () => [],
+    },
+    defaultItem: {
+        type: Object,
+        default: null,
+    },
+    addButtonText: {
+        type: String,
+        default: 'Tambahkan Data',
+    },
+    addIcon: {
+        type: String,
+        default: 'add',
+    },
+    addPosition: {
+        type: String,
+        default: 'bottom',
+    },
+    itemTitle: {
+        type: [String, Function],
+        default: 'Item',
+    },
+    itemSubtitle: {
+        type: [String, Function],
+        default: '',
+    },
+    columns: {
+        type: [Number, String],
+        default: 2,
+    },
+    collapsible: {
+        type: Boolean,
+        default: false,
+    },
+    defaultCollapsed: {
+        type: Boolean,
+        default: false,
+    },
+    reorderable: {
+        type: Boolean,
+        default: true,
+    },
+    deletable: {
+        type: Boolean,
+        default: true,
+    },
+    duplicable: {
+        type: Boolean,
+        default: true,
+    },
+    confirmDelete: {
+        type: Boolean,
+        default: false,
+    },
+    cardVariant: {
+        type: String,
+        default: 'bordered',
+    },
+    errors: {
+        type: Object,
+        default: () => ({}),
+    },
+    emptyTitle: {
+        type: String,
+        default: 'Belum ada data',
+    },
+    emptyDescription: {
+        type: String,
+        default: 'Klik tombol di bawah untuk menambahkan entri formulir pertama.',
+    },
 });
 
 const model = defineModel();
-defineEmits(['change', 'blur', 'focus', 'clear', 'error', 'cancel-upload', 'validate', 'complete', 'resend', 'tag-add', 'tag-remove', 'max-reached']);
+defineEmits([
+    'change',
+    'blur',
+    'focus',
+    'clear',
+    'error',
+    'cancel-upload',
+    'validate',
+    'complete',
+    'resend',
+    'tag-add',
+    'tag-remove',
+    'max-reached',
+    'item-add',
+    'item-remove',
+    'item-duplicate',
+    'item-move',
+]);
 
 // SSR Hydration-safe Unique ID generator (Vue 3.5+)
 const generatedId = useId();
@@ -659,6 +750,49 @@ defineExpose({
             @focus="$emit('focus', $event)"
             @clear="$emit('clear')"
         />
+
+        <!-- Dynamic Form Repeater (Multiple Input Form) -->
+        <InputRepeater
+            v-else-if="['repeater', 'form-repeater', 'multiple-form'].includes(type)"
+            ref="controlRef"
+            :id="inputId"
+            v-model="model"
+            :name="name"
+            :fields="fields"
+            :default-item="defaultItem"
+            :min="min !== null ? Number(min) : 1"
+            :max="max !== null ? Number(max) : null"
+            :add-button-text="addButtonText"
+            :add-icon="addIcon"
+            :add-position="addPosition"
+            :item-title="itemTitle"
+            :item-subtitle="itemSubtitle"
+            :columns="columns"
+            :collapsible="collapsible"
+            :default-collapsed="defaultCollapsed"
+            :reorderable="reorderable"
+            :deletable="deletable"
+            :duplicable="duplicable"
+            :confirm-delete="confirmDelete"
+            :card-variant="cardVariant"
+            :size="size"
+            :disabled="disabled"
+            :readonly="readonly"
+            :errors="errors"
+            :empty-title="emptyTitle"
+            :empty-description="emptyDescription"
+            @change="$emit('change', $event)"
+            @item-add="$emit('item-add', $event)"
+            @item-remove="$emit('item-remove', $event)"
+            @item-duplicate="$emit('item-duplicate', $event)"
+            @item-move="$emit('item-move', $event)"
+            @max-reached="$emit('max-reached', $event)"
+        >
+            <!-- Forward dynamic slots -->
+            <template v-for="(_, slotName) in $slots" #[slotName]="slotProps">
+                <slot :name="slotName" v-bind="slotProps || {}" />
+            </template>
+        </InputRepeater>
 
         <!-- Standard Textual & HTML5 Inputs (Text, Password, Number, Search, Currency, etc.) -->
         <InputText

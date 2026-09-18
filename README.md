@@ -56,6 +56,7 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 | **`LocationPicker.vue`** | Komponen pemilih tag lokasi interaktif berbasis Leaflet & OpenStreetMap: pin marker *draggable*, auto *reverse-geocoding*, deteksi GPS instan, pencarian tempat, dan output lat/lng. |
 | **`InputTag.vue`** / **`TagInput.vue`** | Komponen input tag enterprise dengan 4 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks/scoped slots `#tag` & `#option`, ikon & perataan vertikal presisi), 3 mode (random, preset, hybrid), auto-paste split, dan dropdown anti-clipping di Card. |
 | **`ScrollProgress.vue`** | Indikator progres scroll cerdas berkinerja tinggi (60fps passive listener) dengan 5 pilar UI, 4 mode tampilan anti-monoton (`bar`, `floating-pill`, `circular`, `minimal`), 9 tema warna solid, perpaduan terpusat **Icon + Teks**, target kontainer lokal, estimasi waktu baca, dan tombol terintegrasi *Scroll to Top*. [Dokumentasi Lengkap →](doc/components/scroll-progress.md) |
+| **`DragDrop.vue`** | Komponen drag and drop universal zero-dependency: sortable list satu dimensi, responsive grid cards reordering, enterprise Kanban board antar kolom, dan touch device support. [Dokumentasi Lengkap →](doc/components/drag-drop.md) |
 
 
 ### 🧩 Composables (State Helpers)
