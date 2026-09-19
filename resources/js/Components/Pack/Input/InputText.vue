@@ -103,9 +103,39 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    showPasswordStrength: {
+        type: Boolean,
+        default: true,
+    },
+    passwordRules: {
+        type: Object,
+        default: () => ({
+            minLength: 8,
+            requireUppercase: true,
+            requireLowercase: true,
+            requireNumbers: true,
+            requireSymbols: true,
+        }),
+    },
+    validator: {
+        type: Function,
+        default: null,
+    },
+    pattern: {
+        type: [String, RegExp],
+        default: null,
+    },
+    patternMessage: {
+        type: String,
+        default: 'Format input tidak sesuai ketentuan',
+    },
+    onWatch: {
+        type: Function,
+        default: null,
+    },
 });
 
-const emit = defineEmits(['update:modelValue', 'change', 'blur', 'focus', 'clear', 'validate']);
+const emit = defineEmits(['update:modelValue', 'input', 'change', 'blur', 'focus', 'clear', 'validate']);
 
 const containerRef = ref(null);
 const isFocused = ref(false);
@@ -154,67 +184,208 @@ watch(() => props.modelValue, (newVal) => {
 
 // Live Validation Rules & Feedback
 const liveFeedback = ref('');
+
+// Normalisasi password rules kustom
+const activePasswordRules = computed(() => {
+    const rules = props.passwordRules || {};
+    return {
+        minLength: typeof rules.minLength === 'number' ? rules.minLength : 8,
+        requireUppercase: rules.requireUppercase !== false,
+        requireLowercase: rules.requireLowercase !== false,
+        requireNumbers: rules.requireNumbers !== false,
+        requireSymbols: rules.requireSymbols !== false,
+    };
+});
+
 const passwordCriteria = ref({
     minChar: false,
-    hasUpperLower: false,
+    hasUppercase: false,
+    hasLowercase: false,
     hasNumber: false,
     hasSpecial: false,
 });
 
+// Hitung total kriteria yang aktif
+const totalActiveRulesCount = computed(() => {
+    let count = 0;
+    const r = activePasswordRules.value;
+    if (r.minLength > 0) count++;
+    if (r.requireUppercase) count++;
+    if (r.requireLowercase) count++;
+    if (r.requireNumbers) count++;
+    if (r.requireSymbols) count++;
+    return Math.max(count, 1);
+});
+
+// Skor kekuatan sandi berdasarkan aturan aktif yang lolos
 const passwordStrengthScore = computed(() => {
-    let score = 0;
-    if (passwordCriteria.value.minChar) score++;
-    if (passwordCriteria.value.hasUpperLower) score++;
-    if (passwordCriteria.value.hasNumber) score++;
-    if (passwordCriteria.value.hasSpecial) score++;
-    return score;
+    let passed = 0;
+    const r = activePasswordRules.value;
+    if (r.minLength > 0 && passwordCriteria.value.minChar) passed++;
+    if (r.requireUppercase && passwordCriteria.value.hasUppercase) passed++;
+    if (r.requireLowercase && passwordCriteria.value.hasLowercase) passed++;
+    if (r.requireNumbers && passwordCriteria.value.hasNumber) passed++;
+    if (r.requireSymbols && passwordCriteria.value.hasSpecial) passed++;
+    return passed;
 });
 
 const passwordStrengthLabel = computed(() => {
-    switch (passwordStrengthScore.value) {
-        case 4: return { text: 'Sangat Kuat', color: 'text-emerald-500 bg-emerald-500' };
-        case 3: return { text: 'Kuat', color: 'text-blue-500 bg-blue-500' };
-        case 2: return { text: 'Sedang', color: 'text-amber-500 bg-amber-500' };
-        case 1:
-        default: return { text: 'Lemah', color: 'text-rose-500 bg-rose-500' };
+    const total = totalActiveRulesCount.value;
+    const score = passwordStrengthScore.value;
+    const ratio = score / total;
+
+    if (ratio >= 1) {
+        return { text: 'Sangat Kuat', color: 'text-emerald-500 bg-emerald-500' };
+    } else if (ratio >= 0.75) {
+        return { text: 'Kuat', color: 'text-blue-500 bg-blue-500' };
+    } else if (ratio >= 0.5) {
+        return { text: 'Sedang', color: 'text-amber-500 bg-amber-500' };
+    } else {
+        return { text: 'Lemah', color: 'text-rose-500 bg-rose-500' };
     }
 });
 
 const validateInput = (rawVal) => {
-    if (!props.liveValidation) return;
+    const strVal = rawVal === null || rawVal === undefined ? '' : String(rawVal);
 
-    if (props.type === 'email') {
-        if (!rawVal) {
+    // Panggil callback onWatch jika disediakan developer
+    if (typeof props.onWatch === 'function') {
+        try {
+            props.onWatch(rawVal);
+        } catch {}
+    }
+
+    if (!props.liveValidation) {
+        return { valid: true, message: '' };
+    }
+
+    // 1. Prioritas Tertinggi: Validator Kustom Function
+    if (typeof props.validator === 'function') {
+        const result = props.validator(rawVal);
+        if (result === true || (typeof result === 'object' && result?.valid === true)) {
             liveFeedback.value = '';
-            return;
+            const payload = { valid: true, message: '', value: rawVal };
+            emit('validate', payload);
+            return payload;
+        } else {
+            const msg = typeof result === 'string'
+                ? result
+                : (result?.message || 'Format data tidak valid');
+            liveFeedback.value = msg;
+            const payload = { valid: false, message: msg, value: rawVal };
+            emit('validate', payload);
+            return payload;
+        }
+    }
+
+    // 2. Pola Regex Kustom (Pattern)
+    if (props.pattern && strVal) {
+        const regex = typeof props.pattern === 'string' ? new RegExp(props.pattern) : props.pattern;
+        if (!regex.test(strVal)) {
+            liveFeedback.value = props.patternMessage || 'Format input tidak sesuai ketentuan';
+            const payload = { valid: false, message: liveFeedback.value, value: rawVal };
+            emit('validate', payload);
+            return payload;
+        }
+    }
+
+    // 3. Validasi Built-in Berdasarkan Tipe
+    if (props.type === 'email') {
+        if (!strVal) {
+            liveFeedback.value = '';
+            const payload = { valid: true, message: '', value: rawVal };
+            emit('validate', payload);
+            return payload;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(rawVal)) {
+        if (!emailRegex.test(strVal)) {
             liveFeedback.value = "Email harus mengandung karakter '@' dan domain valid (contoh: nama@domain.com)";
-            emit('validate', { valid: false, message: liveFeedback.value });
+            const payload = { valid: false, message: liveFeedback.value, value: rawVal };
+            emit('validate', payload);
+            return payload;
         } else {
             liveFeedback.value = '';
-            emit('validate', { valid: true, message: '' });
+            const payload = { valid: true, message: '', value: rawVal };
+            emit('validate', payload);
+            return payload;
         }
+    } else if (props.type === 'url') {
+        if (!strVal) {
+            liveFeedback.value = '';
+            const payload = { valid: true, message: '', value: rawVal };
+            emit('validate', payload);
+            return payload;
+        }
+        const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+        if (!urlRegex.test(strVal)) {
+            liveFeedback.value = "Format URL tidak valid (contoh: https://domain.com)";
+            const payload = { valid: false, message: liveFeedback.value, value: rawVal };
+            emit('validate', payload);
+            return payload;
+        } else {
+            liveFeedback.value = '';
+            const payload = { valid: true, message: '', value: rawVal };
+            emit('validate', payload);
+            return payload;
+        }
+    } else if (props.type === 'number') {
+        if (strVal !== '') {
+            const num = Number(strVal);
+            if (props.min !== null && !isNaN(num) && num < Number(props.min)) {
+                liveFeedback.value = `Nilai minimal adalah ${props.min}`;
+                const payload = { valid: false, message: liveFeedback.value, value: rawVal };
+                emit('validate', payload);
+                return payload;
+            }
+            if (props.max !== null && !isNaN(num) && num > Number(props.max)) {
+                liveFeedback.value = `Nilai maksimal adalah ${props.max}`;
+                const payload = { valid: false, message: liveFeedback.value, value: rawVal };
+                emit('validate', payload);
+                return payload;
+            }
+        }
+        liveFeedback.value = '';
+        const payload = { valid: true, message: '', value: rawVal };
+        emit('validate', payload);
+        return payload;
     } else if (props.type === 'password') {
-        const str = rawVal || '';
+        const str = strVal;
+        const r = activePasswordRules.value;
         passwordCriteria.value = {
-            minChar: str.length >= 8,
-            hasUpperLower: /[a-z]/.test(str) && /[A-Z]/.test(str),
+            minChar: str.length >= r.minLength,
+            hasUppercase: /[A-Z]/.test(str),
+            hasLowercase: /[a-z]/.test(str),
             hasNumber: /\d/.test(str),
             hasSpecial: /[^A-Za-z0-9]/.test(str),
         };
-        const isValid = str.length >= 8;
-        emit('validate', { valid: isValid, score: passwordStrengthScore.value });
+        const isValid = passwordStrengthScore.value === totalActiveRulesCount.value;
+        const payload = {
+            valid: isValid,
+            score: passwordStrengthScore.value,
+            totalScore: totalActiveRulesCount.value,
+            criteria: passwordCriteria.value,
+            value: rawVal,
+        };
+        emit('validate', payload);
+        return payload;
     } else if (props.type === 'tel') {
-        const digits = String(rawVal).replace(/\D/g, '');
+        const digits = strVal.replace(/\D/g, '');
         if (digits.length > 0 && (digits.length < 10 || digits.length > 14)) {
             liveFeedback.value = `Nomor telepon harus antara 10 - 14 digit (saat ini: ${digits.length} digit)`;
-            emit('validate', { valid: false, message: liveFeedback.value });
+            const payload = { valid: false, message: liveFeedback.value, value: rawVal };
+            emit('validate', payload);
+            return payload;
         } else {
             liveFeedback.value = '';
-            emit('validate', { valid: true, message: '' });
+            const payload = { valid: true, message: '', value: rawVal };
+            emit('validate', payload);
+            return payload;
         }
+    } else {
+        liveFeedback.value = '';
+        const payload = { valid: true, message: '', value: rawVal };
+        emit('validate', payload);
+        return payload;
     }
 };
 
@@ -223,6 +394,7 @@ watch(() => props.modelValue, (newVal) => {
 });
 
 const handleInput = (e) => {
+    emit('input', e);
     const rawVal = e.target.value;
 
     if (isCurrency.value) {
@@ -355,6 +527,8 @@ const blur = () => {
 defineExpose({
     focus,
     blur,
+    clear: handleClear,
+    validate: () => validateInput(displayValue.value),
     inputRef,
 });
 </script>
@@ -484,7 +658,7 @@ defineExpose({
 
         <!-- PrimeVue Style Password Strength Meter & Live Checklist -->
         <div
-            v-if="type === 'password' && isFocused && displayValue"
+            v-if="type === 'password' && showPasswordStrength && isFocused && displayValue"
             class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg space-y-2 select-none"
         >
             <div class="flex items-center justify-between text-xs">
@@ -492,31 +666,58 @@ defineExpose({
                 <span class="font-bold text-xs" :class="passwordStrengthLabel.color">{{ passwordStrengthLabel.text }}</span>
             </div>
 
-            <!-- 4-Stage Strength Bar -->
-            <div class="grid grid-cols-4 gap-1.5 h-1.5 w-full">
+            <!-- Dynamic Strength Bar based on totalActiveRulesCount -->
+            <div
+                class="grid gap-1.5 h-1.5 w-full"
+                :style="{ gridTemplateColumns: `repeat(${totalActiveRulesCount}, minmax(0, 1fr))` }"
+            >
                 <div
-                    v-for="i in 4"
+                    v-for="i in totalActiveRulesCount"
                     :key="i"
                     class="h-full rounded-full transition-colors duration-200"
                     :class="i <= passwordStrengthScore ? passwordStrengthLabel.color : 'bg-slate-200 dark:bg-slate-800'"
                 />
             </div>
 
-            <!-- Requirements Checklist -->
+            <!-- Requirements Checklist (Only show active rules) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-[11px]">
-                <div class="flex items-center gap-1.5" :class="passwordCriteria.minChar ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'">
+                <div
+                    v-if="activePasswordRules.minLength > 0"
+                    class="flex items-center gap-1.5"
+                    :class="passwordCriteria.minChar ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'"
+                >
                     <span class="material-symbols-outlined text-xs leading-none">{{ passwordCriteria.minChar ? 'check_circle' : 'radio_button_unchecked' }}</span>
-                    <span>Min. 8 karakter</span>
+                    <span>Min. {{ activePasswordRules.minLength }} karakter</span>
                 </div>
-                <div class="flex items-center gap-1.5" :class="passwordCriteria.hasUpperLower ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'">
-                    <span class="material-symbols-outlined text-xs leading-none">{{ passwordCriteria.hasUpperLower ? 'check_circle' : 'radio_button_unchecked' }}</span>
-                    <span>Huruf besar & kecil</span>
+                <div
+                    v-if="activePasswordRules.requireUppercase"
+                    class="flex items-center gap-1.5"
+                    :class="passwordCriteria.hasUppercase ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'"
+                >
+                    <span class="material-symbols-outlined text-xs leading-none">{{ passwordCriteria.hasUppercase ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                    <span>Huruf besar (A-Z)</span>
                 </div>
-                <div class="flex items-center gap-1.5" :class="passwordCriteria.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'">
+                <div
+                    v-if="activePasswordRules.requireLowercase"
+                    class="flex items-center gap-1.5"
+                    :class="passwordCriteria.hasLowercase ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'"
+                >
+                    <span class="material-symbols-outlined text-xs leading-none">{{ passwordCriteria.hasLowercase ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                    <span>Huruf kecil (a-z)</span>
+                </div>
+                <div
+                    v-if="activePasswordRules.requireNumbers"
+                    class="flex items-center gap-1.5"
+                    :class="passwordCriteria.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'"
+                >
                     <span class="material-symbols-outlined text-xs leading-none">{{ passwordCriteria.hasNumber ? 'check_circle' : 'radio_button_unchecked' }}</span>
                     <span>Mengandung angka</span>
                 </div>
-                <div class="flex items-center gap-1.5" :class="passwordCriteria.hasSpecial ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'">
+                <div
+                    v-if="activePasswordRules.requireSymbols"
+                    class="flex items-center gap-1.5"
+                    :class="passwordCriteria.hasSpecial ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'"
+                >
                     <span class="material-symbols-outlined text-xs leading-none">{{ passwordCriteria.hasSpecial ? 'check_circle' : 'radio_button_unchecked' }}</span>
                     <span>Simbol (!@#$%^&*)</span>
                 </div>

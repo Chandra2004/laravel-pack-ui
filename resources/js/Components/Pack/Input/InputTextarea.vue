@@ -65,7 +65,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['update:modelValue', 'change', 'blur', 'focus']);
+const emit = defineEmits(['update:modelValue', 'input', 'change', 'blur', 'focus']);
 
 const textareaRef = ref(null);
 
@@ -130,6 +130,7 @@ watch(() => props.modelValue, () => {
 });
 
 const handleInput = (e) => {
+    emit('input', e);
     emit('update:modelValue', e.target.value);
     if (props.autoResize) {
         adjustHeight();

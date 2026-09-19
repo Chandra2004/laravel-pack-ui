@@ -9,6 +9,7 @@
 Komponen universal input form yang menggabungkan seluruh variasi elemen input HTML5 standar dan kontrol form modern dalam 1 komponen seragam yang adaptif terhadap dark mode Tailwind CSS dan Google Material Icons.
 
 ### Fitur Utama:
+
 1. **Dukungan 20+ Tipe Input Lengkap**: Mendukung seluruh tipe HTML5 standar (`text`, `email`, `password`, `number`, `tel`, `url`, `search`, `date`, `time`, `datetime-local`, `month`, `week`) serta komponen khusus (`textarea`, `select`, `checkbox`, `radio`, `switch`, `file`, `color`, `range`).
 2. **Password Reveal Toggle**: Tombol otomatis (ikon mata) untuk melihat/menyembunyikan sandi pada input `type="password"`.
 3. **Search Auto-Clear**: Tombol silang untuk menghapus kata kunci pencarian secara instan pada `type="search"`.
@@ -23,139 +24,393 @@ Komponen universal input form yang menggabungkan seluruh variasi elemen input HT
 
 ### Daftar Tipe Input yang Didukung (`type="..."`)
 
-| Kategori | Nilai `type` | Deskripsi & Fitur Khusus |
-| :--- | :--- | :--- |
-| **Kredensial & Teks** | `'text'` | Input teks umum dengan addon prefix/suffix dan ikon |
-| | `'email'` | Input alamat email dengan validasi format bawaan browser |
-| | `'password'` | Input kata sandi dengan tombol toggle show/hide password (Google Icons) |
-| | `'search'` | Input pencarian dengan tombol hapus/clear instan |
-| | `'number'` | Input angka dengan dukungan min, max, step, dan prefix mata uang (`"Rp"`) |
-| | `'tel'` | Input nomor telepon / WhatsApp |
-| | `'url'` | Input tautan web dengan prefix link |
-| **Tanggal & Waktu** | `'date'` | Pemilih tanggal kalender kustom ala PrimeVue (navigasi bulan/tahun, badge tanggal aktif, tombol hari ini & hapus) |
-| | `'time'` | Pemilih jam & menit popover kustom dengan kontrol spinner |
-| | `'datetime-local'` | Pemilih tanggal dan waktu terintegrasi dalam satu panel popover kustom |
-| | `'month'` | Pemilih bulan & tahun |
-| | `'week'` | Pemilih minggu & tahun |
-| **Pilihan & Multiline** | `'select'` | Custom floating dropdown popover ala PrimeVue dengan filter pencarian, checkmark terpilih, dan keyboard navigation |
-| | `'textarea'` | Input teks multiline dengan `rows` dan live character counter limit |
-| | `'checkbox'` | Kotak centang dengan label dan subteks penjelasan |
-| | `'radio'` | Pilihan radio group dengan array `options` |
-| | `'switch'` | Toggle sakelar switch on/off modern |
-| **Media & Spesial** | `'file'` | Box upload drag-and-drop dengan live thumbnail preview |
-| | `'color'` | Floating color picker popover dengan palet warna cepat, eyedropper layar, dan salin HEX |
-| | `'range'` | Slider rentang nilai dengan indikator badge angka dinamis |
-| | `'otp'` | Input One-Time Password / PIN dengan slot digit terpisah, auto-focus, paste parsing, masking, dan countdown timer |
-| | `'mask'` | Input berformat pola kustom/preset (kartu kredit, NPWP, NIK, kode pos) dengan pemformatan otomatis dan pengikatan raw value |
+| Kategori                      | Nilai`type`        | Deskripsi & Fitur Khusus                                                                                                    |
+| :---------------------------- | :------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
+| **Kredensial & Teks**   | `'text'`           | Input teks umum dengan addon prefix/suffix dan ikon                                                                         |
+|                               | `'email'`          | Input alamat email dengan validasi format bawaan browser                                                                    |
+|                               | `'password'`       | Input kata sandi dengan tombol toggle show/hide password (Google Icons)                                                     |
+|                               | `'search'`         | Input pencarian dengan tombol hapus/clear instan                                                                            |
+|                               | `'number'`         | Input angka dengan dukungan min, max, step, dan prefix mata uang (`"Rp"`)                                                 |
+|                               | `'tel'`            | Input nomor telepon / WhatsApp                                                                                              |
+|                               | `'url'`            | Input tautan web dengan prefix link                                                                                         |
+| **Tanggal & Waktu**     | `'date'`           | Pemilih tanggal kalender kustom ala PrimeVue (navigasi bulan/tahun, badge tanggal aktif, tombol hari ini & hapus)           |
+|                               | `'time'`           | Pemilih jam & menit popover kustom dengan kontrol spinner                                                                   |
+|                               | `'datetime-local'` | Pemilih tanggal dan waktu terintegrasi dalam satu panel popover kustom                                                      |
+|                               | `'month'`          | Pemilih bulan & tahun                                                                                                       |
+|                               | `'week'`           | Pemilih minggu & tahun                                                                                                      |
+| **Pilihan & Multiline** | `'select'`         | Custom floating dropdown popover ala PrimeVue dengan filter pencarian, checkmark terpilih, dan keyboard navigation          |
+|                               | `'textarea'`       | Input teks multiline dengan`rows` dan live character counter limit                                                        |
+|                               | `'checkbox'`       | Kotak centang dengan label dan subteks penjelasan                                                                           |
+|                               | `'radio'`          | Pilihan radio group dengan array`options`                                                                                 |
+|                               | `'switch'`         | Toggle sakelar switch on/off modern                                                                                         |
+| **Media & Spesial**     | `'file'`           | Box upload drag-and-drop dengan live thumbnail preview                                                                      |
+|                               | `'color'`          | Floating color picker popover dengan palet warna cepat, eyedropper layar, dan salin HEX                                     |
+|                               | `'range'`          | Slider rentang nilai dengan indikator badge angka dinamis                                                                   |
+|                               | `'otp'`            | Input One-Time Password / PIN dengan slot digit terpisah, auto-focus, paste parsing, masking, dan countdown timer           |
+|                               | `'mask'`           | Input berformat pola kustom/preset (kartu kredit, NPWP, NIK, kode pos) dengan pemformatan otomatis dan pengikatan raw value |
+
+---
 
 ---
 
 ### Component Props API (`<InputField />`)
 
-| Prop | Tipe Data | Default | Deskripsi |
-| :--- | :--- | :--- | :--- |
-| `modelValue` / `v-model` | `[String, Number, Boolean, File, Array, Object]` | `''` | State binding reaktif nilai input |
-| `type` | `String` | `'text'` | Tipe kontrol input (mendukung 20+ HTML5 & kontrol form khusus) |
-| `label` | `String` | `''` | Judul label di atas input |
-| `subtext` | `String` | `''` | Teks penjelasan tambahan di sebelah label/switch/radio |
-| `name` | `String` | `''` | Atribut nama input HTML |
-| `id` | `String` | `''` | Atribut ID elemen input (menggunakan `useId()` Vue 3.5 secara SSR-safe) |
-| `placeholder` | `String` | `''` | Teks placeholder bantuan |
-| `required` | `Boolean` | `false` | Menandai field wajib diisi (menambahkan tanda `*` merah) |
-| `disabled` | `Boolean` | `false` | Menonaktifkan interaksi input |
-| `readonly` | `Boolean` | `false` | Mengunci input hanya dapat dibaca |
-| `error` | `String` | `''` | Pesan error validasi (border merah & ring glow ala PrimeVue) |
-| `hint` | `String` | `''` | Teks bantuan / petunjuk di bawah input |
-| `icon` | `String` | `''` | Nama Google Material Icon di sisi kiri input |
-| `iconRight` | `String` | `''` | Nama Google Material Icon di sisi kanan input |
-| `prefix` | `String` | `''` | Teks addon di sisi kiri (contoh: `'Rp'`, `'https://'`) |
-| `suffix` | `String` | `''` | Teks addon di sisi kanan (contoh: `'%'`, `'IDR'`, `'/ bln'`) |
-| `autocomplete` | `String` | `''` | Nilai atribut autocomplete browser |
-| `maxlength` | `[Number, String]` | `null` | Batas maksimum panjang karakter (menampilkan live counter) |
-| `min` | `[Number, String]` | `null` | Batas nilai minimum (untuk `number`, `range`, `date`) |
-| `max` | `[Number, String]` | `null` | Batas nilai maksimum (untuk `number`, `range`, `date`) |
-| `step` | `[Number, String]` | `null` | Interval loncatan nilai (untuk `number`, `range`) |
-| `rows` | `[Number, String]` | `3` | Jumlah baris awal untuk `type="textarea"` |
-| `options` | `Array` | `[]` | Opsi pilihan untuk `type="select"`, `type="radio"`, atau saran pencarian pada `type="search"` |
-| `multiple` | `Boolean` | `false` | Mengizinkan multi-select atau multi-file upload |
-| `accept` | `String` | `''` | Format file yang diterima untuk `type="file"` (default kosong = menerima semua jenis berkas) |
-| `size` | `String` | `'md'` | Ukuran kontrol form (`'sm'`, `'md'`, `'lg'`) |
-| `clearable` | `Boolean` | `false` | Menampilkan tombol hapus instan pada input yang memiliki nilai (otomatis aktif pada `type="search"`) |
-| `showPasswordToggle`| `Boolean` | `true` | Menampilkan toggle ikon mata lihat/sembunyikan sandi pada `type="password"` |
-| `loading` | `Boolean` | `false` | Menampilkan spinner loading halus di sisi kanan input/select |
-| `currency` | `[Boolean, String]` | `false` | Mengaktifkan format nominal uang lokal (pemisah ribuan otomatis) dan mengikat nilai murni numerik ke `v-model` |
-| `maxSize` | `[Number, String]` | `null` | Batas ukuran file maksimal pada `type="file"` (misal: `'5MB'`, `'500KB'`, atau bytes) dengan validasi instan |
-| `maxFiles` | `Number` | `null` | Batas jumlah file maksimal pada upload multi-berkas |
-| `variant` / `layout` | `String` | `''` | Varian tampilan upload berkas (`'avatar'`, `'dropzone'` untuk single file; `'grid'`, `'list'` untuk multiple file). Default otomatis `'dropzone'` (single) dan `'grid'` (multiple) |
-| `uploading` | `Boolean` | `false` | Menampilkan progress bar dan status loading unggah pada `type="file"` |
-| `progress` | `Number` | `null` | Angka persentase progress unggah (0-100) pada `type="file"` |
-| `liveValidation`| `Boolean` | `true` | Mengaktifkan validasi langsung format email, password strength meter, dan format nomor telepon |
-| `rangeLabel` | `String` | `'Nilai'` | Label teks sebelum angka nilai pada `type="range"` |
-| `rangeFormatter` | `Function` | `null` | Fungsi kustom pemformatan angka slider (misal: `(v) => `${v}%`` atau `(v) => `Rp ${v}``) |
-| `autoResize` | `Boolean` | `false` | Textarea otomatis menyesuaikan tinggi dengan konten (`type="textarea"`) |
-| `minRows` | `[Number, String]` | `null` | Batas minimal baris saat auto-resize (`type="textarea"`) |
-| `maxRows` | `[Number, String]` | `null` | Batas maksimal baris saat auto-resize (`type="textarea"`) |
-| `resize` | `String` | `'vertical'` | Kontrol arah resize manual CSS: `'none'`, `'vertical'`, `'both'`, `'horizontal'` |
-| `indeterminate`| `Boolean` | `false` | Status parsial "sebagian tercentang" dengan ikon minus (`type="checkbox"`) |
-| `chipDisplay` | `Boolean` | `true` | Menampilkan opsi terpilih sebagai chips/tags dengan tombol hapus individual pada multi-select (`type="select"`) |
-| `length` | `Number` | `6` | Jumlah slot digit pada input PIN/OTP (`type="otp"`) |
-| `integerOnly` | `Boolean` | `true` | Hanya mengizinkan karakter angka pada OTP (`type="otp"`) |
-| `masked` | `Boolean` | `false` | Menyembunyikan tampilan karakter OTP dengan titik sandi (`type="otp"`) |
-| `separator` | `String` | `''` | Karakter pemisah antar grup slot OTP (contoh: `'-'`) |
-| `separatorAfter`| `Number` | `null` | Posisi pemisah setelah slot ke-N (default: tengah) (`type="otp"`) |
-| `countdown` | `Number` | `0` | Durasi timer hitung mundur kirim ulang OTP dalam detik (`type="otp"`) |
-| `resendText` | `String` | `'Kirim Ulang Kode OTP'` | Teks label tombol kirim ulang setelah countdown habis (`type="otp"`) |
-| `mask` | `String` | `''` | Pola masking kustom: `#` (angka), `A` (huruf), `*` (alfanumerik) (`type="mask"`) |
-| `preset` | `String` | `''` | Preset pola mask bawaan: `'credit-card'`, `'npwp'`, `'nik'`, `'postal-code'`, `'phone-id'`, `'expiry'`, `'cvv'` |
-| `slotChar` | `String` | `'_'` | Karakter placeholder pada posisi slot yang belum diisi (`type="mask"`) |
-| `emitRaw` | `Boolean` | `true` | Mengikat nilai murni tanpa pemisah ke `v-model` (`type="mask"`) |
+Berikut adalah daftar lengkap properti (*props*) yang didukung oleh `<InputField />`, dikelompokkan berdasarkan fungsinya:
+
+#### 1. Properti Umum & Tipografi Form
+
+| Prop                         | Tipe Data                                          | Default    | Deskripsi                                                                                                                                                                                                                                                                                                                                                          |
+| :--------------------------- | :------------------------------------------------- | :--------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modelValue` / `v-model` | `[String, Number, Boolean, File, Array, Object]` | `''`     | State binding reaktif nilai input.                                                                                                                                                                                                                                                                                                                                 |
+| `type`                     | `String`                                         | `'text'` | Tipe kontrol input (mendukung 20+ varian:`text`, `email`, `password`, `number`, `tel`, `url`, `search`, `date`, `time`, `datetime-local`, `month`, `week`, `currency`, `textarea`, `select`, `checkbox`, `radio`, `switch`, `file`, `color`, `range`, `otp`, `mask`, `location`, `tag`, `tags`, `repeater`). |
+| `label`                    | `String`                                         | `''`     | Teks judul label di atas input.                                                                                                                                                                                                                                                                                                                                    |
+| `subtext`                  | `String`                                         | `''`     | Teks penjelasan sekunder di samping label, switch, atau checkbox.                                                                                                                                                                                                                                                                                                  |
+| `name`                     | `String`                                         | `''`     | Atribut nama input HTML untuk form submission.                                                                                                                                                                                                                                                                                                                     |
+| `id`                       | `String`                                         | `''`     | Atribut ID elemen input (otomatis dibuat secara unik dan SSR-safe dengan`useId()` Vue 3.5 jika dikosongkan).                                                                                                                                                                                                                                                     |
+| `placeholder`              | `String`                                         | `''`     | Teks petunjuk abu-abu saat input masih kosong.                                                                                                                                                                                                                                                                                                                     |
+| `required`                 | `Boolean`                                        | `false`  | Menandai field wajib diisi dan otomatis menambahkan tanda bintang (`*`) merah.                                                                                                                                                                                                                                                                                   |
+| `disabled`                 | `Boolean`                                        | `false`  | Menonaktifkan interaksi input dan memberikan styling redup (*opacity 60%*).                                                                                                                                                                                                                                                                                      |
+| `readonly`                 | `Boolean`                                        | `false`  | Mengunci nilai input agar tidak dapat diedit pengguna namun tetap dapat disalin dan difokuskan.                                                                                                                                                                                                                                                                    |
+| `error`                    | `String`                                         | `''`     | Pesan error validasi (otomatis memberi border merah, glow ring, dan ikon peringatan di bawah input). Selaras dengan`form.errors.field` Inertia.                                                                                                                                                                                                                  |
+| `hint`                     | `String`                                         | `''`     | Teks panduan atau petunjuk pengisian di bawah kontrol form (hanya muncul saat tidak ada`error`).                                                                                                                                                                                                                                                                 |
+| `icon`                     | `String`                                         | `''`     | Nama Google Material Icon di sisi kiri input (contoh:`'mail'`, `'lock'`, `'person'`).                                                                                                                                                                                                                                                                        |
+| `iconRight`                | `String`                                         | `''`     | Nama Google Material Icon di sisi kanan input.                                                                                                                                                                                                                                                                                                                     |
+| `prefix`                   | `String`                                         | `''`     | Teks addon di sisi kiri luar (contoh:`'Rp'`, `'https://'`).                                                                                                                                                                                                                                                                                                    |
+| `suffix`                   | `String`                                         | `''`     | Teks addon di sisi kanan luar (contoh:`'%'`, `'IDR'`, `'/ bulan'`).                                                                                                                                                                                                                                                                                          |
+| `size`                     | `String`                                         | `'md'`   | Ukuran skala komponen:`'sm'` (kompak/tabel), `'md'` (standar form), `'lg'` (hero input).                                                                                                                                                                                                                                                                     |
+| `autocomplete`             | `String`                                         | `''`     | Atribut HTML5 autocomplete (contoh:`'current-password'`, `'new-password'`, `'email'`).                                                                                                                                                                                                                                                                       |
+| `clearable`                | `Boolean`                                        | `false`  | Menampilkan tombol silang (*clear*) instan saat input terisi (otomatis `true` pada `type="search"`).                                                                                                                                                                                                                                                         |
+| `loading`                  | `Boolean`                                        | `false`  | Menampilkan spinner animasi memuat di sisi kanan input atau select.                                                                                                                                                                                                                                                                                                |
+
+#### 2. Fitur Universal Watch & Validasi Kustom (Untuk Semua Input)
+
+| Prop               | Tipe Data            | Default                                   | Deskripsi                                                                                                                                                                                                 |
+| :----------------- | :------------------- | :---------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `liveValidation` | `Boolean`          | `true`                                  | Mengaktifkan evaluasi format real-time saat pengguna mengetik (email, password, tel, url, number).                                                                                                        |
+| `validator`      | `Function(value)`  | `null`                                  | Fungsi validasi kustom untuk**seluruh tipe input**. Mengembalikan `true` jika valid, atau `String` pesan error jika tidak valid. Pesan error langsung tampil di bawah input (*liveFeedback*). |
+| `pattern`        | `[String, RegExp]` | `null`                                  | Pola ekspresi reguler (Regex) untuk validasi langsung pada input teks.                                                                                                                                    |
+| `patternMessage` | `String`           | `'Format input tidak sesuai ketentuan'` | Pesan kesalahan yang ditampilkan saat input tidak lolos pengecekan`pattern`.                                                                                                                            |
+| `onWatch`        | `Function(newVal)` | `null`                                  | Callback hook pemantau yang dipicu setiap kali nilai input berubah secara reaktif (fitur*watch universal*).                                                                                             |
+
+#### 3. Fitur Password & Kekuatan Sandi (`type="password"`)
+
+| Prop                     | Tipe Data   | Default           | Deskripsi                                                                                                                                |
+| :----------------------- | :---------- | :---------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| `showPasswordToggle`   | `Boolean` | `true`          | Menampilkan tombol ikon mata (lihat/sembunyikan sandi).                                                                                  |
+| `showPasswordStrength` | `Boolean` | `true`          | Menampilkan atau menyembunyikan floating box*Strength Meter* dan checklist kriteria saat input password difokuskan.                    |
+| `passwordRules`        | `Object`  | *Lihat default* | Objek konfigurasi aturan kekuatan sandi. Bar indikator dan checklist otomatis beradaptasi secara dinamis hanya dengan aturan yang aktif. |
+
+Default konfigurasi `passwordRules`:
+
+```javascript
+{
+  minLength: 8,           // Batas minimal panjang karakter (misal: 6, 8, 10, 12)
+  requireUppercase: true, // Wajib memiliki minimal 1 huruf kapital (A-Z)
+  requireLowercase: true, // Wajib memiliki minimal 1 huruf kecil (a-z)
+  requireNumbers: true,   // Wajib mengandung angka (0-9)
+  requireSymbols: true,   // Wajib mengandung karakter simbol unik (!@#$%^&*)
+}
+```
+
+#### 4. Angka, Finansial & Slider (`type="number"`, `'range'`, `'currency'`)
+
+| Prop               | Tipe Data             | Default     | Deskripsi                                                                                                                  |
+| :----------------- | :-------------------- | :---------- | :------------------------------------------------------------------------------------------------------------------------- |
+| `currency`       | `[Boolean, String]` | `false`   | Mengaktifkan pemformatan ribuan uang lokal (`1.500.000`) dan otomatis mengikat nilai angka murni numerik ke `v-model`. |
+| `min`            | `[Number, String]`  | `null`    | Nilai angka atau tanggal minimum yang diizinkan (dilengkapi validasi live).                                                |
+| `max`            | `[Number, String]`  | `null`    | Nilai angka atau tanggal maksimum yang diizinkan (dilengkapi validasi live).                                               |
+| `step`           | `[Number, String]`  | `null`    | Interval loncatan kelipatan nilai.                                                                                         |
+| `rangeLabel`     | `String`            | `'Nilai'` | Label teks sebelum angka nilai slider pada`type="range"`.                                                                |
+| `rangeFormatter` | `Function(val)`     | `null`    | Fungsi kustom pemformatan angka slider (contoh:`(v) => \`\${v}%\``atau`(v) => \`Rp \${v}\``).                          |
+
+#### 5. Textarea Multiline (`type="textarea"`)
+
+| Prop           | Tipe Data            | Default        | Deskripsi                                                                            |
+| :------------- | :------------------- | :------------- | :----------------------------------------------------------------------------------- |
+| `rows`       | `[Number, String]` | `3`          | Jumlah baris awal textarea.                                                          |
+| `maxlength`  | `[Number, String]` | `null`       | Batas maksimal karakter (menampilkan indikator live counter`charCount/maxlength`). |
+| `autoResize` | `Boolean`          | `false`      | Textarea otomatis membesar ke bawah mengikuti panjang teks yang diketik.             |
+| `minRows`    | `[Number, String]` | `null`       | Batas minimal baris saat`autoResize: true`.                                        |
+| `maxRows`    | `[Number, String]` | `null`       | Batas maksimal baris sebelum scrollbar vertikal muncul saat`autoResize: true`.     |
+| `resize`     | `String`           | `'vertical'` | Pengarah resize kursor CSS:`'none'`, `'vertical'`, `'both'`, `'horizontal'`. |
+
+#### 6. Dropdown & Pilihan (`type="select"`, `'radio'`, `'checkbox'`, `'switch'`)
+
+| Prop              | Tipe Data                     | Default   | Deskripsi                                                                                                                                                       |
+| :---------------- | :---------------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `options`       | `Array`                     | `[]`    | Pilihan array item (berupa array string`['A', 'B']` atau objek `[{ value: 1, label: 'Satu' }]`). Juga dipakai untuk saran pencarian pada `type="search"`. |
+| `multiple`      | `Boolean`                   | `false` | Mengizinkan pemilihan multi-opsi atau multi-upload berkas.                                                                                                      |
+| `chipDisplay`   | `Boolean`                   | `true`  | Menampilkan item terpilih dalam bentuk badge chips dengan tombol silang individual pada multi-select.                                                           |
+| `indeterminate` | `Boolean`                   | `false` | Status parsial "sebagian tercentang" (ikon minus`-`) pada checkbox parent.                                                                                    |
+| `value`         | `[String, Number, Boolean]` | `null`  | Nilai spesifik untuk binding checkbox / radio grup.                                                                                                             |
+
+#### 7. OTP / PIN Kode (`type="otp"`)
+
+| Prop               | Tipe Data   | Default                    | Deskripsi                                                    |
+| :----------------- | :---------- | :------------------------- | :----------------------------------------------------------- |
+| `length`         | `Number`  | `6`                      | Jumlah kotak slot digit OTP (misal: 4 atau 6 digit).         |
+| `integerOnly`    | `Boolean` | `true`                   | Hanya mengizinkan input karakter angka (0-9).                |
+| `masked`         | `Boolean` | `false`                  | Menyembunyikan tampilan digit dengan bulatan sandi.          |
+| `separator`      | `String`  | `''`                     | Karakter pemisah antar slot (contoh:`'-'`).                |
+| `separatorAfter` | `Number`  | `null`                   | Posisi slot ke-N sebelum pemisah diletakkan.                 |
+| `countdown`      | `Number`  | `0`                      | Durasi hitung mundur kirim ulang OTP (dalam detik).          |
+| `resendText`     | `String`  | `'Kirim Ulang Kode OTP'` | Teks label tombol kirim ulang setelah hitung mundur selesai. |
+
+#### 8. Pola Masking (`type="mask"`)
+
+| Prop         | Tipe Data   | Default  | Deskripsi                                                                                                                      |
+| :----------- | :---------- | :------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| `mask`     | `String`  | `''`   | Pola mask kustom:`#` (angka), `A` (huruf), `*` (alfanumerik). Contoh: `####-####-####-####`.                           |
+| `preset`   | `String`  | `''`   | Preset bawaan siap pakai:`'credit-card'`, `'npwp'`, `'nik'`, `'postal-code'`, `'phone-id'`, `'expiry'`, `'cvv'`. |
+| `slotChar` | `String`  | `'_'`  | Karakter placeholder pada posisi slot yang belum terisi.                                                                       |
+| `emitRaw`  | `Boolean` | `true` | Mengikat nilai angka/karakter murni tanpa simbol pemisah ke`v-model`.                                                        |
+
+#### 9. Tag Input (`type="tag"` / `'tags'`)
+
+| Prop                  | Tipe Data            | Default                   | Deskripsi                                                                                                                   |
+| :-------------------- | :------------------- | :------------------------ | :-------------------------------------------------------------------------------------------------------------------------- |
+| `allowCustom`       | `Boolean`          | `true`                  | Mengizinkan penambahan tag teks baru di luar array`options`.                                                              |
+| `separatorKeys`     | `Array`            | `['Tab', 'Enter', ',']` | Tombol keyboard yang memicu pembentukan tag baru.                                                                           |
+| `allowDuplicates`   | `Boolean`          | `false`                 | Mencegah penambahan tag yang sama dua kali.                                                                                 |
+| `maxTags`           | `Number`           | `null`                  | Batas maksimum jumlah tag yang dapat dibuat.                                                                                |
+| `tagVariant`        | `String`           | `'default'`             | Skema warna badge tag:`'default'`, `'primary'`, `'success'`, `'warning'`, `'danger'`, `'purple'`, `'random'`. |
+| `tagStyle`          | `String`           | `'soft'`                | Gaya tampilan tag:`'soft'` (pastel), `'solid'` (kontras), `'outline'` (garis tepi).                                   |
+| `tagIcon`           | `String`           | `''`                    | Ikon Google Material Symbols di sebelah kiri setiap tag.                                                                    |
+| `pasteSeparators`   | `[RegExp, String]` | `/[,;\n\t]+/`           | Karakter pemisah otomatis saat pengguna menempel (*paste*) teks panjang ke input tag.                                     |
+| `addOnBlur`         | `Boolean`          | `true`                  | Otomatis menjadikan teks yang belum disubmit sebagai tag baru saat elemen kehilangan fokus.                                 |
+| `removeOnBackspace` | `Boolean`          | `true`                  | Menghapus tag terakhir saat pengguna menekan tombol Backspace pada input kosong.                                            |
+| `lowercase`         | `Boolean`          | `false`                 | Mengonversi seluruh teks tag ke huruf kecil secara otomatis.                                                                |
+
+#### 10. Dynamic Form Repeater (`type="repeater"` / `'form-repeater'`)
+
+| Prop              | Tipe Data              | Default              | Deskripsi                                                                                             |
+| :---------------- | :--------------------- | :------------------- | :---------------------------------------------------------------------------------------------------- |
+| `fields`        | `Array`              | `[]`               | Definisi skema kolom input di setiap baris repeater.                                                  |
+| `defaultItem`   | `Object`             | `null`             | Template data bawaan untuk baris entri baru.                                                          |
+| `addButtonText` | `String`             | `'Tambahkan Data'` | Teks pada tombol penambahan baris.                                                                    |
+| `addIcon`       | `String`             | `'add'`            | Nama ikon pada tombol penambahan.                                                                     |
+| `addPosition`   | `String`             | `'bottom'`         | Posisi tombol tambah:`'bottom'`, `'top'`, `'both'`.                                             |
+| `itemTitle`     | `[String, Function]` | `'Item'`           | Judul header per kartu item (mendukung fungsi dinamis`(item, index) => \`Peserta #${index + 1}\``). |
+| `columns`       | `[Number, String]`   | `2`                | Jumlah kolom grid layout pada kartu repeater.                                                         |
+| `collapsible`   | `Boolean`            | `false`            | Kartu item dapat diperluas atau dilipat.                                                              |
+| `reorderable`   | `Boolean`            | `true`             | Mengaktifkan tombol geser urutan baris ke atas / ke bawah.                                            |
+| `deletable`     | `Boolean`            | `true`             | Mengaktifkan tombol hapus baris.                                                                      |
+| `duplicable`    | `Boolean`            | `true`             | Mengaktifkan tombol duplikasi instan baris yang sudah terisi.                                         |
+| `confirmDelete` | `Boolean`            | `false`            | Memunculkan konfirmasi sebelum baris dihapus.                                                         |
 
 ---
 
 ### Slots API (`<InputField />`)
 
-| Slot Name | Deskripsi |
-| :--- | :--- |
-| `default` | Kustomisasi konten label checkbox/radio atau fallback opsi select |
-| `label` | Kustomisasi elemen label judul |
-| `prefix` | Kustomisasi elemen prefix addon kiri |
-| `suffix` | Kustomisasi elemen suffix addon kanan |
-| `hint` | Kustomisasi teks petunjuk di bawah input |
-| `error` | Kustomisasi pesan validasi error |
+| Slot Name   | Parameter | Deskripsi                                                                  |
+| :---------- | :-------- | :------------------------------------------------------------------------- |
+| `default` | —        | Konten kustom di samping label checkbox, radio, atau fallback opsi select. |
+| `label`   | —        | Kustomisasi elemen teks/komponen label judul di bagian atas.               |
+| `prefix`  | —        | Kustomisasi elemen konten addon di sisi kiri.                              |
+| `suffix`  | —        | Kustomisasi elemen konten addon di sisi kanan.                             |
+| `hint`    | —        | Kustomisasi teks petunjuk atau link bantuan di bawah input.                |
+| `error`   | —        | Kustomisasi tampilan pesan error validasi.                                 |
 
 ---
 
 ### Events API (`<InputField />`)
 
-| Event Name | Parameter | Deskripsi |
-| :--- | :--- | :--- |
-| `update:modelValue` | `value` | Dipicu saat nilai input berubah (sinkronisasi `v-model`) |
-| `change` | `Event` | Dipicu saat terjadi event change native pada elemen kontrol |
-| `blur` | `FocusEvent` | Dipicu saat elemen kehilangan fokus |
-| `focus` | `FocusEvent` | Dipicu saat elemen menerima fokus |
-| `clear` | — | Dipicu saat tombol clear/hapus pada input (search, text, date picker, select, mask) diklik |
-| `error` | `String` | Dipicu saat terjadi error validasi berkas (`maxSize` atau `maxFiles`) |
-| `cancel-upload` | — | Dipicu saat tombol batalkan unggahan pada `type="file"` diklik |
-| `validate` | `{ valid: Boolean, message: String }` | Dipicu saat live validation mengevaluasi keabsahan format (email, password, tel) |
-| `complete` | `String` | Dipicu saat seluruh digit OTP telah lengkap terisi (`type="otp"`) |
-| `resend` | — | Dipicu saat tombol kirim ulang OTP diklik setelah timer countdown selesai (`type="otp"`) |
+Komponen `<InputField />` memancarkan event-event berikut untuk integrasi yang fleksibel:
+
+| Event Name             | Parameter                                    | Kapan Dipicu?                                                                                                                                                                             |
+| :--------------------- | :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@update:modelValue` | `(value: any)`                             | Dipicu setiap kali nilai state input berubah (sinkronisasi dua arah`v-model`).                                                                                                          |
+| `@input`             | `(event: Event)`                           | Dipicu secara native setiap kali karakter baru diketik atau diinput ke elemen kontrol.                                                                                                    |
+| `@change`            | `(event: Event)`                           | Dipicu saat nilai telah selesai dikomit (misal saat enter ditekan atau kontrol kehilangan fokus).                                                                                         |
+| `@focus`             | `(event: FocusEvent)`                      | Dipicu saat elemen menerima fokus pengguna.                                                                                                                                               |
+| `@blur`              | `(event: FocusEvent)`                      | Dipicu saat elemen kehilangan fokus pengguna.                                                                                                                                             |
+| `@clear`             | —                                           | Dipicu saat tombol hapus/silang pada input (`clearable`, `search`, `mask`, `select`) diklik.                                                                                      |
+| `@validate`          | `(result: Object)`                         | Dipicu setiap kali fungsi validasi dievaluasi. Mengembalikan payload lengkap:`{ valid: boolean, message: string, value: any, score?: number, totalScore?: number, criteria?: Object }`. |
+| `@error`             | `(errorMessage: string)`                   | Dipicu saat terjadi kegagalan validasi berkas pada`type="file"` (misal file melebihi `maxSize` atau `maxFiles`).                                                                    |
+| `@cancel-upload`     | —                                           | Dipicu saat tombol batal unggah pada berkas diklik.                                                                                                                                       |
+| `@complete`          | `(otpCode: string)`                        | Dipicu saat seluruh digit OTP telah selesai diisi (`type="otp"`).                                                                                                                       |
+| `@resend`            | —                                           | Dipicu saat tombol kirim ulang kode OTP diklik (`type="otp"`).                                                                                                                          |
+| `@tag-add`           | `(tag: string \| object)`                   | Dipicu saat tag baru berhasil ditambahkan (`type="tag"`).                                                                                                                               |
+| `@tag-remove`        | `(tag: string \| object)`                   | Dipicu saat salah satu tag dihapus (`type="tag"`).                                                                                                                                      |
+| `@max-reached`       | `(max: number)`                            | Dipicu saat jumlah tag atau baris repeater telah menyentuh batas maksimum.                                                                                                                |
+| `@item-add`          | `(newItem: object)`                        | Dipicu saat baris entri baru ditambahkan ke repeater (`type="repeater"`).                                                                                                               |
+| `@item-remove`       | `(index: number)`                          | Dipicu saat baris entri pada repeater dihapus.                                                                                                                                            |
+| `@item-duplicate`    | `(index: number)`                          | Dipicu saat baris entri pada repeater diduplikasi.                                                                                                                                        |
+| `@item-move`         | `({ fromIndex: number, toIndex: number })` | Dipicu saat urutan baris entri pada repeater dipindahkan.                                                                                                                                 |
+
+#### Contoh Menangani Events:
+
+```vue
+<InputField
+  v-model="username"
+  label="Username"
+  :validator="(val) => val.length < 4 ? 'Minimal 4 karakter' : true"
+  @input="handleNativeInput"
+  @validate="onValidationChanged"
+  @clear="onFieldCleared"
+/>
+```
+
+---
 
 ### Component Expose API (`defineExpose`)
 
-Melalui template ref (misal: `<InputField ref="fieldRef" />`), komponen induk dapat mengakses fungsionalitas berikut:
+Melalui template reference Vue (misal: `<InputField ref="inputRef" />`), komponen induk dapat mengakses properti dan metode programatik berikut:
 
-| Property / Method | Tipe Data | Deskripsi |
-| :--- | :--- | :--- |
-| `focus()` | `Function()` | Memicu fokus secara programatik ke elemen input/kontrol aktif di dalam subkomponen |
-| `blur()` | `Function()` | Melepas fokus dari elemen input/kontrol aktif di dalam subkomponen |
-| `inputId` | `ComputedRef<String>` | ID elemen input unik yang dipakai oleh label dan atribut HTML |
-| `controlRef` | `Ref<Component>` | Template ref langsung ke instance sub-komponen aktif (`InputText`, `InputSelect`, dll.) |
+| Method / Property | Tipe Data                    | Deskripsi & Kegunaan                                                                                                                          |
+| :---------------- | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
+| `focus()`       | `Function()`               | Menempatkan kursor fokus secara programatik ke elemen input/textarea/kontrol aktif di dalam subkomponen.                                      |
+| `blur()`        | `Function()`               | Melepas fokus dari elemen kontrol aktif.                                                                                                      |
+| `clear()`       | `Function()`               | Mengosongkan nilai input secara instan dan membersihkan pesan validasi sementara.                                                             |
+| `validate()`    | `Function(): Object`       | Menjalankan proses validasi secara programatik tanpa harus menunggu interaksi pengguna. Mengembalikan`{ valid: Boolean, message: String }`. |
+| `inputId`       | `ComputedRef<String>`      | Mengambil string ID unik elemen input yang terhubung dengan atribut`<label for="...">`.                                                     |
+| `controlRef`    | `Ref<Component>`           | Referensi langsung ke instance Vue sub-komponen aktif (`InputText`, `InputSelect`, `InputFile`, dll.).                                  |
+| `inputRef`      | `ComputedRef<HTMLElement>` | Referensi langsung ke elemen HTML native (`<input>`, `<textarea>`, `<select>`) untuk manipulasi DOM tingkat rendah jika dibutuhkan.     |
+| `value`         | `ComputedRef<any>`         | Mengakses nilai state terkini yang sedang disimpan oleh input.                                                                                |
+
+#### Contoh Pemanggilan Programatik via Template Ref:
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+
+const nameField = ref(null);
+const nameValue = ref('');
+
+const handleFocusInput = () => {
+  // 1. Fokuskan kursor langsung ke kolom
+  nameField.value?.focus();
+};
+
+const handleResetForm = () => {
+  // 2. Kosongkan nilai kolom via expose
+  nameField.value?.clear();
+};
+
+const handleCheckValidity = () => {
+  // 3. Cek validitas secara programatik
+  const result = nameField.value?.validate();
+  if (!result.valid) {
+    console.warn('Validasi gagal:', result.message);
+  }
+};
+</script>
+
+<template>
+  <div class="space-y-3">
+    <InputField
+      ref="nameField"
+      v-model="nameValue"
+      label="Nama Lengkap"
+      :validator="(val) => val ? true : 'Nama tidak boleh kosong!'"
+    />
+
+    <div class="flex gap-2">
+      <button @click="handleFocusInput">Fokuskan</button>
+      <button @click="handleResetForm">Bersihkan</button>
+      <button @click="handleCheckValidity">Validasi Sekarang</button>
+    </div>
+  </div>
+</template>
+```
+
+---
+
+## 🔍 Panduan Fitur Unggulan
+
+### 1. Fitur Live Watch & Custom Validator (Universal di Semua Input)
+
+Tidak hanya terbatas pada alamat email, fitur pemantauan (*watch*) dan validasi interaktif dapat diterapkan pada **semua jenis input** (`text`, `number`, `url`, `tel`, dll.).
+
+1. **Validasi URL Bawaan (`type="url"`)**:
+   Otomatis mengecek protokol `http://` / `https://` dan struktur domain valid.
+2. **Validasi Rentang Angka (`type="number"`)**:
+   Otomatis memverifikasi batasan prop `:min="..."` dan `:max="..."` secara instan dan menampilkan pesan bantuan jika nilai di luar batas.
+3. **Validator Kustom via Prop `:validator`**:
+   Anda dapat memberikan fungsi logika bebas:
+   ```vue
+   <InputField
+     v-model="referralCode"
+     label="Kode Referral"
+     placeholder="Contoh: DISKON50"
+     :validator="(val) => {
+       if (!val) return true;
+       if (val.length < 5) return 'Kode referral minimal 5 karakter.';
+       if (!/^[A-Z0-9]+$/.test(val)) return 'Hanya huruf kapital dan angka.';
+       return true;
+     }"
+   />
+   ```
+4. **Validasi Regex Cepat via Prop `:pattern` & `:pattern-message`**:
+   ```vue
+   <InputField
+     v-model="npwp"
+     label="Nomor Pokok"
+     pattern="^[0-9]{15,16}$"
+     pattern-message="Nomor wajib terdiri dari 15 atau 16 digit angka."
+   />
+   ```
+5. **Hook Pemantau Realtime via Prop `:on-watch`**:
+   ```vue
+   <InputField
+     v-model="searchQuery"
+     type="search"
+     label="Cari Produk"
+     :on-watch="(val) => console.log('User mengetik:', val)"
+   />
+   ```
+
+---
+
+### 2. Fitur Kustomisasi Password Strength Meter
+
+Kotak indikator kekuatan password yang muncul saat kolom sandi difokuskan dapat:
+
+* **Dinonaktifkan Sepenuhnya**:
+  Gunakan prop `:show-password-strength="false"`. Tombol reveal password (mata) tetap berfungsi normal.
+* **Dikustomisasi Aturan & Kriterianya**:
+  Gunakan prop `:password-rules="{ ... }"`. Bar indikator dan checklist otomatis beradaptasi hanya dengan aturan yang Anda pilih.
+
+#### Contoh 1: Mematikan Strength Meter
+
+```vue
+<InputField
+  v-model="password"
+  type="password"
+  label="Kata Sandi Akun"
+  :show-password-strength="false"
+/>
+```
+
+#### Contoh 2: Kustomisasi Sandi Sederhana (Hanya Panjang Karakter & Angka)
+
+```vue
+<InputField
+  v-model="pinCode"
+  type="password"
+  label="PIN Akses Cepat"
+  :password-rules="{
+    minLength: 6,
+    requireNumbers: true,
+    requireSymbols: false,
+    requireUppercase: false,
+    requireLowercase: false,
+  }"
+  hint="Hanya butuh minimal 6 karakter dan angka"
+/>
+```
+
+*Hasil*: Checklist kriteria hanya menampilkan 2 butir ("Min. 6 karakter" & "Mengandung angka"), dan bar kekuatan sandi hanya terbagi menjadi 2 segmen proporsional.
+
+---
 
 ---
 
 ### Contoh Penggunaan InputField
 
 #### 1. Form Autentikasi (Text, Email & Password with Toggle)
+
 ```vue
 <script setup>
 import { useForm } from '@inertiajs/vue3';
@@ -228,6 +483,7 @@ const handleRegister = () => {
 ```
 
 #### 2. Form Keuangan & Konfigurasi Transaksi (Prefix "Rp", Select & Textarea)
+
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -286,6 +542,7 @@ const channelOptions = [
 ```
 
 #### 3. Upload File & Rich Metadata Preview (4 Varian Desain)
+
 Mendukung 4 varian desain: 2 untuk *Single File* (`'avatar'`, `'dropzone'`) dan 2 untuk *Multiple File* (`'grid'`, `'list'`). Setiap varian dilengkapi kartu informasi detail berkas (ekstensi/MIME badge, ukuran KB/MB, dimensi piksel foto, timestamp waktu upload, tombol zoom modal, serta progress bar loading unggah).
 
 ```vue
@@ -366,6 +623,7 @@ const uploadProgress = ref(65);
 ```
 
 #### 4. Pengaturan Sistem (Switch, Radio Group, Slider & Color Picker)
+
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -424,6 +682,7 @@ const envOptions = [
 ```
 
 #### 5. Kontrol Programatik via Template Ref (`ref.focus()`)
+
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -459,6 +718,7 @@ const focusEmailInput = () => {
 ```
 
 #### 6. Verifikasi Transaksi & Kartu Kredit (OTP & Masked Input)
+
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -543,6 +803,7 @@ const handleResendOtp = () => {
 ```
 
 #### 7. Fitur Lanjutan (Auto-Resize Textarea, Grouped Select & Indeterminate Checkbox)
+
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -671,9 +932,11 @@ InputField.vue (Facade Orchestrator)
 ---
 
 ### Inventaris & Spesifikasi 10 Sub-Komponen Input
+
 ### Inventaris & Spesifikasi 12 Sub-Komponen Input
 
 #### 9.1 `InputText.vue`
+
 * **Lokasi File**: `InputText.vue`
 * **Tipe yang Ditangani**: `'text'`, `'email'`, `'password'`, `'number'`, `'tel'`, `'url'`, `'search'`, `'currency'`.
 * **Fitur Unggulan**:
@@ -684,6 +947,7 @@ InputField.vue (Facade Orchestrator)
   * **Expose API**: Menyediakan method `focus()`, `blur()`, dan `inputRef` ke elemen native `<input>`.
 
 #### 9.2 `InputFile.vue`
+
 * **Lokasi File**: `InputFile.vue`
 * **Tipe yang Ditangani**: `'file'`.
 * **Fitur Unggulan**:
@@ -696,6 +960,7 @@ InputField.vue (Facade Orchestrator)
   * **State Unggah Asinkron**: Mendukung prop `uploading` dan `progress` (0-100%) dengan bar indikator progres animasi.
 
 #### 9.3 `InputDatePicker.vue`
+
 * **Lokasi File**: `InputDatePicker.vue`
 * **Tipe yang Ditangani**: `'date'`, `'time'`, `'datetime-local'`.
 * **Fitur Unggulan**:
@@ -705,6 +970,7 @@ InputField.vue (Facade Orchestrator)
   * **Tombol Cepat**: Tombol *Hari Ini* dan *Hapus (Clear)* bawaan.
 
 #### 9.4 `InputSelect.vue`
+
 * **Lokasi File**: `InputSelect.vue`
 * **Tipe yang Ditangani**: `'select'`.
 * **Fitur Unggulan**:
@@ -717,6 +983,7 @@ InputField.vue (Facade Orchestrator)
   * **Expose API**: Menyediakan `open()`, `close()`, `focus()`, dan `isOpen`.
 
 #### 9.5 `InputColor.vue`
+
 * **Lokasi File**: `InputColor.vue`
 * **Tipe yang Ditangani**: `'color'`.
 * **Fitur Unggulan**:
@@ -725,6 +992,7 @@ InputField.vue (Facade Orchestrator)
   * **Screen Eyedropper API**: Menggunakan `window.EyeDropper` native browser untuk mengambil warna dari layar mana saja bila didukung.
 
 #### 9.6 `InputRadio.vue`
+
 * **Lokasi File**: `InputRadio.vue`
 * **Tipe yang Ditangani**: `'radio'`.
 * **Fitur Unggulan**:
@@ -732,6 +1000,7 @@ InputField.vue (Facade Orchestrator)
   * Status visual aktif/fokus yang jelas dengan border kontras dan ring glow.
 
 #### 9.7 `InputCheckbox.vue`
+
 * **Lokasi File**: `InputCheckbox.vue`
 * **Tipe yang Ditangani**: `'checkbox'`.
 * **Fitur Unggulan**:
@@ -743,6 +1012,7 @@ InputField.vue (Facade Orchestrator)
   * **Aksesibilitas**: Dilengkapi atribut `aria-checked="mixed"` saat kondisi indeterminate aktif.
 
 #### 9.8 `InputTextarea.vue`
+
 * **Lokasi File**: `InputTextarea.vue`
 * **Tipe yang Ditangani**: `'textarea'`.
 * **Fitur Unggulan**:
@@ -755,13 +1025,15 @@ InputField.vue (Facade Orchestrator)
   * **Expose API**: Menyediakan `focus()`, `blur()`, `adjustHeight()`, dan `textareaRef`.
 
 #### 9.9 `InputRange.vue`
+
 * **Lokasi File**: `InputRange.vue`
 * **Tipe yang Ditangani**: `'range'`.
 * **Fitur Unggulan**:
   * Slider rentang nilai responsif dengan badge visual indikator angka saat digeser.
-  * Mendukung fungsi `rangeFormatter` kustom (contoh: `(v) => \`\${v}%\`` atau `(v) => \`Rp \${v.toLocaleString()}\``).
+  * Mendukung fungsi `rangeFormatter` kustom (contoh: `(v) => \`\${v}%\``atau`(v) => \`Rp \${v.toLocaleString()}\``).
 
 #### 9.10 `InputSwitch.vue`
+
 * **Lokasi File**: `InputSwitch.vue`
 * **Tipe yang Ditangani**: `'switch'`.
 * **Fitur Unggulan**:
@@ -769,6 +1041,7 @@ InputField.vue (Facade Orchestrator)
   * Aksesibilitas bawaan dengan `role="switch"` dan `aria-checked`.
 
 #### 9.11 `InputOtp.vue` *(Komponen Baru)*
+
 * **Lokasi File**: `InputOtp.vue`
 * **Tipe yang Ditangani**: `'otp'`.
 * **Fitur Unggulan**:
@@ -780,7 +1053,8 @@ InputField.vue (Facade Orchestrator)
   * **Event `@complete`**: Otomatis memicu event saat seluruh slot telah terisi penuh.
   * **Expose API**: `focus()`, `clear()`, `getValue()`, `startCountdown()`.
 
-#### 9.12 `InputMask.vue` *(Komponen Baru)*
+#### 9.12 `InputMask.vue`
+
 * **Lokasi File**: `InputMask.vue`
 * **Tipe yang Ditangani**: `'mask'`.
 * **Fitur Unggulan**:

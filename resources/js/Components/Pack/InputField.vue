@@ -370,10 +370,44 @@ const props = defineProps({
         type: String,
         default: 'Klik tombol di bawah untuk menambahkan entri formulir pertama.',
     },
+    // Password Strength Customization Props
+    showPasswordStrength: {
+        type: Boolean,
+        default: true,
+    },
+    passwordRules: {
+        type: Object,
+        default: () => ({
+            minLength: 8,
+            requireUppercase: true,
+            requireLowercase: true,
+            requireNumbers: true,
+            requireSymbols: true,
+        }),
+    },
+    // Universal Live Watch & Custom Validator Props
+    validator: {
+        type: Function,
+        default: null,
+    },
+    pattern: {
+        type: [String, RegExp],
+        default: null,
+    },
+    patternMessage: {
+        type: String,
+        default: 'Format input tidak sesuai ketentuan',
+    },
+    onWatch: {
+        type: Function,
+        default: null,
+    },
 });
 
 const model = defineModel();
 defineEmits([
+    'update:modelValue',
+    'input',
     'change',
     'blur',
     'focus',
@@ -422,20 +456,53 @@ const controlRef = ref(null);
 const focus = () => {
     if (controlRef.value?.focus) {
         controlRef.value.focus();
+    } else if (controlRef.value?.$el?.querySelector) {
+        const input = controlRef.value.$el.querySelector('input, textarea, select, button');
+        input?.focus();
     }
 };
 
 const blur = () => {
     if (controlRef.value?.blur) {
         controlRef.value.blur();
+    } else if (controlRef.value?.$el?.querySelector) {
+        const input = controlRef.value.$el.querySelector('input, textarea, select, button');
+        input?.blur();
     }
 };
+
+const clear = () => {
+    if (controlRef.value?.clear) {
+        controlRef.value.clear();
+    } else if (['checkbox', 'switch'].includes(props.type)) {
+        model.value = false;
+    } else if (['tag', 'tags'].includes(props.type)) {
+        model.value = [];
+    } else {
+        model.value = props.type === 'number' || props.currency ? null : '';
+    }
+};
+
+const validate = () => {
+    if (controlRef.value?.validate) {
+        return controlRef.value.validate();
+    }
+    return { valid: !props.error, message: props.error || '' };
+};
+
+const inputRef = computed(() => {
+    return controlRef.value?.inputRef || controlRef.value?.textareaRef || controlRef.value?.$el?.querySelector?.('input, textarea, select') || null;
+});
 
 defineExpose({
     focus,
     blur,
+    clear,
+    validate,
     inputId,
     controlRef,
+    inputRef,
+    value: computed(() => model.value),
 });
 </script>
 
@@ -540,6 +607,7 @@ defineExpose({
             :maxlength="maxlength"
             :size="size"
             :error="error"
+            @input="$emit('input', $event)"
             @change="$emit('change', $event)"
             @blur="$emit('blur', $event)"
             @focus="$emit('focus', $event)"
@@ -817,12 +885,19 @@ defineExpose({
             :prefix="prefix"
             :suffix="suffix"
             :show-password-toggle="showPasswordToggle"
+            :show-password-strength="showPasswordStrength"
+            :password-rules="passwordRules"
+            :validator="validator"
+            :pattern="pattern"
+            :pattern-message="patternMessage"
+            :on-watch="onWatch"
             :clearable="clearable"
             :loading="loading"
             :currency="currency"
             :options="options"
             :live-validation="liveValidation"
             :error="error"
+            @input="$emit('input', $event)"
             @change="$emit('change', $event)"
             @blur="$emit('blur', $event)"
             @focus="$emit('focus', $event)"
