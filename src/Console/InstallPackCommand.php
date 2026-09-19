@@ -118,9 +118,13 @@ class InstallPackCommand extends Command
         ]);
 
         // 4. Jalankan atau Anjurkan NPM Install
-        if ($needsNpmInstall) {
+        $nodeModulesMissing = !File::isDirectory(base_path('node_modules/@vitejs/plugin-vue')) ||
+                              !File::isDirectory(base_path('node_modules/vue')) ||
+                              !File::isDirectory(base_path('node_modules/@inertiajs/vue3'));
+
+        if ($needsNpmInstall || $nodeModulesMissing) {
             $this->newLine();
-            if ($autoAll || $this->confirm('Jalankan "npm install" sekarang untuk memasang paket Node.js yang baru ditambahkan?', true)) {
+            if ($autoAll || $this->confirm('Jalankan "npm install" sekarang untuk memasang/memastikan seluruh paket Node.js terpasang?', true)) {
                 $this->runNpmInstall();
             } else {
                 $this->warn('ℹ️ Silakan jalankan di terminal: npm install && npm run build');
@@ -166,6 +170,9 @@ class InstallPackCommand extends Command
         $pluginVueVersion = $packageJson['dependencies']['@vitejs/plugin-vue'] ?? $packageJson['devDependencies']['@vitejs/plugin-vue'] ?? '';
         $isPluginVueIncompatible = $isVite7Plus && $pluginVueVersion && str_starts_with(ltrim($pluginVueVersion, '^~'), '5');
 
+        $isTailwindV4 = str_contains($viteConfig, '@tailwindcss/vite') || isset($packageJson['devDependencies']['@tailwindcss/vite']) || !isset($packageJson['devDependencies']['tailwindcss']);
+        $tailwindViteOk = !$isTailwindV4 || (str_contains($viteConfig, '@tailwindcss/vite') && (bool) preg_match('/tailwindcss\s*\(/', $viteConfig));
+
         $status = [
             'inertia_php' => isset($composerJson['require']['inertiajs/inertia-laravel']),
             'ziggy_php' => isset($composerJson['require']['tightenco/ziggy']),
@@ -179,7 +186,11 @@ class InstallPackCommand extends Command
             'blade_configured' => str_contains($appBlade, '@routes') && str_contains($appBlade, '@inertia'),
             'app_js_configured' => str_contains($appJs, 'createInertiaApp') && str_contains($appJs, 'ZiggyVue'),
             'css_configured' => str_contains($appCss, 'tailwindcss') && str_contains($appCss, 'material-symbols'),
-            'vite_configured' => str_contains($viteConfig, '@tailwindcss/vite') && str_contains($viteConfig, '@vitejs/plugin-vue'),
+            'vite_configured' => str_contains($viteConfig, '@vitejs/plugin-vue')
+                && (bool) preg_match('/vue\s*\(/', $viteConfig)
+                && (str_contains($viteConfig, "'ziggy-js'") || str_contains($viteConfig, '"ziggy-js"'))
+                && (str_contains($viteConfig, "'@'") || str_contains($viteConfig, '"@"'))
+                && $tailwindViteOk,
             'inertia_flash_configured' => File::exists($middlewarePath) && str_contains($middlewareContent, "'flash'") && str_contains($middlewareContent, "'success'"),
         ];
 
@@ -203,7 +214,7 @@ class InstallPackCommand extends Command
             ['Root Layout (app.blade.php)', $status['blade_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang @routes</comment>'],
             ['Vue Entrypoint (app.js)', $status['app_js_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang ZiggyVue</comment>'],
             ['Styling Import (app.css)', $status['css_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Dikonfigurasi</comment>'],
-            ['Vite Config (vite.config.js)', $status['vite_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Dikonfigurasi</comment>'],
+            ['Vite Config (vite.config.js)', $status['vite_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang Plugin Vue</comment>'],
             ['Inertia Flash Props (HandleInertiaRequests)', $status['inertia_flash_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang Session Flash</comment>'],
         ];
 
@@ -260,18 +271,19 @@ class InstallPackCommand extends Command
         $viteVersion = $packageJson['devDependencies']['vite'] ?? $packageJson['dependencies']['vite'] ?? '';
         $isVite7Plus = str_contains($viteVersion, '7') || str_contains($viteVersion, '8') || preg_match('/[~^]?[78]\./', $viteVersion);
 
-        // Dependencies
+        // DevDependencies (Vue Vite Plugin)
         if (!$status['vue']) {
             $packageJson['dependencies']['vue'] = '^3.5.0';
-            $packageJson['dependencies']['@vitejs/plugin-vue'] = '^6.0.0';
+            $packageJson['devDependencies']['@vitejs/plugin-vue'] = '^6.0.0';
             $modified = true;
         } else {
             if (!isset($packageJson['dependencies']['@vitejs/plugin-vue']) && !isset($packageJson['devDependencies']['@vitejs/plugin-vue'])) {
-                $packageJson['dependencies']['@vitejs/plugin-vue'] = '^6.0.0';
+                $packageJson['devDependencies']['@vitejs/plugin-vue'] = '^6.0.0';
                 $modified = true;
             } elseif ($isVite7Plus) {
                 if (isset($packageJson['dependencies']['@vitejs/plugin-vue']) && str_starts_with(ltrim($packageJson['dependencies']['@vitejs/plugin-vue'], '^~'), '5')) {
-                    $packageJson['dependencies']['@vitejs/plugin-vue'] = '^6.0.0';
+                    unset($packageJson['dependencies']['@vitejs/plugin-vue']);
+                    $packageJson['devDependencies']['@vitejs/plugin-vue'] = '^6.0.0';
                     $modified = true;
                 }
                 if (isset($packageJson['devDependencies']['@vitejs/plugin-vue']) && str_starts_with(ltrim($packageJson['devDependencies']['@vitejs/plugin-vue'], '^~'), '5')) {
@@ -522,7 +534,7 @@ JS;
     }
 
     /**
-     * Memastikan vite.config.js mengaktifkan plugin vue, tailwindcss, dan alias ziggy-js.
+     * Memastikan vite.config.js mengaktifkan plugin vue, tailwindcss, dan alias ziggy-js & @.
      */
     protected function configureVite(): void
     {
@@ -569,31 +581,103 @@ JS;
         $content = File::get($vitePath);
         $modified = false;
 
-        // Tambahkan import path jika belum ada
+        // 1. Tambahkan import jika belum ada
         if (!str_contains($content, "import path from 'path';") && !str_contains($content, 'import path from "path";')) {
             $content = "import path from 'path';\n" . $content;
             $modified = true;
         }
 
-        // Tambahkan import vue jika belum ada
         if (!str_contains($content, '@vitejs/plugin-vue')) {
             $content = "import vue from '@vitejs/plugin-vue';\n" . $content;
             $modified = true;
         }
 
-        // Tambahkan import tailwindcss jika belum ada
         if (!str_contains($content, '@tailwindcss/vite')) {
             $content = "import tailwindcss from '@tailwindcss/vite';\n" . $content;
             $modified = true;
         }
 
-        // Periksa alias @ dan ziggy-js
-        if (!str_contains($content, "'ziggy-js'") && !str_contains($content, '"ziggy-js"')) {
+        // 2. Tambahkan plugin ke dalam plugins: [...]
+        $pluginsToInject = [];
+        if (!preg_match('/vue\s*\(/', $content)) {
+            $pluginsToInject[] = "        vue({\n            template: {\n                transformAssetUrls: {\n                    base: null,\n                    includeAbsolute: false,\n                },\n            },\n        }),";
+        }
+
+        if (!preg_match('/tailwindcss\s*\(/', $content)) {
+            $pluginsToInject[] = "        tailwindcss(),";
+        }
+
+        if (!empty($pluginsToInject)) {
+            $injectionStr = implode("\n", $pluginsToInject);
+
+            // Cek apakah laravel(...) ada di dalam konfigurasi
+            $posLaravel = strpos($content, 'laravel(');
+            if ($posLaravel !== false) {
+                // Cari matching closing parenthesis ')' untuk laravel(...)
+                $len = strlen($content);
+                $parenDepth = 0;
+                $endLaravelPos = false;
+                for ($i = $posLaravel; $i < $len; $i++) {
+                    if ($content[$i] === '(') {
+                        $parenDepth++;
+                    } elseif ($content[$i] === ')') {
+                        $parenDepth--;
+                        if ($parenDepth === 0) {
+                            $endLaravelPos = $i;
+                            break;
+                        }
+                    }
+                }
+
+                if ($endLaravelPos !== false) {
+                    $restAfterParen = substr($content, $endLaravelPos + 1);
+                    $hasComma = false;
+                    $commaOffset = 0;
+                    if (preg_match('/^\s*,/', $restAfterParen, $commaMatches)) {
+                        $hasComma = true;
+                        $commaOffset = strlen($commaMatches[0]);
+                    }
+
+                    $insertPoint = $endLaravelPos + 1 + ($hasComma ? $commaOffset : 0);
+                    $toInsert = ($hasComma ? "" : ",") . "\n" . $injectionStr;
+                    $content = substr_replace($content, $toInsert, $insertPoint, 0);
+                    $modified = true;
+                }
+            } elseif (preg_match('/plugins\s*:\s*\[/', $content, $matches, PREG_OFFSET_CAPTURE)) {
+                $insertPoint = $matches[0][1] + strlen($matches[0][0]);
+                $toInsert = "\n" . $injectionStr;
+                $content = substr_replace($content, $toInsert, $insertPoint, 0);
+                $modified = true;
+            }
+        }
+
+        // 3. Periksa alias @ dan ziggy-js
+        $hasZiggyAlias = str_contains($content, "'ziggy-js'") || str_contains($content, '"ziggy-js"');
+        $hasAtAlias = str_contains($content, "'@'") || str_contains($content, '"@"');
+
+        if (!$hasZiggyAlias || !$hasAtAlias) {
             if (str_contains($content, 'alias: {')) {
-                $content = str_replace("alias: {", "alias: {\n            'ziggy-js': path.resolve('vendor/tightenco/ziggy'),", $content);
+                $aliasLines = [];
+                if (!$hasZiggyAlias) {
+                    $aliasLines[] = "            'ziggy-js': path.resolve('vendor/tightenco/ziggy'),";
+                }
+                if (!$hasAtAlias) {
+                    $aliasLines[] = "            '@': path.resolve(__dirname, './resources/js'),";
+                }
+                $content = str_replace("alias: {", "alias: {\n" . implode("\n", $aliasLines), $content);
+                $modified = true;
+            } elseif (str_contains($content, 'resolve: {')) {
+                $aliasSnippet = "        alias: {\n" .
+                    (!$hasZiggyAlias ? "            'ziggy-js': path.resolve('vendor/tightenco/ziggy'),\n" : "") .
+                    (!$hasAtAlias ? "            '@': path.resolve(__dirname, './resources/js'),\n" : "") .
+                    "        },\n";
+                $content = str_replace("resolve: {", "resolve: {\n" . $aliasSnippet, $content);
                 $modified = true;
             } else {
-                $aliasSnippet = "    resolve: {\n        alias: {\n            'ziggy-js': path.resolve('vendor/tightenco/ziggy'),\n            '@': path.resolve(__dirname, './resources/js'),\n        },\n    },\n";
+                $aliasSnippet = "    resolve: {\n        alias: {\n" .
+                    (!$hasZiggyAlias ? "            'ziggy-js': path.resolve('vendor/tightenco/ziggy'),\n" : "") .
+                    (!$hasAtAlias ? "            '@': path.resolve(__dirname, './resources/js'),\n" : "") .
+                    "        },\n    },\n";
                 $pos = strrpos($content, '});');
                 if ($pos !== false) {
                     $content = substr_replace($content, $aliasSnippet . "});\n", $pos, 3);
@@ -604,7 +688,7 @@ JS;
 
         if ($modified) {
             File::put($vitePath, $content);
-            $this->info('  ✓ vite.config.js berhasil diperbarui dengan alias Ziggy & plugin.');
+            $this->info('  ✓ vite.config.js berhasil diperbarui dengan plugin Vue, Tailwind v4, dan alias Ziggy.');
         } else {
             $this->info('  ✓ vite.config.js sudah memiliki konfigurasi yang sesuai.');
         }
