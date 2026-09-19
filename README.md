@@ -57,9 +57,15 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 | **`InputTag.vue`** / **`TagInput.vue`** | Komponen input tag enterprise dengan 4 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks/scoped slots `#tag` & `#option`, ikon & perataan vertikal presisi), 3 mode (random, preset, hybrid), auto-paste split, dan dropdown anti-clipping di Card. |
 | **`ScrollProgress.vue`** | Indikator progres scroll cerdas berkinerja tinggi (60fps passive listener) dengan 5 pilar UI, 4 mode tampilan anti-monoton (`bar`, `floating-pill`, `circular`, `minimal`), 9 tema warna solid, perpaduan terpusat **Icon + Teks**, target kontainer lokal, estimasi waktu baca, dan tombol terintegrasi *Scroll to Top*. [Dokumentasi Lengkap →](doc/components/scroll-progress.md) |
 | **`DragDrop.vue`** | Komponen drag and drop universal zero-dependency: sortable list satu dimensi, responsive grid cards reordering, enterprise Kanban board antar kolom, dan touch device support. [Dokumentasi Lengkap →](doc/components/drag-drop.md) |
+| **`CartDrawer.vue`** | Slide-over drawer keranjang belanja enterprise dengan reaktivitas global, persistensi ganda, bar progres gratis ongkir dinamis, stepper kuantitas real-time, voucher diskon bertingkat, dan catatan pembeli per item. [Dokumentasi Lengkap →](doc/components/cart-drawer.md) |
+| **`AutoSaveStatus.vue`** | Indikator visual status auto-save formulir real-time (saving, saved, error, idle) dan banner pemulihan draf belum tersimpan (*draft recovery alert*). [Dokumentasi Lengkap →](doc/components/auto-save-status.md) |
 
 
 ### 🧩 Composables (State Helpers)
+* **`useUnsavedChanges.js`** – Pelindung navigasi formulir ganda (pencegah penutupan tab/browser `beforeunload` dan pencegat rute Inertia SPA) dengan modal konfirmasi `ConfirmDialog.vue`. [Dokumentasi Lengkap →](doc/composables/use-unsaved-changes.md)
+* **`useAutoSave.js`** – State helper penyimpanan formulir otomatis di latar belakang dengan dirty-checking cerdas, timer debounce, batas kedaluwarsa draf, dan pemulihan draf lokal/remote. [Dokumentasi Lengkap →](doc/composables/use-auto-save.md)
+* **`useCart.js`** – State manager keranjang belanja global singleton dengan kalkulasi otomatis subtotal/diskon voucher/pajak PPN/ongkir, persistensi ganda `localStorage`, dan sinkronisasi drawer. [Dokumentasi Lengkap →](doc/composables/use-cart.md)
+* **`useOfflineSync.js`** – Antrean mutasi data saat pengguna offline (Outbox Pattern) berbasis IndexedDB + auto fallback localStorage dengan sinkronisasi otomatis dan exponential retry. [Dokumentasi Lengkap →](doc/composables/use-offline-sync.md)
 * **`useScrollProgress.js`** – Helper pelacakan progres scroll reaktif (window maupun kontainer elemen lokal) dengan kalkulasi sisa waktu baca, status ambang atas, dan fungsi scroll mulus kembali ke atas (`scrollToTop`).
 * **`useClipboard.js`** – Helper penyalinan teks ke clipboard dengan status `copied` reaktif dan fallback legacy browser.
 * **`useDebounce.js`** – Pengontrol jeda eksekusi fungsi berat, debounce form pencarian realtime, dan auto-save draft.
@@ -389,6 +395,8 @@ Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*pro
 * 🏷️ [**TagInput (`InputTag.vue` / `TagInput.vue`)**](doc/components/tag-input.md) — Komponen input tag fleksibel dengan 4 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks/scoped slots `#tag` & `#option`, ikon & perataan vertikal presisi), dropdown anti-clipping di Card, navigasi Tab/Enter, auto-split paste, limit max-tags, dan varian warna acak harmonis.
 * 📜 [**ScrollProgress (`ScrollProgress.vue`)**](doc/components/scroll-progress.md) — Indikator progres scroll cerdas berkinerja tinggi (60fps passive listener) dengan 5 pilar UI, 4 mode tampilan anti-monoton (`bar`, `floating-pill`, `circular`, `minimal`), 9 tema warna solid, perpaduan Icon + Teks, dan estimasi waktu baca.
 * 💬 [**ToastNotification (`ToastNotification.vue`)**](doc/components/toast.md) — Floating toast notification system dengan 4 pilar kustomisasi (warna semantik/varian, bentuk radius/size, teks/scoped slot, & icon), countdown bar, 6 posisi sudut layar, & multi-toast stack.
+* 🛒 [**CartDrawer (`CartDrawer.vue`)**](doc/components/cart-drawer.md) — Panel drawer keranjang belanja enterprise dengan reaktivitas global `useCart`, stepper kuantitas, validasi stok, kupon diskon berjenjang, dan bar progres gratis ongkir.
+* 💾 [**AutoSaveStatus (`AutoSaveStatus.vue`)**](doc/components/auto-save-status.md) — Indikator status penyimpanan draf otomatis dan banner pemulihan draf form kotor (`idle`, `saving`, `saved`, `error`).
 
 ### ⚙️ Composables
 * 🎯 [**`useClickOutside`**](doc/composables/use-click-outside.md) — Hook pendeteksi interaksi klik di luar elemen target (dropdown, popover, modal).
@@ -407,6 +415,10 @@ Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*pro
 * 📊 [**`useServerTable`**](doc/composables/use-server-table.md) — Sinkronisasi otomatis state data table (search, sort, filter, pagination) dengan query URL Inertia.js.
 * 🌓 [**`useTheme`**](doc/composables/use-theme.md) — State manager pengatur tema gelap/terang, sinkronisasi OS mediaQuery, & class `.dark` Tailwind CSS.
 * 📜 [**`useScrollProgress`**](doc/composables/use-scroll-progress.md) — Pelacakan progres scroll reaktif (window / kontainer elemen lokal) dengan kalkulasi sisa waktu baca, status ambang batas atas, dan fungsi scroll to top.
+* 🛒 [**`useCart`**](doc/composables/use-cart.md) — State manager keranjang belanja e-commerce multi-item dengan kalkulasi diskon kupon, ambang batas gratis ongkir, dan persistensi ganda.
+* 💾 [**`useAutoSave`**](doc/composables/use-auto-save.md) — Composable penyimpanan draf otomatis latar belakang dengan dirty diffing, timer debounce, dan pemulihan draf form.
+* 🛡️ [**`useUnsavedChanges`**](doc/composables/use-unsaved-changes.md) — Pencegah navigasi tidak sengaja saat formulir dalam kondisi kotor (`isDirty`) untuk browser refresh dan router SPA Inertia.
+* 📶 [**`useOfflineSync`**](doc/composables/use-offline-sync.md) — Antrean mutasi data saat pengguna offline (Outbox Pattern) berbasis IndexedDB + auto-fallback localStorage yang 100% berjalan di browser tanpa background worker daemon Laravel.
 
 
 ---
