@@ -2,6 +2,7 @@
 import { ref, computed, watch, inject, provide } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useClickOutside } from '@/Composables/Pack/useClickOutside';
+import SidebarFlyoutProvider from './Sidebar/SidebarFlyoutProvider.vue';
 
 const props = defineProps({
     /**
@@ -107,6 +108,10 @@ const emit = defineEmits(['navigate']);
 // Injeksi Context Terpusat dari Sidebar / SidebarComponent
 const context = inject('packSidebarContext', null);
 
+// Injeksi konteks apakah item ini berada di dalam flyout popover
+const isInFlyout = inject('packSidebarInFlyout', false);
+const closeFlyoutContext = inject('packSidebarCloseFlyout', null);
+
 // Injeksi dan penyediaan kedalaman hirarki submenu otomatis
 const injectedDepth = inject('packSidebarItemDepth', 0);
 const effectiveDepth = computed(() => {
@@ -120,6 +125,8 @@ provide('packSidebarItemDepth', computed(() => effectiveDepth.value + 1));
 // Resolusi Properti Reaktif (Prop Eksplisit -> Konfigurasi Item -> Injeksi Context -> Default)
 const resolvedCollapsed = computed(() => {
     if (props.isCollapsed !== null) return props.isCollapsed;
+    // Sub-item (depth > 0) atau item yang berada di dalam popover flyout tidak boleh collapsed
+    if (isInFlyout || effectiveDepth.value > 0) return false;
     return context?.isCollapsed?.value ?? false;
 });
 
@@ -225,6 +232,10 @@ const popoverPanelRef = ref(null);
 const isFlyoutOpen = ref(false);
 const flyoutStyle = ref({ top: '0px', left: '0px' });
 
+provide('packSidebarCloseFlyout', () => {
+    isFlyoutOpen.value = false;
+});
+
 const updateFlyoutPosition = () => {
     if (flyoutRef.value) {
         const rect = flyoutRef.value.getBoundingClientRect();
@@ -274,10 +285,21 @@ const handleNavigate = (navItem) => {
         context.navigate(navItem);
     }
     isFlyoutOpen.value = false;
+    if (closeFlyoutContext) {
+        closeFlyoutContext();
+    }
 };
 
 // Skala ukuran dinamis
 const sizeClass = computed(() => {
+    if (isInFlyout) {
+        return {
+            item: effectiveDepth.value === 0 ? 'py-1.5 text-xs gap-2.5' : 'py-1 text-[11px] gap-2',
+            icon: effectiveDepth.value === 0 ? 'text-[17px]' : 'text-[15px]',
+            badge: 'text-[9px] px-1.5 py-0.2',
+            collapsed: 'h-10 w-10',
+        };
+    }
     switch (resolvedSize.value) {
         case 'sm':
             return {
@@ -306,6 +328,12 @@ const sizeClass = computed(() => {
 
 // Indentasi padding kedalaman bertingkat
 const depthPaddingClass = computed(() => {
+    if (isInFlyout) {
+        if (effectiveDepth.value === 0) return 'px-2.5';
+        if (effectiveDepth.value === 1) return 'pl-7 pr-2.5';
+        if (effectiveDepth.value === 2) return 'pl-9 pr-2.5';
+        return 'pl-11 pr-2.5';
+    }
     if (effectiveDepth.value === 0) return 'px-3';
     if (effectiveDepth.value === 1) return 'pl-9 pr-3';
     if (effectiveDepth.value === 2) return 'pl-12 pr-3';
@@ -397,7 +425,7 @@ const isInternalLink = computed(() => {
         >
             <!-- Left Active Indicator Bar -->
             <span
-                v-if="(!resolvedCollapsed || resolvedMobile) && (isSelfActive || isChildActive) && effectiveDepth === 0 && resolvedItemStyle !== 'solid'"
+                v-if="(!resolvedCollapsed || resolvedMobile) && !isInFlyout && (isSelfActive || isChildActive) && effectiveDepth === 0 && resolvedItemStyle !== 'solid'"
                 class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full"
                 :class="resolvedColorTheme.indicator"
             />
@@ -415,6 +443,11 @@ const isInternalLink = computed(() => {
             >
                 {{ resolvedItem.icon }}
             </span>
+            <span
+                v-else-if="effectiveDepth > 0 || isInFlyout"
+                class="w-1.5 h-1.5 rounded-full mx-1 shrink-0 transition-colors"
+                :class="(isSelfActive || isChildActive) ? resolvedColorTheme.indicator : 'bg-slate-300 dark:bg-slate-600 group-hover:bg-slate-400 dark:group-hover:bg-slate-400'"
+            />
 
             <!-- Label & Chevron (Hanya tampil saat terbuka atau mobile) -->
             <template v-if="!resolvedCollapsed || resolvedMobile">
@@ -481,21 +514,21 @@ const isInternalLink = computed(() => {
                 <div
                     v-if="isFlyoutOpen"
                     ref="popoverPanelRef"
-                    class="fixed z-50 py-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 min-w-48 max-w-64 select-none space-y-1"
+                    class="fixed z-50 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-2xl shadow-slate-900/20 dark:shadow-black/60 border border-slate-200/90 dark:border-slate-800 min-w-52 max-w-64 select-none space-y-1"
                     :style="flyoutStyle"
                     @mouseenter="isFlyoutOpen = true"
                     @mouseleave="isFlyoutOpen = false"
                 >
                     <!-- Header Popover -->
-                    <div class="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800/80 font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center justify-between">
-                        <span>{{ resolvedItem.label }}</span>
-                        <span v-if="resolvedItem.badge" class="font-semibold rounded-full" :class="[badgeClass, sizeClass.badge]">
+                    <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center justify-between gap-2">
+                        <span class="truncate">{{ resolvedItem.label }}</span>
+                        <span v-if="resolvedItem.badge" class="font-semibold rounded-full shrink-0" :class="[badgeClass, sizeClass.badge]">
                             {{ resolvedItem.badge }}
                         </span>
                     </div>
 
-                    <!-- Daftar Sub-menu di Popover -->
-                    <div class="p-1 space-y-0.5 max-h-64 overflow-y-auto">
+                    <!-- Daftar Sub-menu di Popover dibungkus SidebarFlyoutProvider -->
+                    <SidebarFlyoutProvider>
                         <slot>
                             <SidebarItem
                                 v-for="(child, idx) in resolvedItem.children"
@@ -506,7 +539,7 @@ const isInternalLink = computed(() => {
                                 @navigate="handleNavigate"
                             />
                         </slot>
-                    </div>
+                    </SidebarFlyoutProvider>
                 </div>
             </Transition>
         </Teleport>
@@ -534,7 +567,7 @@ const isInternalLink = computed(() => {
         >
             <!-- Left Active Indicator Bar -->
             <span
-                v-if="(!resolvedCollapsed || resolvedMobile) && isSelfActive && effectiveDepth === 0 && resolvedItemStyle !== 'solid'"
+                v-if="(!resolvedCollapsed || resolvedMobile) && !isInFlyout && isSelfActive && effectiveDepth === 0 && resolvedItemStyle !== 'solid'"
                 class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full"
                 :class="resolvedColorTheme.indicator"
             />
@@ -552,6 +585,11 @@ const isInternalLink = computed(() => {
             >
                 {{ resolvedItem.icon }}
             </span>
+            <span
+                v-else-if="effectiveDepth > 0 || isInFlyout"
+                class="w-1.5 h-1.5 rounded-full mx-1 shrink-0 transition-colors"
+                :class="isSelfActive ? resolvedColorTheme.indicator : 'bg-slate-300 dark:bg-slate-600 group-hover:bg-slate-400 dark:group-hover:bg-slate-400'"
+            />
 
             <!-- Label -->
             <span v-if="!resolvedCollapsed || resolvedMobile" class="flex-1 truncate tracking-tight">
@@ -588,7 +626,7 @@ const isInternalLink = computed(() => {
             ]"
         >
             <span
-                v-if="(!resolvedCollapsed || resolvedMobile) && isSelfActive && depth === 0 && resolvedItemStyle !== 'solid'"
+                v-if="(!resolvedCollapsed || resolvedMobile) && !isInFlyout && isSelfActive && effectiveDepth === 0 && resolvedItemStyle !== 'solid'"
                 class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full"
                 :class="resolvedColorTheme.indicator"
             />
@@ -605,6 +643,11 @@ const isInternalLink = computed(() => {
             >
                 {{ resolvedItem.icon }}
             </span>
+            <span
+                v-else-if="effectiveDepth > 0 || isInFlyout"
+                class="w-1.5 h-1.5 rounded-full mx-1 shrink-0 transition-colors"
+                :class="isSelfActive ? resolvedColorTheme.indicator : 'bg-slate-300 dark:bg-slate-600 group-hover:bg-slate-400 dark:group-hover:bg-slate-400'"
+            />
 
             <span v-if="!resolvedCollapsed || resolvedMobile" class="flex-1 truncate tracking-tight">
                 {{ resolvedItem.label }}
@@ -639,7 +682,7 @@ const isInternalLink = computed(() => {
             ]"
         >
             <span
-                v-if="(!resolvedCollapsed || resolvedMobile) && isSelfActive && depth === 0 && resolvedItemStyle !== 'solid'"
+                v-if="(!resolvedCollapsed || resolvedMobile) && !isInFlyout && isSelfActive && effectiveDepth === 0 && resolvedItemStyle !== 'solid'"
                 class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full"
                 :class="resolvedColorTheme.indicator"
             />
@@ -656,6 +699,11 @@ const isInternalLink = computed(() => {
             >
                 {{ resolvedItem.icon }}
             </span>
+            <span
+                v-else-if="effectiveDepth > 0 || isInFlyout"
+                class="w-1.5 h-1.5 rounded-full mx-1 shrink-0 transition-colors"
+                :class="isSelfActive ? resolvedColorTheme.indicator : 'bg-slate-300 dark:bg-slate-600 group-hover:bg-slate-400 dark:group-hover:bg-slate-400'"
+            />
 
             <span v-if="!resolvedCollapsed || resolvedMobile" class="flex-1 truncate tracking-tight">
                 {{ resolvedItem.label }}

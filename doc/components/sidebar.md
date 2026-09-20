@@ -3,6 +3,7 @@
 [← Kembali ke Dokumentasi Utama](../../README.md) | [Lihat Composable useSidebar](../composables/use-sidebar.md)
 
 `Sidebar.vue` (dan `SidebarComponent.vue`) adalah komponen bilah navigasi samping (*vertical navigation bar*) enterprise dengan arsitektur **Dual-API**:
+
 1. **Compound Components (Deklaratif)**: Penggunaan modular yang intuitif via subkomponen (`SidebarHeader`, `SidebarNav`, `SidebarGroup`, `SidebarItem`, `SidebarFooter`, `SidebarToggle`).
 2. **Config-Driven (Array-based)**: Penggunaan berbasis konfigurasi array `:items="[...]"`, 100% *backward-compatible*.
 
@@ -80,7 +81,7 @@ const { isCollapsed, isMobileOpen } = useSidebar({
       <SidebarNav>
         <SidebarGroup title="Utama" />
         <SidebarItem label="Dashboard" icon="dashboard" href="/dashboard" :active="true" />
-        
+      
         <!-- Menu bertingkat (Submenu) dengan slot default -->
         <SidebarItem label="Transaksi" icon="receipt_long" badge="12" badge-variant="warning">
           <SidebarItem label="Semua Transaksi" href="/transactions" />
@@ -171,31 +172,33 @@ const menuItems = [
 
 ## 📋 Props API `<Sidebar />` (`SidebarComponent.vue`)
 
-| Prop | Tipe Data | Default | Deskripsi |
-| :--- | :--- | :--- | :--- |
-| `items` | `Array` | `[]` | Struktur array menu (opsional jika menggunakan slot anak deklaratif) |
-| `color` / `colorTheme` | `String` | `'primary'` | Tema warna: `'primary'`, `'indigo'`, `'emerald'`, `'purple'`, `'amber'`, `'rose'`, `'cyan'`, `'dark'` |
-| `itemStyle` | `String` | `'soft'` | Gaya item menu: `'soft'`, `'solid'`, `'outline'` |
-| `radius` | `String` | `'lg'` | Bentuk sudut item: `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'full'` |
-| `variant` | `String` | `'default'` | Gaya wadah sidebar: `'default'`, `'bordered'`, `'floating'` |
-| `size` | `String` | `'md'` | Ukuran item & ikon: `'sm'`, `'md'`, `'lg'` |
-| `collapsed` | `Boolean` | `false` | Status ciut sidebar (*mendukung `v-model:collapsed`*) |
-| `collapsible` | `Boolean` | `true` | Menampilkan/mengaktifkan fitur ciut sidebar |
-| `floatingToggle`| `Boolean` | `true` | Tombol lingkaran melayang di tepi kanan sidebar desktop |
-| `width` | `String` | `'64'` | Lebar sidebar saat terbuka: `'56'`, `'64'` (256px), `'72'`, `'80'` |
-| `collapsedWidth`| `String` | `'16'` | Lebar sidebar saat ciut: `'14'`, `'16'` (64px), `'18'`, `'20'` |
-| `showLogo` | `Boolean` | `true` | Menampilkan area header logo default (jika tidak menggunakan slot) |
-| `showFooter` | `Boolean` | `false` | Menampilkan area footer default |
-| `mobileBreakpoint`| `Number` | `768` | Batas breakpoint layar (px) untuk drawer seluler |
-| `mobileOpen` | `Boolean` | `false` | Status buka drawer seluler (*mendukung `v-model:mobileOpen`*) |
-| `activeRoute` | `String` | `''` | URL path aktif untuk pencocokan otomatis |
+| Prop                       | Tipe Data   | Default       | Deskripsi                                                                                                            |
+| :------------------------- | :---------- | :------------ | :------------------------------------------------------------------------------------------------------------------- |
+| `items`                  | `Array`   | `[]`        | Struktur array menu (opsional jika menggunakan slot anak deklaratif)                                                 |
+| `color` / `colorTheme` | `String`  | `'primary'` | Tema warna:`'primary'`, `'indigo'`, `'emerald'`, `'purple'`, `'amber'`, `'rose'`, `'cyan'`, `'dark'` |
+| `itemStyle`              | `String`  | `'soft'`    | Gaya item menu:`'soft'`, `'solid'`, `'outline'`                                                                |
+| `radius`                 | `String`  | `'lg'`      | Bentuk sudut item:`'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'full'`                                     |
+| `variant`                | `String`  | `'default'` | Gaya wadah sidebar:`'default'`, `'bordered'`, `'floating'`                                                     |
+| `size`                   | `String`  | `'md'`      | Ukuran item & ikon:`'sm'`, `'md'`, `'lg'`                                                                      |
+| `collapsed`              | `Boolean` | `false`     | Status ciut sidebar (*mendukung `v-model:collapsed`*)                                                            |
+| `collapsible`            | `Boolean` | `true`      | Menampilkan/mengaktifkan fitur ciut sidebar                                                                          |
+| `floatingToggle`         | `Boolean` | `true`      | Tombol lingkaran melayang di tepi kanan sidebar desktop                                                              |
+| `width`                  | `String`  | `'64'`      | Lebar sidebar saat terbuka:`'56'`, `'64'` (256px), `'72'`, `'80'`                                            |
+| `collapsedWidth`         | `String`  | `'16'`      | Lebar sidebar saat ciut:`'14'`, `'16'` (64px), `'18'`, `'20'`                                                |
+| `showLogo`               | `Boolean` | `true`      | Menampilkan area header logo default (jika tidak menggunakan slot)                                                   |
+| `showFooter`             | `Boolean` | `false`     | Menampilkan area footer default                                                                                      |
+| `mobileBreakpoint`       | `Number`  | `768`       | Batas breakpoint layar (px) untuk drawer seluler                                                                     |
+| `mobileOpen`             | `Boolean` | `false`     | Status buka drawer seluler (*mendukung `v-model:mobileOpen`*)                                                    |
+| `activeRoute`            | `String`  | `''`        | URL path aktif untuk pencocokan otomatis                                                                             |
 
 ---
 
 ## 🧩 Subkomponen API
 
 ### 1. `<SidebarHeader />`
+
 Header bilah sisi yang adaptif terhadap status ciut.
+
 - **Props**:
   - `title` (`String`, default: `'Pack UI'`): Judul aplikasi / merek.
   - `subtitle` (`String`, default: `''`): Subjudul atau deskripsi singkat.
@@ -207,16 +210,21 @@ Header bilah sisi yang adaptif terhadap status ciut.
   - `#actions`: Tombol aksi di sisi kanan header.
 
 ### 2. `<SidebarNav />`
+
 Wadah scrollbar vertikal ramping (*thin custom scrollbar*) untuk menampung item menu.
 
 ### 3. `<SidebarGroup />`
+
 Pemisah kategori menu navigasi.
+
 - **Props**:
   - `title` (`String`, default: `''`): Label judul kategori huruf besar.
   - `separator` (`Boolean`, default: `false`): Menampilkan garis pembagi horizontal tipis di atasnya.
 
 ### 4. `<SidebarItem />`
+
 Item menu interaktif dengan dukungan link href, active state, chevron berputar, dan slot submenu bersarang.
+
 - **Props**:
   - `label` (`String`, default: `''`): Teks nama menu.
   - `icon` (`String`, default: `''`): Nama Google Material Symbols.
@@ -232,10 +240,13 @@ Item menu interaktif dengan dukungan link href, active state, chevron berputar, 
   - `#badge`: Kustomisasi badge menu.
 
 ### 5. `<SidebarFooter />`
+
 Wadah profil pengguna atau copyright di bagian bawah sidebar. Otomatis memiliki border atas dan penyesuaian padding saat ciut.
 
 ### 6. `<SidebarToggle />`
+
 Tombol pemicu collapse atau mobile drawer serbaguna yang dapat diletakkan di dalam maupun di luar sidebar (misal di topbar).
+
 - **Props**:
   - `variant` (`String`, default: `'icon'`): Gaya tombol (`'floating'`, `'icon'`, `'button'`).
   - `mobile` (`Boolean`, default: `false`): Jika `true`, tombol ini mengontrol drawer seluler bukan collapse desktop.
