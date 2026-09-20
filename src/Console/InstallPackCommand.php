@@ -135,11 +135,11 @@ class InstallPackCommand extends Command
         $this->info('🎉 Instalasi selesai! Pack UI siap digunakan.');
         $this->line('  📁 Komponen UI : <comment>resources/js/Components/Pack</comment>');
         $this->line('  📁 Composables : <comment>resources/js/Composables/Pack</comment>');
-        $this->line('  📁 Layouts     : <comment>resources/js/Layouts</comment>');
+        $this->line('  📁 Layouts     : <comment>resources/js/Layouts/Pack</comment>');
         $this->newLine();
         $this->comment('Contoh Pemakaian di Halaman Vue:');
         $this->line('  <info>import InputField from "@/Components/Pack/InputField.vue";</info>');
-        $this->line('  <info>import DashboardLayout from "@/Layouts/DashboardLayout.vue";</info>');
+        $this->line('  <info>import UIDashboardLayout from "@/Layouts/Pack/UIDashboardLayout.vue";</info>');
         $this->line('  <info>import { useNotification } from "@/Composables/Pack/useNotification.js";</info>');
         $this->line('  <info>// Routing Ziggy: route("dashboard.index")</info>');
         $this->newLine();

@@ -43,7 +43,7 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 | **`Card.vue`** | Container serbaguna dengan dukungan collapsible body, loading overlay, header icon, dan actions slot. |
 | **`ConfirmDialog.vue`** | Dialog konfirmasi destruktif/penting global (Promise async) yang terhubung langsung ke `useConfirm.js`. |
 | **`Dropdown.vue`** | Menu aksi popover enterprise dengan 5 pilar UI, 5 varian desain anti-monoton (`rich` 2-baris card, `glassmorphic`, `pills`, `bordered`, `default`), navigasi keyboard WAI-ARIA lengkap, auto click-outside, dan slot header/footer. [Dokumentasi Lengkap →](doc/components/dropdown.md) |
-| **`Sidebar.vue`** | Sidebar navigasi dashboard desktop collapsible + mobile drawer teleported, lengkap dengan sub-sub menu rekursif dan popover flyout. |
+| **`Sidebar.vue`** | Bilah navigasi samping enterprise dengan arsitektur Dual-API (Compound Components deklaratif & Config-Driven array `:items`), collapsible desktop, mobile drawer, dan integrasi `useSidebar.js`. [Dokumentasi Lengkap →](doc/components/sidebar.md) |
 | **`Skeleton.vue`** | Placeholder loading loader dinamis & hemat memori dengan 5 pilar kustomisasi, 7 preset halaman siap pakai (stats, table, card, profile, form, article, feed), varian atomik (text, circular, icon, rounded), animasi pure CSS shimmer wave/pulse, dan conditional wrapper (`:loading`). [Dokumentasi Lengkap →](doc/components/skeleton.md) |
 | **`Stepper.vue`** | Stepper alur kerja & progress wizard multi-tahap dengan 5 pilar kustomisasi, 6 varian tipe (multi-stepper cards, segmented bar, circle, pills, vertical timeline, dots), penempatan informasi terarah (kanan, kiri, atas, bawah), skeleton loading adaptif, dan bilah navigasi aksi. [Dokumentasi Lengkap →](doc/components/stepper.md) |
 | **`Tabs.vue`** | Navigasi panel konten enterprise dengan 5 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks/deskripsi 2 baris, ikon posisi left/top, responsif scroll panah halus), 4 layout (underline, pills, segmented, enclosed), dan WAI-ARIA. |
@@ -87,6 +87,7 @@ Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan 
 * **`useTheme.js`** – State manager tema gelap/terang dengan persistensi `localStorage` dan sinkronisasi preferensi sistem operasi.
 * **`useClickOutside.js`** – Helper penutup otomatis popover, dropdown, atau menu saat pengguna mengklik di luar area elemen.
 * **`useFormValidation.js`** – Skema validasi formulir reaktif dengan preset aturan umum dan sinkronisasi galat backend Laravel.
+* **`useSidebar.js`** – State manager reaktif bilah navigasi samping (ciut desktop, drawer seluler, shortcut `Ctrl+B`, dan persistensi `localStorage`). [Dokumentasi Lengkap →](doc/composables/use-sidebar.md)
 
 ---
 
@@ -367,6 +368,9 @@ Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*pro
 ### 🛠️ Prasyarat & Instalasi
 * 📖 [**Panduan Setup & Instalasi (`doc/setup.md`)**](doc/setup.md) — Font Google Material Symbols, konfigurasi Tailwind CSS v4 / v3, konfigurasi backend Middleware Laravel `HandleInertiaRequests`, dan optimasi build bundler Vite.
 
+### 🏛️ Tata Letak (Layouts)
+* 🖥️ [**UIDashboardLayout (`UIDashboardLayout.vue`)**](doc/layouts/ui-dashboard-layout.md) — Kerangka tata letak dasbor (*shell layout*) enterprise siap pakai dengan integrasi modular `SidebarComponent.vue`, bilah atas (*topbar*), modal pencarian global `⌘K`, lencana notifikasi, saklar tema, breadcrumbs, dan profil pengguna.
+
 ### 🧩 Komponen UI (Components)
 * 🔔 [**Alert (`Alert.vue`)**](doc/components/alert.md) — Inline banner alert dengan auto-close, progress countdown bar, varian (`soft`, `solid`, `outline`), & dismissible.
 * 👤 [**Avatar & AvatarGroup (`Avatar.vue` / `AvatarGroup.vue`)**](doc/components/avatar.md) — Foto profil avatar dengan fitur Profile Dropdown Menu terintegrasi, cincin cerita Instagram (Story Ring), indikator radar pulse online, verified badge, tumpukan tim AvatarGroup, dan 5 pilar UI.
@@ -380,7 +384,7 @@ Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*pro
 * 📝 [**InputField & Sub-Komponen (`InputField.vue`)**](doc/components/input-field.md) — Facade universal form input mendelegasikan 12 sub-komponen: Text, Password, DatePicker, File (Dropzone), Select, Color, Radio, Checkbox, Textarea, Range, Switch, OTP, & Mask.
 * 🪟 [**Modal (`Modal.vue`)**](doc/components/modal.md) — Dialog overlay via `<Teleport>` dengan Focus Trap, ukuran responsif (`sm` hingga `full`), posisi dialog, & Expose API.
 * 📄 [**Pagination (`Pagination.vue`)**](doc/components/pagination.md) — Komponen navigasi halaman kompatibel Laravel `LengthAwarePaginator` dan mode client-side.
-* 📑 [**SidebarComponent & DashboardLayout (`SidebarComponent.vue` / `DashboardLayout.vue`)**](doc/components/sidebar.md) — Bilah samping modular dengan 5 pilar kustomisasi (warna aksen, gaya item soft/solid/outline, radius, varian bordered/floating), menu bertingkat, mobile drawer, serta `DashboardLayout.vue` lengkap dengan topbar, search `⌘K`, notifikasi, & user menu.
+* 📑 [**SidebarComponent (`SidebarComponent.vue` / `Sidebar.vue`)**](doc/components/sidebar.md) — Bilah samping modular mandiri (*standalone*) dengan 5 pilar kustomisasi (warna aksen, gaya item soft/solid/outline, radius, varian bordered/floating), menu bertingkat, mobile drawer, dan slot kustom.
 * 💀 [**Skeleton (`Skeleton.vue`)**](doc/components/skeleton.md) — Kerangka placeholder loader dengan efek animasi shimmer wave modern untuk teks, avatar, kartu, dan tabel.
 * 🪜 [**Stepper (`Stepper.vue`)**](doc/components/stepper.md) — Penunjuk alur wizard multi-langkah horizontal/vertikal, mode sekuensial linear, & penanda status error.
 * 📊 [**TableComponent (`TableComponent.vue`)**](doc/components/table.md) — Tabel data enterprise dengan 5 pilar kustomisasi (warna semantik, bentuk radius/size, teks/header judul & bilah aksi massal, ikon, responsif sticky first column & scroll indicator), multi-column skeleton loader, dan ekspor CSV.

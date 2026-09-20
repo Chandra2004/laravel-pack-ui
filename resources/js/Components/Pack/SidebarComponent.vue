@@ -1,12 +1,16 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, computed, watch, provide, onMounted, onUnmounted } from 'vue';
 import { useClickOutside } from '@/Composables/Pack/useClickOutside';
+import { useSidebar } from '@/Composables/Pack/useSidebar';
 import SidebarItem from './SidebarItem.vue';
+import SidebarHeader from './Sidebar/SidebarHeader.vue';
+import SidebarNav from './Sidebar/SidebarNav.vue';
+import SidebarFooter from './Sidebar/SidebarFooter.vue';
+import SidebarToggle from './Sidebar/SidebarToggle.vue';
 
 const props = defineProps({
     /**
-     * 3. TEKS KONTEN: Daftar item navigasi bertingkat
+     * 3. TEKS KONTEN: Daftar item navigasi bertingkat (Mode Config-Driven)
      * Format item: { label, icon, href, badge, badgeVariant, children: [], separator, heading, active, disabled, target }
      */
     items: {
@@ -18,7 +22,7 @@ const props = defineProps({
      */
     collapsed: {
         type: Boolean,
-        default: false,
+        default: null,
     },
     /**
      * Apakah sidebar dapat diciutkan/diperluas
@@ -31,6 +35,20 @@ const props = defineProps({
      * Tombol ciut melayang di border samping (floating circular toggle button)
      */
     floatingToggle: {
+        type: Boolean,
+        default: true,
+    },
+    /**
+     * Key penyimpanan preferensi ciut di localStorage (false untuk mematikan)
+     */
+    persistKey: {
+        type: [String, Boolean],
+        default: 'pack_sidebar_collapsed',
+    },
+    /**
+     * Aktifkan shortcut keyboard Ctrl+B / Cmd+B untuk toggle collapse
+     */
+    enableShortcut: {
         type: Boolean,
         default: true,
     },
@@ -111,6 +129,20 @@ const props = defineProps({
         default: true,
     },
     /**
+     * Nama Brand di header default
+     */
+    brandName: {
+        type: String,
+        default: '',
+    },
+    /**
+     * Sub-nama brand di header default
+     */
+    brandSub: {
+        type: String,
+        default: '',
+    },
+    /**
      * Tampilkan area footer
      */
     showFooter: {
@@ -129,7 +161,7 @@ const props = defineProps({
      */
     mobileOpen: {
         type: Boolean,
-        default: false,
+        default: null,
     },
     /**
      * Rute yang sedang aktif saat ini
@@ -142,58 +174,93 @@ const props = defineProps({
 
 const emit = defineEmits(['update:collapsed', 'update:mobileOpen', 'navigate']);
 
-const isCollapsed = ref(props.collapsed);
-const isMobileOpen = ref(props.mobileOpen);
+// Inisialisasi Composable useSidebar
+const sidebarState = useSidebar({
+    persistKey: props.persistKey,
+    defaultCollapsed: props.collapsed ?? false,
+    enableShortcut: props.enableShortcut,
+});
+
+const isCollapsed = ref(props.collapsed !== null ? props.collapsed : sidebarState.isCollapsed.value);
+const isMobileOpen = ref(props.mobileOpen !== null ? props.mobileOpen : sidebarState.isMobileOpen.value);
 const isMobile = ref(false);
 const mobileDrawerRef = ref(null);
 
-watch(() => props.collapsed, (val) => { isCollapsed.value = val; });
-watch(() => props.mobileOpen, (val) => {
-    isMobileOpen.value = val;
-    handleBodyScrollLock(val);
+// Sinkronisasi props.collapsed dari parent
+watch(() => props.collapsed, (val) => {
+    if (val !== null && isCollapsed.value !== val) {
+        isCollapsed.value = val;
+        sidebarState.setCollapsed(val);
+    }
 });
 
-// Kunci scroll body saat drawer mobile terbuka
-const handleBodyScrollLock = (lock) => {
-    if (typeof document === 'undefined') return;
-    if (lock) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = '';
+// Sinkronisasi props.mobileOpen dari parent
+watch(() => props.mobileOpen, (val) => {
+    if (val !== null && isMobileOpen.value !== val) {
+        isMobileOpen.value = val;
+        sidebarState.setMobileOpen(val);
     }
-};
+});
 
+// Sinkronisasi dari composable sidebarState (shortcut Ctrl+B atau trigger eksternal)
+watch(sidebarState.isCollapsed, (val) => {
+    if (isCollapsed.value !== val) {
+        isCollapsed.value = val;
+    }
+});
+
+watch(sidebarState.isMobileOpen, (val) => {
+    if (isMobileOpen.value !== val) {
+        isMobileOpen.value = val;
+    }
+});
+
+// Emit perubahan internal ke parent & sinkron ke sidebarState
+watch(isCollapsed, (val) => {
+    emit('update:collapsed', val);
+    if (sidebarState.isCollapsed.value !== val) {
+        sidebarState.setCollapsed(val);
+    }
+});
+
+watch(isMobileOpen, (val) => {
+    emit('update:mobileOpen', val);
+    if (sidebarState.isMobileOpen.value !== val) {
+        sidebarState.setMobileOpen(val);
+    }
+});
+
+// Aksi Toggle
 const toggleCollapse = () => {
     isCollapsed.value = !isCollapsed.value;
-    emit('update:collapsed', isCollapsed.value);
+    sidebarState.setCollapsed(isCollapsed.value);
 };
 
 const openMobile = () => {
     isMobileOpen.value = true;
-    emit('update:mobileOpen', true);
-    handleBodyScrollLock(true);
+    sidebarState.openMobile();
 };
 
 const closeMobile = () => {
     isMobileOpen.value = false;
-    emit('update:mobileOpen', false);
-    handleBodyScrollLock(false);
+    sidebarState.closeMobile();
 };
 
 useClickOutside(mobileDrawerRef, () => {
-    if (isMobile.value && isMobileOpen.value) {
+    if (isMobileOpen.value) {
         closeMobile();
     }
 });
 
 const handleNavigate = (item) => {
     emit('navigate', item);
-    if (isMobile.value) {
+    if (isMobile.value || isMobileOpen.value) {
         closeMobile();
     }
 };
 
 const checkMobile = () => {
+    if (typeof window === 'undefined') return;
     const wasMobile = isMobile.value;
     isMobile.value = window.innerWidth < props.mobileBreakpoint;
     if (wasMobile && !isMobile.value && isMobileOpen.value) {
@@ -203,12 +270,17 @@ const checkMobile = () => {
 
 onMounted(() => {
     checkMobile();
-    window.addEventListener('resize', checkMobile);
+    if (typeof window !== 'undefined') {
+        window.addEventListener('resize', checkMobile);
+    }
 });
 
 onUnmounted(() => {
-    window.removeEventListener('resize', checkMobile);
-    handleBodyScrollLock(false);
+    if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', checkMobile);
+    }
+    // Pastikan mobile drawer selalu tertutup saat komponen unmount
+    closeMobile();
 });
 
 // Lebar dinamis
@@ -232,7 +304,7 @@ const collapsedWidthClass = computed(() => {
     }
 });
 
-// 2. BENTUK: Varian tampilan
+// Varian gaya visual
 const variantClasses = computed(() => {
     switch (props.variant) {
         case 'bordered':
@@ -245,10 +317,9 @@ const variantClasses = computed(() => {
     }
 });
 
-// 1. WARNA: Palet tema terpadu
+// Palet warna ringkas & modular
 const colorTheme = computed(() => {
-    const c = props.color;
-    const map = {
+    const aliasMap = {
         blue: 'primary',
         success: 'emerald',
         violet: 'purple',
@@ -257,110 +328,103 @@ const colorTheme = computed(() => {
         sky: 'cyan',
         slate: 'dark',
     };
-    const key = map[c] || c;
+    const key = aliasMap[props.color] || props.color;
 
-    switch (key) {
-        case 'indigo':
-            return {
-                indicator: 'bg-indigo-600 dark:bg-indigo-500',
-                soft: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 font-semibold',
-                solid: 'text-white bg-indigo-600 dark:bg-indigo-600 font-semibold shadow-xs shadow-indigo-600/20',
-                outline: 'text-indigo-600 dark:text-indigo-400 border border-indigo-500/60 dark:border-indigo-400/50 font-semibold bg-transparent',
-                iconActive: 'text-indigo-600 dark:text-indigo-400',
-                iconSolid: 'text-white',
-                badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
-                logoBg: 'bg-indigo-600 text-white',
-                toggleHover: 'hover:text-indigo-600 dark:hover:text-indigo-400',
-            };
-        case 'emerald':
-            return {
-                indicator: 'bg-emerald-600 dark:bg-emerald-500',
-                soft: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/40 font-semibold',
-                solid: 'text-white bg-emerald-600 dark:bg-emerald-600 font-semibold shadow-xs shadow-emerald-600/20',
-                outline: 'text-emerald-600 dark:text-emerald-400 border border-emerald-500/60 dark:border-emerald-400/50 font-semibold bg-transparent',
-                iconActive: 'text-emerald-600 dark:text-emerald-400',
-                iconSolid: 'text-white',
-                badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
-                logoBg: 'bg-emerald-600 text-white',
-                toggleHover: 'hover:text-emerald-600 dark:hover:text-emerald-400',
-            };
-        case 'purple':
-            return {
-                indicator: 'bg-purple-600 dark:bg-purple-500',
-                soft: 'text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-950/40 font-semibold',
-                solid: 'text-white bg-purple-600 dark:bg-purple-600 font-semibold shadow-xs shadow-purple-600/20',
-                outline: 'text-purple-600 dark:text-purple-400 border border-purple-500/60 dark:border-purple-400/50 font-semibold bg-transparent',
-                iconActive: 'text-purple-600 dark:text-purple-400',
-                iconSolid: 'text-white',
-                badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
-                logoBg: 'bg-purple-600 text-white',
-                toggleHover: 'hover:text-purple-600 dark:hover:text-purple-400',
-            };
-        case 'amber':
-            return {
-                indicator: 'bg-amber-500 dark:bg-amber-500',
-                soft: 'text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40 font-semibold',
-                solid: 'text-white bg-amber-500 dark:bg-amber-500 font-semibold shadow-xs shadow-amber-500/20',
-                outline: 'text-amber-600 dark:text-amber-400 border border-amber-500/60 dark:border-amber-400/50 font-semibold bg-transparent',
-                iconActive: 'text-amber-600 dark:text-amber-400',
-                iconSolid: 'text-white',
-                badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
-                logoBg: 'bg-amber-500 text-white',
-                toggleHover: 'hover:text-amber-600 dark:hover:text-amber-400',
-            };
-        case 'rose':
-            return {
-                indicator: 'bg-rose-600 dark:bg-rose-500',
-                soft: 'text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 font-semibold',
-                solid: 'text-white bg-rose-600 dark:bg-rose-600 font-semibold shadow-xs shadow-rose-600/20',
-                outline: 'text-rose-600 dark:text-rose-400 border border-rose-500/60 dark:border-rose-400/50 font-semibold bg-transparent',
-                iconActive: 'text-rose-600 dark:text-rose-400',
-                iconSolid: 'text-white',
-                badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
-                logoBg: 'bg-rose-600 text-white',
-                toggleHover: 'hover:text-rose-600 dark:hover:text-rose-400',
-            };
-        case 'cyan':
-            return {
-                indicator: 'bg-cyan-600 dark:bg-cyan-500',
-                soft: 'text-cyan-600 dark:text-cyan-400 bg-cyan-50/80 dark:bg-cyan-950/40 font-semibold',
-                solid: 'text-white bg-cyan-600 dark:bg-cyan-600 font-semibold shadow-xs shadow-cyan-600/20',
-                outline: 'text-cyan-600 dark:text-cyan-400 border border-cyan-500/60 dark:border-cyan-400/50 font-semibold bg-transparent',
-                iconActive: 'text-cyan-600 dark:text-cyan-400',
-                iconSolid: 'text-white',
-                badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300',
-                logoBg: 'bg-cyan-600 text-white',
-                toggleHover: 'hover:text-cyan-600 dark:hover:text-cyan-400',
-            };
-        case 'dark':
-            return {
-                indicator: 'bg-slate-900 dark:bg-white',
-                soft: 'text-slate-900 dark:text-white bg-slate-200/70 dark:bg-slate-800/60 font-semibold',
-                solid: 'text-white dark:text-slate-900 bg-slate-900 dark:bg-white font-semibold shadow-xs shadow-slate-900/20',
-                outline: 'text-slate-900 dark:text-white border border-slate-700 dark:border-slate-300 font-semibold bg-transparent',
-                iconActive: 'text-slate-900 dark:text-white',
-                iconSolid: 'text-white dark:text-slate-900',
-                badge: 'bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
-                logoBg: 'bg-slate-900 text-white dark:bg-white dark:text-slate-900',
-                toggleHover: 'hover:text-slate-900 dark:hover:text-white',
-            };
-        case 'primary':
-        default:
-            return {
-                indicator: 'bg-blue-600 dark:bg-blue-500',
-                soft: 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 font-semibold',
-                solid: 'text-white bg-blue-600 dark:bg-blue-600 font-semibold shadow-xs shadow-blue-600/20',
-                outline: 'text-blue-600 dark:text-blue-400 border border-blue-500/60 dark:border-blue-400/50 font-semibold bg-transparent',
-                iconActive: 'text-blue-600 dark:text-blue-400',
-                iconSolid: 'text-white',
-                badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-                logoBg: 'bg-blue-600 text-white',
-                toggleHover: 'hover:text-blue-600 dark:hover:text-blue-400',
-            };
-    }
+    const themes = {
+        indigo: {
+            indicator: 'bg-indigo-600 dark:bg-indigo-500',
+            soft: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 font-semibold',
+            solid: 'text-white bg-indigo-600 dark:bg-indigo-600 font-semibold shadow-xs shadow-indigo-600/20',
+            outline: 'text-indigo-600 dark:text-indigo-400 border border-indigo-500/60 dark:border-indigo-400/50 font-semibold bg-transparent',
+            iconActive: 'text-indigo-600 dark:text-indigo-400',
+            iconSolid: 'text-white',
+            badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300',
+            logoBg: 'bg-indigo-600 text-white',
+            toggleHover: 'hover:text-indigo-600 dark:hover:text-indigo-400',
+        },
+        emerald: {
+            indicator: 'bg-emerald-600 dark:bg-emerald-500',
+            soft: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/40 font-semibold',
+            solid: 'text-white bg-emerald-600 dark:bg-emerald-600 font-semibold shadow-xs shadow-emerald-600/20',
+            outline: 'text-emerald-600 dark:text-emerald-400 border border-emerald-500/60 dark:border-emerald-400/50 font-semibold bg-transparent',
+            iconActive: 'text-emerald-600 dark:text-emerald-400',
+            iconSolid: 'text-white',
+            badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
+            logoBg: 'bg-emerald-600 text-white',
+            toggleHover: 'hover:text-emerald-600 dark:hover:text-emerald-400',
+        },
+        purple: {
+            indicator: 'bg-purple-600 dark:bg-purple-500',
+            soft: 'text-purple-600 dark:text-purple-400 bg-purple-50/80 dark:bg-purple-950/40 font-semibold',
+            solid: 'text-white bg-purple-600 dark:bg-purple-600 font-semibold shadow-xs shadow-purple-600/20',
+            outline: 'text-purple-600 dark:text-purple-400 border border-purple-500/60 dark:border-purple-400/50 font-semibold bg-transparent',
+            iconActive: 'text-purple-600 dark:text-purple-400',
+            iconSolid: 'text-white',
+            badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+            logoBg: 'bg-purple-600 text-white',
+            toggleHover: 'hover:text-purple-600 dark:hover:text-purple-400',
+        },
+        amber: {
+            indicator: 'bg-amber-500 dark:bg-amber-500',
+            soft: 'text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40 font-semibold',
+            solid: 'text-white bg-amber-500 dark:bg-amber-500 font-semibold shadow-xs shadow-amber-500/20',
+            outline: 'text-amber-600 dark:text-amber-400 border border-amber-500/60 dark:border-amber-400/50 font-semibold bg-transparent',
+            iconActive: 'text-amber-600 dark:text-amber-400',
+            iconSolid: 'text-white',
+            badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+            logoBg: 'bg-amber-500 text-white',
+            toggleHover: 'hover:text-amber-600 dark:hover:text-amber-400',
+        },
+        rose: {
+            indicator: 'bg-rose-600 dark:bg-rose-500',
+            soft: 'text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 font-semibold',
+            solid: 'text-white bg-rose-600 dark:bg-rose-600 font-semibold shadow-xs shadow-rose-600/20',
+            outline: 'text-rose-600 dark:text-rose-400 border border-rose-500/60 dark:border-rose-400/50 font-semibold bg-transparent',
+            iconActive: 'text-rose-600 dark:text-rose-400',
+            iconSolid: 'text-white',
+            badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300',
+            logoBg: 'bg-rose-600 text-white',
+            toggleHover: 'hover:text-rose-600 dark:hover:text-rose-400',
+        },
+        cyan: {
+            indicator: 'bg-cyan-600 dark:bg-cyan-500',
+            soft: 'text-cyan-600 dark:text-cyan-400 bg-cyan-50/80 dark:bg-cyan-950/40 font-semibold',
+            solid: 'text-white bg-cyan-600 dark:bg-cyan-600 font-semibold shadow-xs shadow-cyan-600/20',
+            outline: 'text-cyan-600 dark:text-cyan-400 border border-cyan-500/60 dark:border-cyan-400/50 font-semibold bg-transparent',
+            iconActive: 'text-cyan-600 dark:text-cyan-400',
+            iconSolid: 'text-white',
+            badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300',
+            logoBg: 'bg-cyan-600 text-white',
+            toggleHover: 'hover:text-cyan-600 dark:hover:text-cyan-400',
+        },
+        dark: {
+            indicator: 'bg-slate-900 dark:bg-white',
+            soft: 'text-slate-900 dark:text-white bg-slate-200/70 dark:bg-slate-800/60 font-semibold',
+            solid: 'text-white dark:text-slate-900 bg-slate-900 dark:bg-white font-semibold shadow-xs shadow-slate-900/20',
+            outline: 'text-slate-900 dark:text-white border border-slate-700 dark:border-slate-300 font-semibold bg-transparent',
+            iconActive: 'text-slate-900 dark:text-white',
+            iconSolid: 'text-white dark:text-slate-900',
+            badge: 'bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
+            logoBg: 'bg-slate-900 text-white dark:bg-white dark:text-slate-900',
+            toggleHover: 'hover:text-slate-900 dark:hover:text-white',
+        },
+        primary: {
+            indicator: 'bg-blue-600 dark:bg-blue-500',
+            soft: 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 font-semibold',
+            solid: 'text-white bg-blue-600 dark:bg-blue-600 font-semibold shadow-xs shadow-blue-600/20',
+            outline: 'text-blue-600 dark:text-blue-400 border border-blue-500/60 dark:border-blue-400/50 font-semibold bg-transparent',
+            iconActive: 'text-blue-600 dark:text-blue-400',
+            iconSolid: 'text-white',
+            badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+            logoBg: 'bg-blue-600 text-white',
+            toggleHover: 'hover:text-blue-600 dark:hover:text-blue-400',
+        },
+    };
+
+    return themes[key] || themes.primary;
 });
 
-// 2. BENTUK: Kelas Radius
+// Kelas radius
 const radiusClass = computed(() => {
     switch (props.radius) {
         case 'none': return 'rounded-none';
@@ -373,7 +437,33 @@ const radiusClass = computed(() => {
     }
 });
 
-defineExpose({ toggleCollapse, openMobile, closeMobile, isCollapsed, isMobileOpen });
+// Context Provider Terpusat via provide()
+provide('packSidebarContext', {
+    colorTheme,
+    itemStyle: computed(() => props.itemStyle),
+    radiusClass,
+    size: computed(() => props.size),
+    isCollapsed,
+    isMobileOpen,
+    isMobile,
+    activeRoute: computed(() => props.activeRoute),
+    items: computed(() => props.items),
+    toggleCollapse,
+    openMobile,
+    closeMobile,
+    toggleMobile: () => {
+        isMobileOpen.value = !isMobileOpen.value;
+    },
+    navigate: handleNavigate,
+});
+
+defineExpose({
+    toggleCollapse,
+    openMobile,
+    closeMobile,
+    isCollapsed,
+    isMobileOpen,
+});
 </script>
 
 <template>
@@ -390,120 +480,56 @@ defineExpose({ toggleCollapse, openMobile, closeMobile, isCollapsed, isMobileOpe
         ]"
     >
         <!-- Floating Border Toggle Button (Linear / Notion Style) -->
-        <button
+        <SidebarToggle
             v-if="collapsible && floatingToggle"
-            type="button"
-            @click="toggleCollapse"
-            :title="isCollapsed ? 'Perluas Menu (Ctrl+B)' : 'Perkecil Menu (Ctrl+B)'"
-            :aria-label="isCollapsed ? 'Perluas Menu' : 'Perkecil Menu'"
-            :class="[
-                'absolute -right-3.5 top-5 z-30 w-7 h-7 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-center text-slate-400 hover:scale-110 active:scale-95 transition-all cursor-pointer',
-                colorTheme.toggleHover,
-            ]"
-        >
-            <span
-                class="material-symbols-outlined text-base leading-none transition-transform duration-300 select-none"
-                :class="isCollapsed ? 'rotate-180' : ''"
-            >
-                chevron_left
-            </span>
-        </button>
+            variant="floating"
+        />
 
         <!-- HEADER / LOGO (Desktop) -->
-        <div
+        <SidebarHeader
             v-if="showLogo"
-            class="flex items-center shrink-0 h-16 border-b border-slate-200/60 dark:border-slate-800/60"
-            :class="isCollapsed ? 'justify-center px-0' : 'justify-between px-4'"
+            :brand-name="brandName"
+            :brand-sub="brandSub"
+            :show-toggle="collapsible && !floatingToggle"
         >
-            <!-- A. Logo Mode Diperluas -->
-            <div v-if="!isCollapsed" class="flex items-center gap-3 min-w-0 flex-1">
-                <slot name="logo">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div
-                            class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs"
-                            :class="colorTheme.logoBg"
-                        >
-                            P
-                        </div>
-                        <span class="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-                            Dashboard
-                        </span>
-                    </div>
-                </slot>
-            </div>
-
-            <!-- In-header Toggle (Jika floatingToggle dimatikan) -->
-            <button
-                v-if="collapsible && !floatingToggle && !isCollapsed"
-                type="button"
-                @click="toggleCollapse"
-                class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer shrink-0"
-                title="Tutup sidebar"
-            >
-                <span class="material-symbols-outlined text-base leading-none select-none">
-                    menu_open
-                </span>
-            </button>
-
-            <!-- B. Logo Mode Diciutkan -->
-            <div
-                v-if="isCollapsed"
-                class="w-full flex items-center justify-center cursor-pointer group"
-                @click="toggleCollapse"
-                title="Klik untuk memperluas menu"
-            >
-                <slot name="logo-collapsed">
-                    <div
-                        class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 transition-transform"
-                        :class="colorTheme.logoBg"
-                    >
-                        P
-                    </div>
-                </slot>
-            </div>
-        </div>
+            <template #default>
+                <slot name="logo" />
+            </template>
+            <template #collapsed>
+                <slot name="logo-collapsed" />
+            </template>
+            <template #actions>
+                <slot name="header-extra" />
+            </template>
+        </SidebarHeader>
 
         <!-- TOP SLOT (Pencarian / Workspace Switcher) -->
         <div v-if="$slots.top" :class="isCollapsed ? 'px-1 py-2' : 'px-3 py-2'">
             <slot name="top" :is-collapsed="isCollapsed" />
         </div>
 
-        <!-- DESKTOP NAVIGATION ITEMS -->
-        <nav
-            class="flex-1 py-3 space-y-0.5"
-            :class="[
-                isCollapsed ? 'overflow-visible px-2' : 'overflow-y-auto px-3',
-            ]"
-            aria-label="Navigasi sidebar desktop"
-        >
-            <SidebarItem
-                v-for="(item, index) in items"
-                :key="index"
-                :item="item"
-                :depth="0"
-                :is-collapsed="isCollapsed"
-                :is-mobile="false"
-                :active-route="activeRoute"
-                :color-theme="colorTheme"
-                :item-style="itemStyle"
-                :radius-class="radiusClass"
-                :size="size"
-                @navigate="handleNavigate"
-            >
-                <template v-if="$slots.item" #default="itemProps">
-                    <slot name="item" v-bind="itemProps" />
-                </template>
-            </SidebarItem>
-        </nav>
+        <!-- DESKTOP NAVIGATION ITEMS (Hybrid: Slot Deklaratif atau Looping Props) -->
+        <SidebarNav>
+            <slot>
+                <!-- Fallback otomatis jika tidak ada slot anak: loop prop items -->
+                <SidebarItem
+                    v-for="(item, index) in items"
+                    :key="index"
+                    :item="item"
+                    :depth="0"
+                    @navigate="handleNavigate"
+                >
+                    <template v-if="$slots.item" #default="itemProps">
+                        <slot name="item" v-bind="itemProps" />
+                    </template>
+                </SidebarItem>
+            </slot>
+        </SidebarNav>
 
         <!-- FOOTER (Desktop: Profil / Logout / Pengaturan) -->
-        <div
-            v-if="showFooter && $slots.footer"
-            class="shrink-0 border-t border-slate-200/60 dark:border-slate-800/60"
-            :class="isCollapsed ? 'p-2 flex justify-center' : 'p-3'"
-        >
+        <SidebarFooter v-if="showFooter || $slots.footer">
             <slot name="footer" :is-collapsed="isCollapsed" />
-        </div>
+        </SidebarFooter>
     </aside>
 
     <!-- ========================================================================= -->
@@ -556,7 +582,7 @@ defineExpose({ toggleCollapse, openMobile, closeMobile, isCollapsed, isMobileOpe
                                     P
                                 </div>
                                 <span class="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-                                    Dashboard
+                                    {{ brandName || 'Dashboard' }}
                                 </span>
                             </div>
                         </slot>
@@ -579,38 +605,31 @@ defineExpose({ toggleCollapse, openMobile, closeMobile, isCollapsed, isMobileOpe
                         <slot name="top" :is-collapsed="false" />
                     </div>
 
-                    <!-- Mobile Navigation List -->
-                    <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-1" aria-label="Navigasi mobile">
-                        <SidebarItem
-                            v-for="(item, index) in items"
-                            :key="index"
-                            :item="item"
-                            :depth="0"
-                            :is-collapsed="false"
-                            :is-mobile="true"
-                            :active-route="activeRoute"
-                            :color-theme="colorTheme"
-                            :item-style="itemStyle"
-                            :radius-class="radiusClass"
-                            :size="size"
-                            @navigate="handleNavigate"
-                        >
-                            <template v-if="$slots.item" #default="itemProps">
-                                <slot name="item" v-bind="itemProps" />
-                            </template>
-                        </SidebarItem>
-                    </nav>
+                    <!-- Mobile Navigation List (Hybrid Slot atau Items) -->
+                    <SidebarNav>
+                        <slot>
+                            <SidebarItem
+                                v-for="(item, index) in items"
+                                :key="index"
+                                :item="item"
+                                :depth="0"
+                                @navigate="handleNavigate"
+                            >
+                                <template v-if="$slots.item" #default="itemProps">
+                                    <slot name="item" v-bind="itemProps" />
+                                </template>
+                            </SidebarItem>
+                        </slot>
+                    </SidebarNav>
 
                     <!-- Mobile Drawer Footer -->
-                    <div
-                        v-if="showFooter && $slots.footer"
-                        class="shrink-0 p-4 border-t border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50"
-                    >
-                        <slot name="footer" :is-collapsed="false" />
-                    </div>
+                    <SidebarFooter v-if="showFooter || $slots.footer || $slots['mobile-footer']">
+                        <slot name="mobile-footer">
+                            <slot name="footer" :is-collapsed="false" />
+                        </slot>
+                    </SidebarFooter>
                 </div>
             </Transition>
         </div>
     </Teleport>
 </template>
-

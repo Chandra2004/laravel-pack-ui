@@ -1,51 +1,129 @@
-# 📑 Sidebar & Dashboard Layout (`SidebarComponent.vue` & `DashboardLayout.vue`)
+# 📑 Sidebar (`SidebarComponent.vue` / `Sidebar.vue`)
 
-[← Kembali ke Dokumentasi Utama](../../README.md)
+[← Kembali ke Dokumentasi Utama](../../README.md) | [Lihat Composable useSidebar](../composables/use-sidebar.md)
 
-Komponen navigasi samping (*Sidebar*) dan kerangka tata letak dasbor (*Dashboard Shell Layout*) yang dirancang modular sesuai **5 Pilar Kustomisasi**. Anda dapat menggunakannya dalam 3 skenario:
-1. **Hanya `SidebarComponent.vue`** (atau alias `Sidebar.vue`) jika aplikasi Anda sudah memiliki topbar sendiri.
-2. **Hanya `DashboardLayout.vue`** dengan sidebar kustom Anda sendiri via slot `#sidebar`.
-3. **Keduanya bersamaan**: `DashboardLayout.vue` secara *out-of-the-box* telah mengintegrasikan `SidebarComponent.vue`, lengkap dengan topbar, pencarian, notifikasi, switch tema, breadcrumbs, dan profil pengguna.
+`Sidebar.vue` (dan `SidebarComponent.vue`) adalah komponen bilah navigasi samping (*vertical navigation bar*) enterprise dengan arsitektur **Dual-API**:
+1. **Compound Components (Deklaratif)**: Penggunaan modular yang intuitif via subkomponen (`SidebarHeader`, `SidebarNav`, `SidebarGroup`, `SidebarItem`, `SidebarFooter`, `SidebarToggle`).
+2. **Config-Driven (Array-based)**: Penggunaan berbasis konfigurasi array `:items="[...]"`, 100% *backward-compatible*.
+
+Komponen ini dirancang untuk bekerja secara mandiri (*standalone*) maupun diintegrasikan ke dalam layout kustom dengan state manager reaktif [**`useSidebar.js`**](../composables/use-sidebar.md).
+
+> [!TIP]
+> Jika Anda membutuhkan kerangka tata letak dasbor lengkap yang sudah mengintegrasikan Sidebar bersama Topbar, Search ⌘K, Notifikasi, Breadcrumb, dan Profil Pengguna, silakan gunakan [**UIDashboardLayout.vue**](../layouts/ui-dashboard-layout.md).
 
 ---
 
 ## 🎨 5 Pilar Kustomisasi Terapan
 
-1. **Warna (`colorTheme`)**:
+1. **Warna (`colorTheme` / `color`)**:
    - `primary` (Blue), `indigo`, `emerald`, `purple`, `amber`, `rose`, `cyan`, `dark`.
-   - Warna aksen diterapkan konsisten pada item aktif, badge menu, focus ring, hover state, hingga tombol toggle.
+   - Otomatis dialirkan (*injected*) ke seluruh sub-komponen anak tanpa *prop-drilling*.
 2. **Bentuk & Gaya (`radius`, `itemStyle`, `variant`)**:
    - **Radius**: `none`, `sm`, `md`, `lg` (default), `xl`, `full`.
    - **Item Style**:
      - `soft`: Background transparan lembut dengan teks aksen berwarna.
      - `solid`: Background solid kontras tinggi dengan teks putih (efek fokus tajam).
-     - `outline`: Border tipis berwarna dengan aksen aksen lembut.
+     - `outline`: Border tipis berwarna dengan aksen lembut.
    - **Sidebar Variant**:
      - `default`: Tampilan klasik menempel tepi dengan border standar.
      - `bordered`: Border kanan dipertegas dengan shadow halus.
      - `floating`: Melayang bergaya kartu (*island layout*) dengan margin di sekelilingnya.
 3. **Teks Konten**:
-   - Judul kategori (`heading`), label menu, badge status/angka, teks copyright footer.
+   - Judul kategori (`heading`/`title`), label menu, badge status/angka, teks profil footer.
    - Teks terpotong rapi (*truncate*) saat mode ciut (*collapsed*) dengan tooltip bawaan.
 4. **Ikon**:
    - Google Material Symbols didukung penuh pada menu utama dan submenu.
-   - Indikator ekspansi submenu chevron berputar mulus (`transition-transform duration-200`).
+   - Indikator ekspansi chevron berputar mulus (`transition-transform duration-200`).
    - Ukuran ikon otomatis berskala sesuai prop `size` (`sm`, `md`, `lg`).
 5. **Responsif**:
-   - Beralih mulus ke mode *Mobile Drawer* saat lebar layar di bawah `mobileBreakpoint` (default `768px`).
+   - Beralih mulus ke mode *Mobile Drawer* saat layar di bawah `mobileBreakpoint` (default `768px`).
    - Dilengkapi *backdrop blur*, penguncian scroll layar (`body scroll-lock`), dan penutupan otomatis saat klik luar (*click outside*).
 
 ---
 
-## 🚀 1. Penggunaan Standalone Sidebar (`SidebarComponent.vue`)
+## 🚀 Pola 1: Compound Components Deklaratif (Direkomendasikan)
 
-Gunakan jika Anda hanya memerlukan bilah navigasi samping:
+Pola ini memberikan fleksibilitas tertinggi, mudah dibaca, dan modular:
+
+```vue
+<script setup>
+import {
+  Sidebar,
+  SidebarHeader,
+  SidebarNav,
+  SidebarGroup,
+  SidebarItem,
+  SidebarFooter,
+  SidebarToggle,
+  useSidebar
+} from '@/Components/Pack/Sidebar.vue';
+
+const { isCollapsed, isMobileOpen } = useSidebar({
+  persistKey: 'app-sidebar-pref',
+});
+</script>
+
+<template>
+  <div class="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <Sidebar
+      v-model:collapsed="isCollapsed"
+      v-model:mobile-open="isMobileOpen"
+      color="indigo"
+      item-style="soft"
+      radius="lg"
+      variant="bordered"
+    >
+      <!-- Header / Brand -->
+      <SidebarHeader title="Acme Corp" subtitle="Admin Portal" icon="token" />
+
+      <!-- Navigasi Menu -->
+      <SidebarNav>
+        <SidebarGroup title="Utama" />
+        <SidebarItem label="Dashboard" icon="dashboard" href="/dashboard" :active="true" />
+        
+        <!-- Menu bertingkat (Submenu) dengan slot default -->
+        <SidebarItem label="Transaksi" icon="receipt_long" badge="12" badge-variant="warning">
+          <SidebarItem label="Semua Transaksi" href="/transactions" />
+          <SidebarItem label="Menunggu Konfirmasi" href="/transactions/pending" badge="3" />
+        </SidebarItem>
+
+        <SidebarGroup title="Sistem" :separator="true" />
+        <SidebarItem label="Pengaturan" icon="settings" href="/settings" />
+      </SidebarNav>
+
+      <!-- Footer Profil -->
+      <SidebarFooter>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+            JD
+          </div>
+          <div v-if="!isCollapsed" class="min-w-0 flex-1">
+            <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">John Doe</p>
+            <p class="text-[11px] text-slate-500 truncate">Super Admin</p>
+          </div>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+
+    <!-- Konten Utama Halaman -->
+    <main class="flex-1 p-6">
+      <SidebarToggle variant="button" mobile />
+      <slot />
+    </main>
+  </div>
+</template>
+```
+
+---
+
+## ⚡ Pola 2: Config-Driven Array (`:items="[...]"`)
+
+Cocok jika data menu berasal dari API backend atau konfigurasi JSON:
 
 ```vue
 <script setup>
 import { ref } from 'vue';
-import SidebarComponent from '@/Components/Pack/SidebarComponent.vue';
-// Catatan: import Sidebar from '@/Components/Pack/Sidebar.vue' tetap didukung penuh (alias)
+import Sidebar from '@/Components/Pack/Sidebar.vue';
 
 const isCollapsed = ref(false);
 const isMobileOpen = ref(false);
@@ -71,30 +149,18 @@ const menuItems = [
 
 <template>
   <div class="flex min-h-screen">
-    <!-- Standalone Sidebar -->
-    <SidebarComponent
+    <Sidebar
       :items="menuItems"
       v-model:collapsed="isCollapsed"
       v-model:mobile-open="isMobileOpen"
-      color-theme="indigo"
+      color="indigo"
       item-style="soft"
       radius="lg"
       variant="bordered"
       active-route="/dashboard"
-    >
-      <template #logo>
-        <div class="flex items-center gap-2 px-2 py-1">
-          <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">P</div>
-          <span class="font-bold text-slate-800 dark:text-white">MerchantHub</span>
-        </div>
-      </template>
-    </SidebarComponent>
+    />
 
-    <!-- Konten Utama Anda -->
     <main class="flex-1 p-6">
-      <button @click="isMobileOpen = true" class="md:hidden p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
-        <span class="material-symbols-outlined">menu</span>
-      </button>
       <slot />
     </main>
   </div>
@@ -103,164 +169,85 @@ const menuItems = [
 
 ---
 
-## 🚀 2. Penggunaan Kerangka Lengkap (`DashboardLayout.vue`)
-
-Gunakan jika Anda menginginkan tata letak dasbor instan siap pakai dengan bilah atas (*topbar*), pencarian global, lonceng notifikasi, pengalih mode gelap/terang, dan menu akun profil:
-
-```vue
-<script setup>
-import DashboardLayout from '@/Layouts/DashboardLayout.vue';
-// Bisa juga diimpor dari '@/Components/Pack/DashboardLayout.vue'
-
-const menuItems = [
-    { heading: 'NAVIGASI' },
-    { label: 'Dashboard', icon: 'dashboard', href: '/dashboard', active: true },
-    { label: 'Pesanan', icon: 'shopping_bag', href: '/orders', badge: '5' },
-    { label: 'Pelanggan', icon: 'group', href: '/customers' },
-];
-
-const breadcrumbs = [
-    { label: 'Home', href: '/dashboard' },
-    { label: 'Pesanan' }
-];
-
-const currentUser = {
-    name: 'Budi Santoso',
-    email: 'budi@tokomerchant.id',
-    role: 'Store Owner',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'
-};
-</script>
-
-<template>
-  <DashboardLayout
-    :items="menuItems"
-    brand-name="MerchantPro"
-    brand-sub="Panel Pengelola Toko"
-    color-theme="primary"
-    sidebar-variant="bordered"
-    sidebar-item-style="soft"
-    sidebar-radius="lg"
-    :breadcrumbs="breadcrumbs"
-    :user="currentUser"
-    :notification-count="3"
-    @search="(q) => console.log('Mencari:', q)"
-    @logout="() => console.log('Logout ditekan')"
-  >
-    <!-- Slot Aksi Tambahan di Header Halaman -->
-    <template #page-actions>
-      <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700">
-        + Buat Pesanan
-      </button>
-    </template>
-
-    <!-- Konten Halaman Dasbor -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-        <h3 class="text-sm font-semibold text-slate-500">Total Penjualan</h3>
-        <p class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">Rp 28.500.000</p>
-      </div>
-    </div>
-  </DashboardLayout>
-</template>
-```
-
----
-
-## 📋 Props API `<SidebarComponent />` (atau `<Sidebar />`)
+## 📋 Props API `<Sidebar />` (`SidebarComponent.vue`)
 
 | Prop | Tipe Data | Default | Deskripsi |
 | :--- | :--- | :--- | :--- |
-| `items` | `Array` | `[]` | Struktur array menu navigasi bertingkat |
-| `colorTheme` | `String` | `'primary'` | Skema warna: `'primary'`, `'indigo'`, `'emerald'`, `'purple'`, `'amber'`, `'rose'`, `'cyan'`, `'dark'` |
+| `items` | `Array` | `[]` | Struktur array menu (opsional jika menggunakan slot anak deklaratif) |
+| `color` / `colorTheme` | `String` | `'primary'` | Tema warna: `'primary'`, `'indigo'`, `'emerald'`, `'purple'`, `'amber'`, `'rose'`, `'cyan'`, `'dark'` |
 | `itemStyle` | `String` | `'soft'` | Gaya item menu: `'soft'`, `'solid'`, `'outline'` |
 | `radius` | `String` | `'lg'` | Bentuk sudut item: `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'full'` |
 | `variant` | `String` | `'default'` | Gaya wadah sidebar: `'default'`, `'bordered'`, `'floating'` |
-| `size` | `String` | `'md'` | Ukuran skala tinggi dan padding item: `'sm'`, `'md'`, `'lg'` |
+| `size` | `String` | `'md'` | Ukuran item & ikon: `'sm'`, `'md'`, `'lg'` |
 | `collapsed` | `Boolean` | `false` | Status ciut sidebar (*mendukung `v-model:collapsed`*) |
-| `collapsible` | `Boolean` | `true` | Mengaktifkan tombol toggle untuk menciutkan sidebar |
-| `floatingToggle`| `Boolean` | `true` | Tombol lingkaran melayang di tepi kanan sidebar untuk collapse cepat |
+| `collapsible` | `Boolean` | `true` | Menampilkan/mengaktifkan fitur ciut sidebar |
+| `floatingToggle`| `Boolean` | `true` | Tombol lingkaran melayang di tepi kanan sidebar desktop |
 | `width` | `String` | `'64'` | Lebar sidebar saat terbuka: `'56'`, `'64'` (256px), `'72'`, `'80'` |
 | `collapsedWidth`| `String` | `'16'` | Lebar sidebar saat ciut: `'14'`, `'16'` (64px), `'18'`, `'20'` |
-| `showLogo` | `Boolean` | `true` | Menampilkan area header logo di bagian atas |
-| `showFooter` | `Boolean` | `false` | Menampilkan area footer bawah sidebar |
-| `mobileBreakpoint`| `Number` | `768` | Batas piksel layar (default `768px` / `md:`) untuk beralih ke mobile drawer |
-| `mobileOpen` | `Boolean` | `false` | Status buka drawer mobile (*mendukung `v-model:mobileOpen`*) |
-| `activeRoute` | `String` | `''` | URL path aktif untuk penandaan otomatis status menu aktif |
+| `showLogo` | `Boolean` | `true` | Menampilkan area header logo default (jika tidak menggunakan slot) |
+| `showFooter` | `Boolean` | `false` | Menampilkan area footer default |
+| `mobileBreakpoint`| `Number` | `768` | Batas breakpoint layar (px) untuk drawer seluler |
+| `mobileOpen` | `Boolean` | `false` | Status buka drawer seluler (*mendukung `v-model:mobileOpen`*) |
+| `activeRoute` | `String` | `''` | URL path aktif untuk pencocokan otomatis |
 
 ---
 
-## 📋 Props API `<DashboardLayout />`
+## 🧩 Subkomponen API
 
-| Prop | Tipe Data | Default | Deskripsi |
-| :--- | :--- | :--- | :--- |
-| `items` | `Array` | `[]` | Data navigasi yang diteruskan ke sidebar |
-| `colorTheme` | `String` | `'primary'` | Tema warna global untuk topbar dan sidebar |
-| `sidebarVariant`| `String` | `'bordered'` | Varian sidebar (`'default'`, `'bordered'`, `'floating'`) |
-| `sidebarItemStyle`| `String` | `'soft'` | Gaya item navigasi (`'soft'`, `'solid'`, `'outline'`) |
-| `sidebarRadius` | `String` | `'lg'` | Radius item navigasi (`'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'full'`) |
-| `sidebarSize` | `String` | `'md'` | Ukuran item navigasi (`'sm'`, `'md'`, `'lg'`) |
-| `brandName` | `String` | `'Pack UI'` | Nama aplikasi di header dan topbar |
-| `brandSub` | `String` | `'Dashboard'` | Deskripsi singkat sub-nama aplikasi |
-| `breadcrumbs` | `Array` | `[]` | Array breadcrumb `[{ label: 'Home', href: '/' }, { label: 'Detail' }]` |
-| `user` | `Object` | `null` | Objek user `{ name, email, avatar, role }` |
-| `showSearch` | `Boolean` | `true` | Menampilkan tombol pencarian global `⌘K` |
-| `showNotifications`| `Boolean`| `true` | Menampilkan lonceng notifikasi di topbar |
-| `notificationCount`| `Number`| `0` | Angka badge notifikasi belum terbaca |
-| `showThemeToggle` | `Boolean`| `true` | Menampilkan tombol saklar tema Gelap/Terang |
-| `showFooter` | `Boolean` | `true` | Menampilkan footer dasbor di bagian bawah |
-| `footerText` | `String` | `'© 2026 ...'` | Teks hak cipta footer |
-| `footerVersion`| `String` | `'v1.0.0'` | Teks versi aplikasi di footer |
+### 1. `<SidebarHeader />`
+Header bilah sisi yang adaptif terhadap status ciut.
+- **Props**:
+  - `title` (`String`, default: `'Pack UI'`): Judul aplikasi / merek.
+  - `subtitle` (`String`, default: `''`): Subjudul atau deskripsi singkat.
+  - `icon` (`String`, default: `'dashboard'`): Ikon Material Symbols jika tidak memakai slot logo.
+  - `collapsed` (`Boolean`, default: `null`): Mengambil dari parent context secara otomatis.
+- **Slots**:
+  - `#default`: Kustomisasi logo/branding penuh saat sidebar terbuka.
+  - `#collapsed`: Kustomisasi logo saat sidebar ciut.
+  - `#actions`: Tombol aksi di sisi kanan header.
 
----
+### 2. `<SidebarNav />`
+Wadah scrollbar vertikal ramping (*thin custom scrollbar*) untuk menampung item menu.
 
-## 🧩 Struktur Objek Item Navigasi (`items`)
+### 3. `<SidebarGroup />`
+Pemisah kategori menu navigasi.
+- **Props**:
+  - `title` (`String`, default: `''`): Label judul kategori huruf besar.
+  - `separator` (`Boolean`, default: `false`): Menampilkan garis pembagi horizontal tipis di atasnya.
 
-```javascript
-[
-    { heading: 'SEKSI MENU' },
-    { 
-        label: 'Dashboard', 
-        icon: 'dashboard', 
-        href: '/dashboard', 
-        active: true 
-    },
-    {
-        label: 'Transaksi',
-        icon: 'receipt_long',
-        badge: '12',
-        badgeVariant: 'warning', // 'primary' | 'success' | 'warning' | 'danger' | 'info'
-        children: [
-            { label: 'Semua', href: '/transactions' },
-            { 
-                label: 'Virtual Account', 
-                children: [
-                    { label: 'BCA Direct', href: '/va/bca' },
-                    { label: 'Mandiri Direct', href: '/va/mandiri' }
-                ]
-            }
-        ]
-    },
-    { separator: true },
-    { label: 'Pengaturan', icon: 'settings', href: '/settings' }
-]
-```
+### 4. `<SidebarItem />`
+Item menu interaktif dengan dukungan link href, active state, chevron berputar, dan slot submenu bersarang.
+- **Props**:
+  - `label` (`String`, default: `''`): Teks nama menu.
+  - `icon` (`String`, default: `''`): Nama Google Material Symbols.
+  - `href` (`String`, default: `''`): Tautan URL tujuan.
+  - `active` (`Boolean`, default: `false`): Menandai menu sedang aktif.
+  - `badge` (`String | Number`, default: `''`): Teks atau angka counter badge.
+  - `badgeVariant` (`String`, default: `'primary'`): Varian badge (`primary`, `success`, `warning`, `danger`, `info`).
+  - `badgeColor` (`String`, default: `''`): Kelas warna kustom badge Tailwind.
+  - `item` (`Object`, default: `null`): Objek config item (mode backward-compatible).
+  - `collapsedTooltip` (`String`, default: `''`): Tooltip saat menu diciutkan.
+- **Slots**:
+  - `#default`: Tempat menaruh komponen `<SidebarItem />` anak (submenu bertingkat).
+  - `#badge`: Kustomisasi badge menu.
+
+### 5. `<SidebarFooter />`
+Wadah profil pengguna atau copyright di bagian bawah sidebar. Otomatis memiliki border atas dan penyesuaian padding saat ciut.
+
+### 6. `<SidebarToggle />`
+Tombol pemicu collapse atau mobile drawer serbaguna yang dapat diletakkan di dalam maupun di luar sidebar (misal di topbar).
+- **Props**:
+  - `variant` (`String`, default: `'icon'`): Gaya tombol (`'floating'`, `'icon'`, `'button'`).
+  - `mobile` (`Boolean`, default: `false`): Jika `true`, tombol ini mengontrol drawer seluler bukan collapse desktop.
+  - `label` (`String`, default: `''`): Teks label jika memakai variant `'button'`.
 
 ---
 
-## 🪟 Slots API
+## 🪟 Slots API `<Sidebar />` (Root)
 
-### Slot `<SidebarComponent />`:
-- `#logo`: Menyesuaikan logo saat sidebar terbuka.
-- `#logo-collapsed`: Menyesuaikan logo saat sidebar ciut.
+- `#default`: Area konten kustom (Compound Components atau elemen Vue apa pun).
+- `#logo`: Menyesuaikan logo saat sidebar terbuka (mode konfigurasi).
+- `#logo-collapsed`: Menyesuaikan logo saat sidebar ciut (mode konfigurasi).
 - `#header-extra`: Komponen tambahan di header samping logo.
 - `#footer`: Konten footer sidebar desktop.
 - `#mobile-footer`: Konten footer drawer mobile.
-
-### Slot `<DashboardLayout />`:
-- `#sidebar`: Menimpa sidebar default dengan sidebar kustom Anda.
-- `#topbar-actions`: Menyisipkan aksi tambahan di bilah atas sebelum profil pengguna.
-- `#page-header`: Menimpa seluruh area judul dan breadcrumb halaman.
-- `#page-actions`: Menyisipkan tombol aksi di pojok kanan header halaman (misal: tombol Buat Baru, Export).
-- `default`: Slot konten utama halaman dasbor.
-- `#footer`: Menimpa footer bawaan layout.

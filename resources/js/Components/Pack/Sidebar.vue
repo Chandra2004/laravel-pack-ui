@@ -1,7 +1,18 @@
+<script>
+export { default as SidebarComponent } from './SidebarComponent.vue';
+export { default as SidebarHeader } from './Sidebar/SidebarHeader.vue';
+export { default as SidebarNav } from './Sidebar/SidebarNav.vue';
+export { default as SidebarGroup } from './Sidebar/SidebarGroup.vue';
+export { default as SidebarItem } from './SidebarItem.vue';
+export { default as SidebarFooter } from './Sidebar/SidebarFooter.vue';
+export { default as SidebarToggle } from './Sidebar/SidebarToggle.vue';
+export { useSidebar } from '@/Composables/Pack/useSidebar';
+</script>
+
 <script setup>
 /**
- * Komponen Sidebar.vue (Alias kompatibilitas untuk SidebarComponent.vue)
- * Anda dapat mengimpor Sidebar.vue atau SidebarComponent.vue secara bergantian.
+ * Komponen Sidebar.vue (Facade utama & ekspor compound sub-komponen)
+ * Mendukung mode Config-Driven (:items="[...]"), mode Deklaratif (<slot />), dan Compound Components.
  */
 import SidebarComponent from './SidebarComponent.vue';
 import { ref } from 'vue';
