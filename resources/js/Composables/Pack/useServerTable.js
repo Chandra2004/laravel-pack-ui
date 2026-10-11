@@ -273,6 +273,7 @@ export function useServerTable(options = {}) {
 
         // Actions / Methods
         applySort,
+        handleSort: applySort,
         setFilter,
         goToPage,
         resetFilters,

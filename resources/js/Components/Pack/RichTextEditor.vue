@@ -13,11 +13,40 @@ import RichTextBubbleMenu from './RichText/RichTextBubbleMenu.vue';
 import RichTextLinkModal from './RichText/RichTextLinkModal.vue';
 import RichTextImageModal from './RichText/RichTextImageModal.vue';
 import RichTextHelpModal from './RichText/RichTextHelpModal.vue';
+import ButtonSubmit from './ButtonSubmit.vue';
+import Badge from './Badge.vue';
 
 const props = defineProps({
     modelValue: {
         type: String,
         default: '',
+    },
+    mode: {
+        type: String,
+        default: 'edit',
+        validator: (v) => ['edit', 'preview', 'split'].includes(v),
+    },
+    showModeToggle: {
+        type: Boolean,
+        default: true,
+    },
+    readonly: {
+        type: Boolean,
+        default: false,
+    },
+    previewDevice: {
+        type: String,
+        default: 'desktop',
+        validator: (v) => ['desktop', 'tablet', 'mobile'].includes(v),
+    },
+    counterType: {
+        type: String,
+        default: 'both',
+        validator: (v) => ['both', 'characters', 'words', 'none'].includes(v),
+    },
+    toolbarSticky: {
+        type: Boolean,
+        default: true,
     },
     label: {
         type: String,
@@ -72,11 +101,11 @@ const props = defineProps({
         validator: (v) => ['sm', 'md', 'lg'].includes(v),
     },
     minHeight: {
-        type: String,
+        type: [String, Number],
         default: '',
     },
     maxHeight: {
-        type: String,
+        type: [String, Number],
         default: '',
     },
     borderless: {
@@ -99,8 +128,12 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    showRawOutput: {
+        type: Boolean,
+        default: true,
+    },
     maxChars: {
-        type: Number,
+        type: [Number, String],
         default: 0,
     },
     imageUploadHandler: {
@@ -109,7 +142,16 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['update:modelValue', 'change', 'focus', 'blur', 'image-uploaded']);
+const emit = defineEmits([
+    'update:modelValue',
+    'update:mode',
+    'update:previewDevice',
+    'mode-change',
+    'change',
+    'focus',
+    'blur',
+    'image-uploaded'
+]);
 
 const uid = Math.random().toString(36).substring(2, 9);
 const inputId = computed(() => props.id || `rich-editor-${uid}`);
@@ -119,10 +161,38 @@ const isLinkModalOpen = ref(false);
 const linkInitialUrl = ref('');
 const isImageModalOpen = ref(false);
 const isHelpModalOpen = ref(false);
-const isPreviewMode = ref(false);
 const isFullscreen = ref(false);
-const previewDevice = ref('desktop'); // 'desktop' | 'tablet' | 'mobile'
 const copyFeedback = ref('');
+
+const currentMode = ref(props.mode);
+const currentPreviewDevice = ref(props.previewDevice);
+
+const isPreviewMode = computed(() => currentMode.value === 'preview');
+const isSplitMode = computed(() => currentMode.value === 'split');
+
+watch(() => props.mode, (newMode) => {
+    if (newMode && newMode !== currentMode.value) {
+        currentMode.value = newMode;
+    }
+});
+
+watch(() => props.previewDevice, (val) => {
+    currentPreviewDevice.value = val;
+});
+
+const setMode = (newMode) => {
+    currentMode.value = newMode;
+    emit('update:mode', newMode);
+    emit('mode-change', newMode);
+    if (newMode === 'edit' && editor.value && !props.readonly) {
+        editor.value.commands.focus();
+    }
+};
+
+const setPreviewDevice = (device) => {
+    currentPreviewDevice.value = device;
+    emit('update:previewDevice', device);
+};
 
 // Computed Styling dari 5 Pilar
 const radiusClasses = computed(() => {
@@ -278,7 +348,7 @@ const processImageFile = async (file) => {
 
 const editor = useEditor({
     content: props.modelValue,
-    editable: props.editable && !props.disabled,
+    editable: !props.readonly && props.editable && !props.disabled,
     extensions: [
         StarterKit.configure({
             heading: {
@@ -303,13 +373,17 @@ const editor = useEditor({
             types: ['heading', 'paragraph'],
         }),
         Placeholder.configure({
-            placeholder: props.placeholder,
+            placeholder: () => props.placeholder,
             emptyEditorClass: 'is-editor-empty',
         }),
     ],
     editorProps: {
         attributes: {
+            id: inputId.value,
             class: 'focus:outline-none w-full min-w-full leading-relaxed',
+            role: 'textbox',
+            'aria-multiline': 'true',
+            'aria-label': props.label || 'Rich Text Editor',
         },
         handleDrop: (view, event, slice, moved) => {
             if (!moved && event.dataTransfer?.files?.length) {
@@ -339,7 +413,7 @@ const editor = useEditor({
     },
     onUpdate: ({ editor }) => {
         const html = editor.getHTML();
-        const cleanHtml = html === '<p></p>' ? '' : html;
+        const cleanHtml = editor.isEmpty ? '' : html;
         emit('update:modelValue', cleanHtml);
         emit('change', cleanHtml);
     },
@@ -347,22 +421,29 @@ const editor = useEditor({
     onBlur: () => emit('blur'),
 });
 
-// Sync external model updates
+// Sync external model updates safely
 watch(() => props.modelValue, (val) => {
     if (!editor.value) return;
-    if (editor.value.getHTML() !== val) {
+    const currentHtml = editor.value.getHTML();
+    const isSame = currentHtml === val || (editor.value.isEmpty && (!val || val === '<p></p>'));
+    if (!isSame) {
         editor.value.commands.setContent(val || '', false);
     }
 });
 
-// Sync editable / disabled props
-watch([() => props.editable, () => props.disabled], ([editable, disabled]) => {
+// Sync editable / disabled / readonly props
+watch([() => props.editable, () => props.disabled, () => props.readonly], ([editable, disabled, readonly]) => {
     if (editor.value) {
-        editor.value.setEditable(editable && !disabled);
+        editor.value.setEditable(!readonly && editable && !disabled);
     }
 });
 
-// Statistics
+// Limits & Statistics
+const maxCharsLimit = computed(() => {
+    const val = Number(props.maxChars);
+    return isNaN(val) || val <= 0 ? 0 : val;
+});
+
 const wordCount = computed(() => {
     if (!editor.value) return 0;
     const text = editor.value.getText();
@@ -375,8 +456,70 @@ const charCount = computed(() => {
 });
 
 const charPercent = computed(() => {
-    if (!props.maxChars || props.maxChars <= 0) return 0;
-    return Math.min(100, Math.round((charCount.value / props.maxChars) * 100));
+    if (!maxCharsLimit.value) return 0;
+    return Math.min(100, Math.round((charCount.value / maxCharsLimit.value) * 100));
+});
+
+const isOverLimit = computed(() => {
+    return maxCharsLimit.value > 0 && charCount.value > maxCharsLimit.value;
+});
+
+// Height Styles & Classes (Supports CSS measurements e.g. '260px', '20rem', pure numbers, or Tailwind classes)
+const canvasHeightStyle = computed(() => {
+    if (isFullscreen.value) return {};
+    const style = {};
+    if (props.minHeight) {
+        const val = String(props.minHeight).trim();
+        if (!val.startsWith('min-h-') && !val.startsWith('h-')) {
+            style.minHeight = /^\d+$/.test(val) ? `${val}px` : val;
+        }
+    }
+    if (props.maxHeight) {
+        const val = String(props.maxHeight).trim();
+        if (!val.startsWith('max-h-') && !val.startsWith('h-')) {
+            style.maxHeight = /^\d+$/.test(val) ? `${val}px` : val;
+        }
+    }
+    return style;
+});
+
+const canvasHeightClasses = computed(() => {
+    if (isFullscreen.value) return 'min-h-0';
+    const classes = [];
+    const minVal = props.minHeight ? String(props.minHeight).trim() : '';
+    if (minVal.startsWith('min-h-') || minVal.startsWith('h-')) {
+        classes.push(minVal);
+    } else if (!minVal) {
+        classes.push(sizeStyles.value.defaultMinHeight);
+    }
+
+    const maxVal = props.maxHeight ? String(props.maxHeight).trim() : '';
+    if (maxVal.startsWith('max-h-') || maxVal.startsWith('h-')) {
+        classes.push(maxVal);
+    }
+    return classes.join(' ');
+});
+
+const badgeColorTheme = computed(() => {
+    const map = {
+        cyan: 'sky',
+        dark: 'slate',
+    };
+    return map[props.colorTheme] || (props.colorTheme === 'primary' ? 'primary' : props.colorTheme);
+});
+
+const focusEditor = () => {
+    if (!props.readonly && props.editable && !props.disabled && editor.value) {
+        editor.value.commands.focus();
+    }
+};
+
+const showRawPanel = ref(false);
+const toggleRawPanel = () => { showRawPanel.value = !showRawPanel.value; };
+
+const currentHtmlOutput = computed(() => {
+    if (!editor.value || editor.value.isEmpty) return '';
+    return editor.value.getHTML();
 });
 
 // Actions
@@ -411,23 +554,26 @@ const clearFormatting = () => {
 };
 
 const togglePreview = () => {
-    isPreviewMode.value = !isPreviewMode.value;
-    if (!isPreviewMode.value && editor.value) {
-        editor.value.commands.focus();
-    }
+    if (props.readonly) return;
+    const nextMode = currentMode.value === 'preview' ? 'edit' : 'preview';
+    setMode(nextMode);
 };
 
 const toggleFullscreen = () => {
     isFullscreen.value = !isFullscreen.value;
 };
 
+let copyTimeoutId = null;
+
 const copyHtml = async () => {
     if (!editor.value) return;
     try {
         await navigator.clipboard.writeText(editor.value.getHTML());
         copyFeedback.value = 'Tersalin!';
-        setTimeout(() => {
+        if (copyTimeoutId) clearTimeout(copyTimeoutId);
+        copyTimeoutId = setTimeout(() => {
             copyFeedback.value = '';
+            copyTimeoutId = null;
         }, 2000);
     } catch {
         copyFeedback.value = 'Gagal';
@@ -474,6 +620,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', handleKeyDown);
+    if (copyTimeoutId) {
+        clearTimeout(copyTimeoutId);
+        copyTimeoutId = null;
+    }
     if (editor.value) {
         editor.value.destroy();
     }
@@ -481,13 +631,23 @@ onBeforeUnmount(() => {
 
 defineExpose({
     editor,
+    getHTML: () => editor.value?.getHTML() || '',
+    getRawHTML: () => currentHtmlOutput.value,
+    getText: () => editor.value?.getText() || '',
+    setContent: (html) => editor.value?.commands.setContent(html || '', false),
+    clear: () => editor.value?.commands.setContent('', false),
     clearFormatting,
     openLinkDialog,
     openImageDialog,
+    setMode,
+    setPreviewDevice,
     togglePreview,
     toggleFullscreen,
     copyHtml,
     downloadHtml,
+    mode: currentMode,
+    previewDevice: currentPreviewDevice,
+    showRawPanel,
 });
 </script>
 
@@ -497,7 +657,8 @@ defineExpose({
         <div v-if="label || $slots.label" class="flex items-center justify-between gap-2">
             <label
                 :for="inputId"
-                class="block text-xs font-semibold text-slate-700 dark:text-slate-200"
+                @click="focusEditor"
+                class="block text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
             >
                 <slot name="label">{{ label }}</slot>
                 <span v-if="required" class="text-rose-500 font-bold ml-0.5" aria-hidden="true">*</span>
@@ -507,10 +668,11 @@ defineExpose({
         <!-- Main Editor Box Container -->
         <div
             :class="[
-                'relative flex flex-col bg-white dark:bg-slate-900 transition-all duration-200 overflow-hidden',
+                'relative flex flex-col bg-white dark:bg-slate-900 transition-all duration-200',
+                toolbarSticky ? 'overflow-visible' : 'overflow-hidden',
                 radiusClasses.container,
                 isFullscreen
-                    ? 'fixed inset-0 z-50 rounded-none border-0 shadow-2xl h-screen p-0 m-0'
+                    ? 'fixed inset-0 z-50 rounded-none border-0 shadow-2xl h-screen p-0 m-0 overflow-hidden'
                     : [
                         borderless
                             ? ''
@@ -524,205 +686,348 @@ defineExpose({
                 disabled ? 'opacity-60 bg-slate-50 dark:bg-slate-950/50 cursor-not-allowed pointer-events-none' : ''
             ]"
         >
-            <!-- Top Toolbar -->
-            <RichTextToolbar
+            <!-- Top Toolbar with sticky option -->
+            <div
                 v-if="showToolbar && editor"
-                :editor="editor"
-                :disabled="disabled"
-                :is-preview-mode="isPreviewMode"
-                :is-fullscreen="isFullscreen"
-                :color-theme="colorTheme"
-                :radius="radius"
-                :size="size"
-                @open-link="openLinkDialog"
-                @open-image="openImageDialog"
-                @toggle-preview="togglePreview"
-                @toggle-fullscreen="toggleFullscreen"
-                @open-help="isHelpModalOpen = true"
-                @clear-formatting="clearFormatting"
+                :class="[
+                    'border-b border-slate-200/80 dark:border-slate-800/80 transition-colors bg-white dark:bg-slate-900',
+                    radiusClasses.inner,
+                    toolbarSticky ? 'sticky top-0 z-20 shadow-xs' : ''
+                ]"
             >
-                <template #extra>
-                    <slot name="toolbar-extra" />
-                </template>
-            </RichTextToolbar>
+                <RichTextToolbar
+                    :editor="editor"
+                    :disabled="disabled || readonly || !editable"
+                    :mode="currentMode"
+                    :show-mode-toggle="showModeToggle && !readonly"
+                    :show-preview-toggle="false"
+                    :is-preview-mode="currentMode === 'preview'"
+                    :is-fullscreen="isFullscreen"
+                    :color-theme="colorTheme"
+                    :radius="radius"
+                    :size="size"
+                    @open-link="openLinkDialog"
+                    @open-image="openImageDialog"
+                    @update:mode="setMode"
+                    @toggle-preview="togglePreview"
+                    @toggle-fullscreen="toggleFullscreen"
+                    @open-help="isHelpModalOpen = true"
+                    @clear-formatting="clearFormatting"
+                >
+                    <template #extra="slotProps">
+                        <slot name="toolbar-extra" v-bind="slotProps" />
+                    </template>
+                </RichTextToolbar>
+            </div>
 
             <!-- Floating Contextual Bubble Menu -->
             <RichTextBubbleMenu
-                v-if="showBubbleMenu && editor && !disabled && !isPreviewMode"
+                v-if="showBubbleMenu && editor && !disabled && !readonly && editable && currentMode === 'edit'"
                 :editor="editor"
                 :color-theme="colorTheme"
                 @open-link="openLinkDialog"
             />
 
-            <!-- Active Editor Area (Visible when NOT in preview mode) -->
+            <!-- Unified Editor Area (Active in Edit & Split modes - SINGLE EditorContent instance) -->
             <div
-                v-show="!isPreviewMode"
+                v-show="currentMode !== 'preview'"
                 :class="[
-                    sizeStyles.canvasPadding,
-                    'text-slate-900 dark:text-slate-100 cursor-text overflow-y-auto transition-colors',
-                    isFullscreen ? 'flex-1 overflow-y-auto min-h-0' : [minHeight || sizeStyles.defaultMinHeight, maxHeight]
-                ]"
-                @click="editor?.chain().focus().run()"
-            >
-                <EditorContent :editor="editor" />
-            </div>
-
-            <!-- HTML Rendered Preview Mode (Modern Minimalist Viewport) -->
-            <div
-                v-show="isPreviewMode"
-                :class="[
-                    sizeStyles.canvasPadding,
-                    'text-slate-900 dark:text-slate-100 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/40 transition-colors flex flex-col',
-                    isFullscreen ? 'flex-1 overflow-y-auto min-h-0' : [minHeight || sizeStyles.defaultMinHeight, maxHeight]
+                    'w-full transition-colors flex-1 min-h-0',
+                    currentMode === 'split'
+                        ? 'grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800'
+                        : 'flex flex-col'
                 ]"
             >
-                <!-- Preview Top Control Banner -->
-                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-200/80 dark:border-slate-800 text-xs">
-                    <!-- Left: Status & Back Button -->
-                    <div class="flex items-center gap-2">
-                        <button
-                            type="button"
-                            @click="togglePreview"
-                            :class="[
-                                'flex items-center gap-1.5 px-3 py-1.5 font-semibold shadow-xs transition-colors cursor-pointer text-xs',
-                                radiusClasses.pill,
-                                themeStyles.btnPreview
-                            ]"
+                <!-- Left/Primary Editor Column -->
+                <div class="flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-slate-900">
+                    <!-- Sub-Header in Split Mode -->
+                    <div
+                        v-if="currentMode === 'split'"
+                        class="px-3 sm:px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex items-center justify-between text-xs shrink-0 select-none"
+                    >
+                        <div class="flex items-center gap-1.5">
+                            <Badge variant="soft" color="indigo" size="xs">
+                                <span class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs leading-none">edit_note</span>
+                                    <span>Editor WYSIWYG</span>
+                                </span>
+                            </Badge>
+                            <span class="text-[11px] text-slate-400 hidden sm:inline">Penyuntingan aktif</span>
+                        </div>
+                        <span
+                            v-if="counterType !== 'none' && (showWordCount || showCharCount)"
+                            class="text-[10.5px] font-mono text-slate-400"
                         >
-                            <span class="material-symbols-outlined text-sm leading-none">arrow_back</span>
-                            <span>Kembali ke Editor</span>
-                        </button>
-
-                        <span class="hidden sm:inline-flex items-center gap-1.5 text-slate-400 font-medium">
-                            <span :class="['w-1.5 h-1.5 rounded-full', themeStyles.activeDot]"></span>
-                            <span>Pratinjau Publik</span>
+                            <template v-if="(counterType === 'both' || counterType === 'words') && showWordCount">
+                                {{ wordCount }} kata
+                            </template>
+                            <template v-if="counterType === 'both' && showWordCount && showCharCount">
+                                &bull;
+                            </template>
+                            <template v-if="(counterType === 'both' || counterType === 'characters') && showCharCount">
+                                {{ charCount }} karakter
+                            </template>
                         </span>
                     </div>
 
-                    <!-- Center: Device Viewport Simulation -->
-                    <div class="flex items-center p-0.5 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-[11px] font-semibold">
-                        <button
-                            type="button"
-                            @click="previewDevice = 'desktop'"
-                            :class="[
-                                'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                                previewDevice === 'desktop'
-                                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            ]"
-                            title="Tampilan Penuh Desktop"
-                        >
-                            <span class="material-symbols-outlined text-sm">desktop_windows</span>
-                            <span class="hidden md:inline">Desktop</span>
-                        </button>
+                    <!-- Single Canvas for EditorContent -->
+                    <div
+                        :id="inputId"
+                        :class="[
+                            sizeStyles.canvasPadding,
+                            canvasHeightClasses,
+                            'flex-1 overflow-y-auto cursor-text text-slate-900 dark:text-slate-100 transition-colors'
+                        ]"
+                        :style="canvasHeightStyle"
+                        @click="editor?.chain().focus().run()"
+                    >
+                        <EditorContent :editor="editor" />
+                    </div>
+                </div>
 
-                        <button
+                <!-- Right Pane: Real-Time Live Rendered HTML Output (Only in Split Mode) -->
+                <div
+                    v-if="currentMode === 'split'"
+                    class="flex flex-col h-full min-h-0 overflow-hidden bg-slate-50/50 dark:bg-slate-950/40"
+                >
+                    <div class="px-3 sm:px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex items-center justify-between text-xs shrink-0 select-none">
+                        <div class="flex items-center gap-1.5">
+                            <div v-if="showRawOutput" class="flex items-center p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-800/80 text-[10px] font-semibold gap-0.5">
+                                <button
+                                    type="button"
+                                    @click="showRawPanel = false"
+                                    :class="[
+                                        'px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center gap-1',
+                                        !showRawPanel
+                                            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                                    ]"
+                                >
+                                    <span class="material-symbols-outlined text-xs">visibility</span>
+                                    <span class="hidden sm:inline">Render</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="showRawPanel = true"
+                                    :class="[
+                                        'px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center gap-1',
+                                        showRawPanel
+                                            ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                                    ]"
+                                >
+                                    <span class="material-symbols-outlined text-xs">code</span>
+                                    <span class="hidden sm:inline">Raw HTML</span>
+                                </button>
+                            </div>
+                            <Badge v-else variant="soft" color="emerald" size="xs">
+                                <span class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs leading-none">visibility</span>
+                                    <span>Pratinjau Live</span>
+                                </span>
+                            </Badge>
+                            <span class="text-[11px] text-slate-400 hidden sm:inline">{{ showRawPanel ? 'Kode HTML mentah' : 'Hasil render seketika' }}</span>
+                        </div>
+                        <ButtonSubmit
                             type="button"
-                            @click="previewDevice = 'tablet'"
-                            :class="[
-                                'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                                previewDevice === 'tablet'
-                                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            ]"
-                            title="Simulasi Tablet (768px)"
+                            variant="ghost"
+                            size="xs"
+                            :icon="copyFeedback ? 'check' : 'content_copy'"
+                            @click="copyHtml"
+                            title="Salin HTML"
                         >
-                            <span class="material-symbols-outlined text-sm">tablet</span>
-                            <span class="hidden md:inline">Tablet</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            @click="previewDevice = 'mobile'"
-                            :class="[
-                                'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                                previewDevice === 'mobile'
-                                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                            ]"
-                            title="Simulasi Layar Ponsel (375px)"
-                        >
-                            <span class="material-symbols-outlined text-sm">smartphone</span>
-                            <span class="hidden md:inline">Ponsel</span>
-                        </button>
+                            {{ copyFeedback || 'Salin' }}
+                        </ButtonSubmit>
                     </div>
 
-                    <!-- Right: Quick Export & Copy HTML -->
-                    <div class="flex items-center gap-1.5">
-                        <button
+                    <div
+                        :class="[
+                            sizeStyles.canvasPadding,
+                            canvasHeightClasses,
+                            'flex-1 overflow-y-auto text-slate-900 dark:text-slate-100'
+                        ]"
+                        :style="canvasHeightStyle"
+                    >
+                        <!-- Raw HTML Source Code View -->
+                        <div v-if="showRawPanel && showRawOutput">
+                            <pre class="rich-text-raw-code"><code>{{ currentHtmlOutput || '&lt;!-- Kosong --&gt;' }}</code></pre>
+                        </div>
+                        <!-- Rendered HTML Preview -->
+                        <template v-else>
+                            <div
+                                v-if="currentHtmlOutput"
+                                v-html="currentHtmlOutput"
+                                class="rich-text-preview space-y-3 leading-relaxed text-sm"
+                            ></div>
+                            <div v-else class="text-slate-400 dark:text-slate-500 italic text-center py-10 text-xs">
+                                Belum ada konten untuk ditampilkan dalam pratinjau.
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standalone HTML Rendered Preview Mode (Clean Read-Only Typography Viewport) -->
+            <div
+                v-show="currentMode === 'preview'"
+                :class="[
+                    sizeStyles.canvasPadding,
+                    'text-slate-900 dark:text-slate-100 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/40 transition-colors flex flex-col',
+                    isFullscreen ? 'flex-1 overflow-y-auto min-h-0' : canvasHeightClasses
+                ]"
+                :style="canvasHeightStyle"
+            >
+                <!-- Preview Top Control Banner with Pack UI Components -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-200/80 dark:border-slate-800 text-xs">
+                    <!-- Left: Status & Back Button via Pack UI -->
+                    <div class="flex items-center gap-2">
+                        <ButtonSubmit
+                            v-if="!readonly"
                             type="button"
+                            variant="primary"
+                            size="xs"
+                            icon="arrow_back"
+                            @click="setMode('edit')"
+                        >
+                            Kembali ke Editor
+                        </ButtonSubmit>
+
+                        <Badge variant="soft" :color="badgeColorTheme" size="xs">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="themeStyles.activeDot"></span>
+                                <span>{{ readonly ? 'Tinjauan Hanya-Baca (Readonly)' : 'Pratinjau Publik (HTML Rendered)' }}</span>
+                            </span>
+                        </Badge>
+                    </div>
+
+                    <!-- Center: Device Viewport Simulation via ButtonSubmit -->
+                    <div class="flex items-center p-0.5 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-[11px] font-semibold">
+                        <ButtonSubmit
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            :class="currentPreviewDevice === 'desktop' ? 'bg-white dark:bg-slate-900 shadow-2xs font-bold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'"
+                            icon="desktop_windows"
+                            @click="setPreviewDevice('desktop')"
+                            title="Tampilan Penuh Desktop"
+                        >
+                            <span class="hidden md:inline">Desktop</span>
+                        </ButtonSubmit>
+
+                        <ButtonSubmit
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            :class="currentPreviewDevice === 'tablet' ? 'bg-white dark:bg-slate-900 shadow-2xs font-bold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'"
+                            icon="tablet"
+                            @click="setPreviewDevice('tablet')"
+                            title="Simulasi Tablet (768px)"
+                        >
+                            <span class="hidden md:inline">Tablet</span>
+                        </ButtonSubmit>
+
+                        <ButtonSubmit
+                            type="button"
+                            variant="ghost"
+                            size="xs"
+                            :class="currentPreviewDevice === 'mobile' ? 'bg-white dark:bg-slate-900 shadow-2xs font-bold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'"
+                            icon="smartphone"
+                            @click="setPreviewDevice('mobile')"
+                            title="Simulasi Layar Ponsel (375px)"
+                        >
+                            <span class="hidden md:inline">Ponsel</span>
+                        </ButtonSubmit>
+                    </div>
+
+                    <!-- Right: Quick Export & Copy HTML via ButtonSubmit -->
+                    <div class="flex items-center gap-1.5">
+                        <ButtonSubmit
+                            v-if="showRawOutput"
+                            type="button"
+                            :variant="showRawPanel ? 'primary' : 'outline'"
+                            size="xs"
+                            icon="code"
+                            @click="toggleRawPanel"
+                            :title="showRawPanel ? 'Lihat hasil render HTML' : 'Lihat kode HTML mentah'"
+                        >
+                            <span class="hidden sm:inline">{{ showRawPanel ? 'Rendered' : 'Raw HTML' }}</span>
+                        </ButtonSubmit>
+
+                        <ButtonSubmit
+                            type="button"
+                            variant="outline"
+                            size="xs"
+                            :icon="copyFeedback ? 'check' : 'content_copy'"
                             @click="copyHtml"
-                            :class="[
-                                'flex items-center gap-1 px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-medium transition-colors cursor-pointer',
-                                radiusClasses.pill
-                            ]"
                             title="Salin string HTML mentah ke clipboard"
                         >
-                            <span class="material-symbols-outlined text-sm text-emerald-600">
-                                {{ copyFeedback ? 'check' : 'content_copy' }}
-                            </span>
-                            <span>{{ copyFeedback || 'Salin HTML' }}</span>
-                        </button>
+                            {{ copyFeedback || 'Salin HTML' }}
+                        </ButtonSubmit>
 
-                        <button
+                        <ButtonSubmit
                             type="button"
+                            variant="outline"
+                            size="xs"
+                            icon="download"
                             @click="downloadHtml"
-                            :class="[
-                                'flex items-center gap-1 px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-medium transition-colors cursor-pointer',
-                                radiusClasses.pill
-                            ]"
                             title="Unduh file .html mandiri"
                         >
-                            <span class="material-symbols-outlined text-sm text-blue-600">download</span>
                             <span class="hidden sm:inline">Unduh HTML</span>
-                        </button>
+                        </ButtonSubmit>
                     </div>
                 </div>
 
                 <!-- Preview Content Canvas -->
                 <div class="flex-1 overflow-y-auto">
-                    <!-- Mobile Device Shell -->
-                    <div
-                        v-if="previewDevice === 'mobile'"
-                        class="max-w-95 mx-auto my-3 p-5 rounded-3xl border-4 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl transition-all space-y-3"
-                    >
-                        <div class="w-16 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mb-3"></div>
-                        <div
-                            v-if="modelValue"
-                            v-html="modelValue"
-                            class="rich-text-preview space-y-3 leading-relaxed text-sm"
-                        ></div>
-                        <div v-else class="text-slate-400 dark:text-slate-500 italic text-center py-8 text-xs">
-                            Belum ada konten untuk ditampilkan dalam pratinjau.
-                        </div>
+                    <!-- Raw HTML Source Code View (Full Preview Mode) -->
+                    <div v-if="showRawPanel && showRawOutput" class="p-4 sm:p-5">
+                        <pre class="rich-text-raw-code"><code>{{ currentHtmlOutput || '&lt;!-- Kosong --&gt;' }}</code></pre>
                     </div>
 
-                    <!-- Tablet Device Shell -->
-                    <div
-                        v-else-if="previewDevice === 'tablet'"
-                        class="max-w-190 mx-auto my-3 p-6 rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg transition-all space-y-3"
-                    >
+                    <template v-else>
+                        <!-- Mobile Device Shell -->
                         <div
-                            v-if="modelValue"
-                            v-html="modelValue"
-                            class="rich-text-preview space-y-3 leading-relaxed text-sm"
-                        ></div>
-                        <div v-else class="text-slate-400 dark:text-slate-500 italic text-center py-10 text-xs">
-                            Belum ada konten untuk ditampilkan dalam pratinjau.
+                            v-if="currentPreviewDevice === 'mobile'"
+                            class="max-w-93.75 mx-auto my-3 p-5 rounded-3xl border-4 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl transition-all space-y-3"
+                        >
+                            <div class="w-16 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mb-3"></div>
+                            <div
+                                v-if="currentHtmlOutput"
+                                v-html="currentHtmlOutput"
+                                class="rich-text-preview space-y-3 leading-relaxed text-sm"
+                            ></div>
+                            <div v-else class="text-slate-400 dark:text-slate-500 italic text-center py-8 text-xs">
+                                Belum ada konten untuk ditampilkan dalam pratinjau.
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Desktop Wrapper -->
-                    <div v-else class="w-full">
+                        <!-- Tablet Device Shell -->
                         <div
-                            v-if="modelValue"
-                            v-html="modelValue"
-                            class="rich-text-preview space-y-3 leading-relaxed"
-                        ></div>
-                        <div v-else class="text-slate-400 dark:text-slate-500 italic text-center py-12">
-                            Belum ada konten untuk ditampilkan dalam pratinjau.
+                            v-else-if="currentPreviewDevice === 'tablet'"
+                            class="max-w-3xl mx-auto my-3 p-6 rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg transition-all space-y-3"
+                        >
+                            <div
+                                v-if="currentHtmlOutput"
+                                v-html="currentHtmlOutput"
+                                class="rich-text-preview space-y-3 leading-relaxed text-sm"
+                            ></div>
+                            <div v-else class="text-slate-400 dark:text-slate-500 italic text-center py-10 text-xs">
+                                Belum ada konten untuk ditampilkan dalam pratinjau.
+                            </div>
                         </div>
-                    </div>
+
+                        <!-- Desktop Wrapper -->
+                        <div v-else class="w-full">
+                            <div
+                                v-if="currentHtmlOutput"
+                                v-html="currentHtmlOutput"
+                                class="rich-text-preview space-y-3 leading-relaxed"
+                            ></div>
+                            <div v-else class="text-slate-400 dark:text-slate-500 italic text-center py-12 text-xs">
+                                Belum ada konten untuk ditampilkan dalam pratinjau.
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
 
@@ -737,35 +1042,50 @@ defineExpose({
                     <span class="inline-flex items-center gap-1.5 font-medium">
                         <span
                             class="w-1.5 h-1.5 rounded-full"
-                            :class="isPreviewMode ? themeStyles.activeDot : 'bg-emerald-500 ring-2 ring-emerald-500/20'"
+                            :class="currentMode === 'preview' ? themeStyles.activeDot : 'bg-emerald-500 ring-2 ring-emerald-500/20'"
                         ></span>
                         <span class="text-slate-600 dark:text-slate-400">
-                            {{ isPreviewMode ? 'Mode Pratinjau' : (isFullscreen ? 'Mode Layar Penuh (Zen)' : 'Editor Siap') }}
+                            {{ currentMode === 'preview' ? 'Mode Pratinjau' : (currentMode === 'split' ? 'Mode Belah (Live Split)' : (isFullscreen ? 'Mode Layar Penuh (Zen)' : 'Editor Siap')) }}
                         </span>
                     </span>
 
-                    <button
-                        v-if="isPreviewMode"
+                    <Badge v-if="readonly" variant="soft" color="neutral" size="xs">
+                        Hanya Baca
+                    </Badge>
+                    <Badge v-else-if="!editable" variant="soft" color="warning" size="xs">
+                        Terkunci
+                    </Badge>
+
+                    <ButtonSubmit
+                        v-if="currentMode === 'preview' && !readonly"
                         type="button"
-                        @click="togglePreview"
-                        class="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
+                        variant="ghost"
+                        size="xs"
+                        icon="arrow_back"
+                        @click="setMode('edit')"
                     >
-                        (Kembali Edit)
-                    </button>
+                        Kembali Edit
+                    </ButtonSubmit>
                 </div>
 
                 <!-- Word & Character Counts & Progress Bar -->
                 <div class="flex items-center gap-3 font-mono text-[10.5px]">
-                    <slot name="footer-extra" />
-                    <span v-if="showWordCount">{{ wordCount }} kata</span>
-                    <span v-if="showCharCount" class="flex items-center gap-2">
-                        <span>{{ charCount }}<template v-if="maxChars"> / {{ maxChars }}</template> karakter</span>
+                    <slot name="footer-extra" :word-count="wordCount" :char-count="charCount" />
+                    <span v-if="(counterType === 'both' || counterType === 'words') && showWordCount">{{ wordCount }} kata</span>
+                    <span
+                        v-if="(counterType === 'both' || counterType === 'characters') && showCharCount"
+                        :class="[
+                            'flex items-center gap-2',
+                            isOverLimit ? 'text-rose-600 dark:text-rose-400 font-semibold' : ''
+                        ]"
+                    >
+                        <span>{{ charCount }}<template v-if="maxCharsLimit"> / {{ maxCharsLimit }}</template> karakter</span>
 
                         <!-- Max Chars Progress Bar -->
                         <div
-                            v-if="maxChars > 0"
+                            v-if="maxCharsLimit > 0"
                             class="w-16 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"
-                            :title="`${charPercent}% dari batas ${maxChars} karakter`"
+                            :title="`${charPercent}% dari batas ${maxCharsLimit} karakter`"
                         >
                             <div
                                 class="h-full transition-all duration-200 rounded-full"
@@ -784,15 +1104,15 @@ defineExpose({
 
         <!-- Helper Hint & Error Messages -->
         <div v-if="error || $slots.error">
-            <p class="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1 flex items-center gap-1">
+            <span class="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1 flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm leading-none">error</span>
                 <slot name="error"><span>{{ error }}</span></slot>
-            </p>
+            </span>
         </div>
         <div v-else-if="hint || $slots.hint">
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
                 <slot name="hint">{{ hint }}</slot>
-            </p>
+            </span>
         </div>
 
         <!-- Modular Link Dialog -->
@@ -938,5 +1258,29 @@ defineExpose({
     border: none;
     border-top: 1px solid rgba(148, 163, 184, 0.25);
     margin: 1.25rem 0;
+}
+
+/* Raw HTML Source Code Block */
+.rich-text-raw-code {
+    background-color: #0f172a;
+    color: #e2e8f0;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8em;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border: 1px solid #1e293b;
+    tab-size: 2;
+}
+
+.rich-text-raw-code code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    font-size: inherit;
 }
 </style>

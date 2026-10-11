@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useClickOutside } from '@/Composables/Pack/useClickOutside';
 import { useClipboard } from '@/Composables/Pack/useClipboard';
+import Badge from './Badge.vue';
 
 const props = defineProps({
     /**
@@ -288,6 +289,7 @@ const isScrolledPast = ref(false);
 const scrollPercentage = ref(0);
 let holdAnimationId = null;
 let holdStartTime = null;
+let holdCompletedTimer = null;
 
 // Composables
 const { copy: execCopy, copied: isCopied } = useClipboard({ timeout: 2000 });
@@ -324,6 +326,10 @@ onUnmounted(() => {
     }
     if (holdAnimationId) {
         cancelAnimationFrame(holdAnimationId);
+    }
+    if (holdCompletedTimer) {
+        clearTimeout(holdCompletedTimer);
+        holdCompletedTimer = null;
     }
 });
 
@@ -708,9 +714,10 @@ const triggerHoldComplete = () => {
     holdCompleted.value = true;
     emit('hold-complete');
 
-    setTimeout(() => {
+    holdCompletedTimer = setTimeout(() => {
         holdCompleted.value = false;
         holdProgress.value = 0;
+        holdCompletedTimer = null;
     }, 1800);
 };
 </script>
@@ -754,8 +761,8 @@ const triggerHoldComplete = () => {
                     <!-- Close Bubble Button -->
                     <button
                         type="button"
-                        @click.stop="isBubbleVisible = false"
-                        class="absolute top-2 right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-0.5"
+                        @click.prevent.stop="isBubbleVisible = false"
+                        class="absolute top-2 right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-0.5 cursor-pointer"
                         aria-label="Tutup pesan"
                     >
                         <span class="material-symbols-outlined text-sm leading-none">close</span>
@@ -769,13 +776,13 @@ const triggerHoldComplete = () => {
                                 <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
                             <span class="text-[11px] font-semibold text-slate-800 dark:text-slate-200">Customer Support</span>
-                            <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded-full">
+                            <Badge size="xs" color="emerald" variant="soft" rounded="full">
                                 {{ whatsappStatus }}
-                            </span>
+                            </Badge>
                         </div>
-                        <p class="text-xs text-slate-600 dark:text-slate-300 leading-snug">
+                        <div class="text-xs text-slate-600 dark:text-slate-300 leading-snug m-0">
                             {{ whatsappBubbleText }}
-                        </p>
+                        </div>
                     </slot>
 
                     <!-- Bubble Pointer Arrow Triangle -->
@@ -900,7 +907,7 @@ const triggerHoldComplete = () => {
                         <component
                             :is="child.href ? (child.as === 'a' ? 'a' : Link) : 'button'"
                             :href="child.href"
-                            type="button"
+                            :type="!child.href ? 'button' : undefined"
                             :disabled="child.disabled"
                             :class="[
                                 sizeClasses.fabChild,
@@ -962,6 +969,7 @@ const triggerHoldComplete = () => {
             <component
                 :is="tag"
                 :href="href"
+                :type="tag === 'button' ? 'button' : undefined"
                 :disabled="isDisabled"
                 :class="[
                     sizeClasses.btn,
@@ -1059,6 +1067,7 @@ const triggerHoldComplete = () => {
             :is="tag"
             v-else
             :href="href"
+            :type="tag === 'button' ? 'button' : undefined"
             :disabled="isDisabled"
             :class="[
                 sizeClasses.btn,
@@ -1212,7 +1221,7 @@ const triggerHoldComplete = () => {
                         <component
                             :is="child.href ? (child.as === 'a' ? 'a' : Link) : 'button'"
                             :href="child.href"
-                            type="button"
+                            :type="!child.href ? 'button' : undefined"
                             :disabled="child.disabled"
                             :class="[
                                 'w-full flex items-center justify-between gap-3 px-3 py-2 text-xs rounded-lg text-left transition-colors cursor-pointer',
@@ -1248,12 +1257,16 @@ const triggerHoldComplete = () => {
                                 </div>
                             </div>
 
-                            <span
+                            <Badge
                                 v-if="child.badge"
-                                class="px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 shrink-0"
+                                size="xs"
+                                color="emerald"
+                                variant="soft"
+                                rounded="md"
+                                class="shrink-0 font-semibold"
                             >
                                 {{ child.badge }}
-                            </span>
+                            </Badge>
                         </component>
                     </template>
                 </slot>

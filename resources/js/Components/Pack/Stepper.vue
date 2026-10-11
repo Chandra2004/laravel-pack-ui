@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import Badge from './Badge.vue';
+import ButtonSubmit from './ButtonSubmit.vue';
 
 const props = defineProps({
     /**
@@ -37,11 +39,24 @@ const props = defineProps({
      * - 'pills': Kapsul langkah terhubung dengan chevron separator
      * - 'timeline': Feed vertikal aktivitas/milestone dengan timestamp & badge
      * - 'dots': Indikator titik kompak untuk carousel/modal
+     * - 'floating' / 'bubble': Gelembung melayang elevated dengan ring & status badge
+     * - 'minimal': Garis bawah aksen (underline tabs) ala Stripe / Linear
+     * - 'segmented' / 'numbered-step': Ribbon bar blok terpadu dengan sekat pembagi
      */
     type: {
         type: String,
         default: 'circle',
-        validator: (val) => ['circle', 'bar', 'progress', 'cards', 'panel', 'pills', 'timeline', 'dots'].includes(val),
+        validator: (val) => [
+            'circle',
+            'bar', 'progress',
+            'cards', 'panel',
+            'pills',
+            'timeline',
+            'dots',
+            'floating', 'bubble',
+            'minimal',
+            'segmented', 'numbered-step',
+        ].includes(val),
     },
     /**
      * 2. BENTUK: Orientasi layout (terutama untuk type 'circle' dan 'timeline')
@@ -218,6 +233,8 @@ watch(() => props.modelValue, (val) => {
 const normalizedType = computed(() => {
     if (props.type === 'progress') return 'bar';
     if (props.type === 'panel') return 'cards';
+    if (props.type === 'bubble') return 'floating';
+    if (props.type === 'numbered-step') return 'segmented';
     return props.type;
 });
 
@@ -351,6 +368,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-indigo-600 dark:bg-indigo-400',
                 dotCompleted: 'bg-indigo-400 dark:bg-indigo-600',
                 buttonPrimary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs shadow-indigo-600/20',
+                minimalActive: 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold',
+                segmentedActive: 'bg-indigo-50/90 text-indigo-900 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-700 font-bold shadow-xs',
             };
         case 'emerald':
             return {
@@ -368,6 +387,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-emerald-600 dark:bg-emerald-400',
                 dotCompleted: 'bg-emerald-400 dark:bg-emerald-600',
                 buttonPrimary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shadow-emerald-600/20',
+                minimalActive: 'border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold',
+                segmentedActive: 'bg-emerald-50/90 text-emerald-900 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-700 font-bold shadow-xs',
             };
         case 'purple':
             return {
@@ -385,6 +406,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-purple-600 dark:bg-purple-400',
                 dotCompleted: 'bg-purple-400 dark:bg-purple-600',
                 buttonPrimary: 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs shadow-purple-600/20',
+                minimalActive: 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400 font-bold',
+                segmentedActive: 'bg-purple-50/90 text-purple-900 border-purple-300 dark:bg-purple-950/60 dark:text-purple-200 dark:border-purple-700 font-bold shadow-xs',
             };
         case 'amber':
             return {
@@ -402,6 +425,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-amber-500 dark:bg-amber-400',
                 dotCompleted: 'bg-amber-400 dark:bg-amber-600',
                 buttonPrimary: 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs shadow-amber-500/20',
+                minimalActive: 'border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400 font-bold',
+                segmentedActive: 'bg-amber-50/90 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-700 font-bold shadow-xs',
             };
         case 'rose':
             return {
@@ -419,6 +444,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-rose-600 dark:bg-rose-400',
                 dotCompleted: 'bg-rose-400 dark:bg-rose-600',
                 buttonPrimary: 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs shadow-rose-600/20',
+                minimalActive: 'border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400 font-bold',
+                segmentedActive: 'bg-rose-50/90 text-rose-900 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-700 font-bold shadow-xs',
             };
         case 'cyan':
             return {
@@ -436,6 +463,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-cyan-600 dark:bg-cyan-400',
                 dotCompleted: 'bg-cyan-400 dark:bg-cyan-600',
                 buttonPrimary: 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-xs shadow-cyan-600/20',
+                minimalActive: 'border-cyan-600 text-cyan-600 dark:border-cyan-400 dark:text-cyan-400 font-bold',
+                segmentedActive: 'bg-cyan-50/90 text-cyan-900 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-200 dark:border-cyan-700 font-bold shadow-xs',
             };
         case 'dark':
             return {
@@ -453,6 +482,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-slate-900 dark:bg-white',
                 dotCompleted: 'bg-slate-500 dark:bg-slate-400',
                 buttonPrimary: 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100',
+                minimalActive: 'border-slate-900 text-slate-900 dark:border-white dark:text-white font-bold',
+                segmentedActive: 'bg-slate-100 text-slate-950 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-600 font-bold shadow-xs',
             };
         case 'primary':
         default:
@@ -471,6 +502,8 @@ const colorTheme = computed(() => {
                 dotActive: 'bg-blue-600 dark:bg-blue-400',
                 dotCompleted: 'bg-blue-400 dark:bg-blue-600',
                 buttonPrimary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-600/20',
+                minimalActive: 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold',
+                segmentedActive: 'bg-blue-50/90 text-blue-900 border-blue-300 dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-700 font-bold shadow-xs',
             };
     }
 });
@@ -597,6 +630,21 @@ const getConnectorLineClass = (index) => {
     return pendingClasses.line;
 };
 
+// Helper badge color
+const badgeSemanticColor = computed(() => {
+    const map = {
+        blue: 'primary',
+        success: 'emerald',
+        violet: 'purple',
+        warning: 'amber',
+        danger: 'rose',
+        sky: 'cyan',
+        slate: 'neutral',
+        dark: 'neutral',
+    };
+    return map[props.color] || props.color;
+});
+
 defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
 </script>
 
@@ -607,19 +655,22 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
             <slot name="header">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                        <h3 v-if="title" class="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                        <div v-if="title" class="text-base font-bold text-slate-900 dark:text-white tracking-tight">
                             {{ title }}
-                        </h3>
-                        <p v-if="description" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                        </div>
+                        <div v-if="description" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                             {{ description }}
-                        </p>
+                        </div>
                     </div>
-                    <div
-                        v-if="normalizedSteps.length > 0 && !loading"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 self-start sm:self-auto"
-                        :class="colorTheme.badge"
-                    >
-                        <span>Langkah {{ currentStep + 1 }} dari {{ normalizedSteps.length }}</span>
+                    <div v-if="normalizedSteps.length > 0 && !loading" class="shrink-0 self-start sm:self-auto">
+                        <Badge
+                            variant="soft"
+                            :color="badgeSemanticColor"
+                            size="sm"
+                            rounded="full"
+                        >
+                            Langkah {{ currentStep + 1 }} dari {{ normalizedSteps.length }}
+                        </Badge>
                     </div>
                 </div>
             </slot>
@@ -665,11 +716,38 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
             </div>
 
             <!-- Skeleton Pills Mode -->
-            <div v-else-if="normalizedType === 'pills'" class="flex flex-wrap items-center gap-2.5">
+            <div v-else-if="normalizedType === 'pills'" class="flex items-center gap-2.5 overflow-x-auto scrollbar-none pb-2">
                 <div
                     v-for="n in normalizedSteps.length || skeletonCount"
                     :key="n"
-                    class="h-8 w-28 bg-slate-200 dark:bg-slate-800 rounded-full"
+                    class="h-8 w-28 bg-slate-200 dark:bg-slate-800 rounded-full shrink-0"
+                />
+            </div>
+
+            <!-- Skeleton Floating Mode -->
+            <div v-else-if="normalizedType === 'floating'" class="flex items-center gap-3 overflow-x-auto scrollbar-none pb-2">
+                <div
+                    v-for="n in normalizedSteps.length || skeletonCount"
+                    :key="n"
+                    class="h-12 w-44 bg-slate-200 dark:bg-slate-800 rounded-2xl shrink-0"
+                />
+            </div>
+
+            <!-- Skeleton Minimal Mode -->
+            <div v-else-if="normalizedType === 'minimal'" class="flex items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div
+                    v-for="n in normalizedSteps.length || skeletonCount"
+                    :key="n"
+                    class="flex-1 h-4 bg-slate-200 dark:bg-slate-800 rounded"
+                />
+            </div>
+
+            <!-- Skeleton Segmented Mode -->
+            <div v-else-if="normalizedType === 'segmented'" class="flex items-center gap-2 border border-slate-200 dark:border-slate-800 rounded-xl p-2 bg-slate-50 dark:bg-slate-900">
+                <div
+                    v-for="n in normalizedSteps.length || skeletonCount"
+                    :key="n"
+                    class="flex-1 h-10 bg-slate-200 dark:bg-slate-800 rounded-lg"
                 />
             </div>
 
@@ -687,49 +765,51 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
 
             <!-- Skeleton Circle / Timeline dengan Penempatan Terarah (bottom, top, right, left) -->
             <div v-else>
-                <!-- Horizontal Orientasi Skeleton -->
-                <ol
+                <!-- Horizontal Orientasi Skeleton (Dengan wrapper scroll responsif untuk mobile) -->
+                <div
                     v-if="orientation === 'horizontal' && normalizedType !== 'timeline'"
-                    class="flex items-start w-full"
+                    class="w-full overflow-x-auto scrollbar-none pb-2 pt-1"
                 >
-                    <li
-                        v-for="(step, index) in normalizedSteps"
-                        :key="index"
-                        :class="['flex items-center', index < normalizedSteps.length - 1 ? 'flex-1' : '']"
-                    >
-                        <!-- Container Step Item dengan arah LabelPlacement -->
-                        <div
-                            :class="[
-                                'flex items-center gap-2 min-w-0',
-                                effectiveLabelPlacement === 'bottom' ? 'flex-col text-center' : '',
-                                effectiveLabelPlacement === 'top' ? 'flex-col-reverse text-center' : '',
-                                effectiveLabelPlacement === 'right' ? 'flex-row text-left' : '',
-                                effectiveLabelPlacement === 'left' ? 'flex-row-reverse text-right' : '',
-                            ]"
+                    <ol class="flex items-start w-full min-w-max sm:min-w-0">
+                        <li
+                            v-for="(step, index) in normalizedSteps"
+                            :key="index"
+                            :class="['flex items-center', index < normalizedSteps.length - 1 ? 'flex-1' : '']"
                         >
-                            <!-- Nodus Skeleton -->
-                            <div :class="[indicatorSize.container, radiusClass, 'bg-slate-200 dark:bg-slate-800 shrink-0']" />
-                            <!-- Teks Skeleton -->
-                            <div class="space-y-1.5 min-w-[70px]">
-                                <div class="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded mx-auto" />
-                                <div class="h-2 w-20 bg-slate-100 dark:bg-slate-800/60 rounded mx-auto" />
+                            <!-- Container Step Item dengan arah LabelPlacement -->
+                            <div
+                                :class="[
+                                    'flex items-center gap-2 min-w-0',
+                                    effectiveLabelPlacement === 'bottom' ? 'flex-col text-center' : '',
+                                    effectiveLabelPlacement === 'top' ? 'flex-col-reverse text-center' : '',
+                                    effectiveLabelPlacement === 'right' ? 'flex-row text-left' : '',
+                                    effectiveLabelPlacement === 'left' ? 'flex-row-reverse text-right' : '',
+                                ]"
+                            >
+                                <!-- Nodus Skeleton -->
+                                <div :class="[indicatorSize.container, radiusClass, 'bg-slate-200 dark:bg-slate-800 shrink-0']" />
+                                <!-- Teks Skeleton -->
+                                <div class="space-y-1.5 min-w-[70px]">
+                                    <div class="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded mx-auto" />
+                                    <div class="h-2 w-20 bg-slate-100 dark:bg-slate-800/60 rounded mx-auto" />
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Connector Skeleton -->
-                        <div
-                            v-if="index < normalizedSteps.length - 1"
-                            class="flex-1 mx-2 sm:mx-3"
-                            :class="[
-                                effectiveLabelPlacement === 'bottom' ? 'mb-auto mt-3 sm:mt-4' : '',
-                                effectiveLabelPlacement === 'top' ? 'mt-auto mb-3 sm:mb-4' : '',
-                                ['right', 'left'].includes(effectiveLabelPlacement) ? 'my-auto' : '',
-                            ]"
-                        >
-                            <div :class="[indicatorSize.line, 'w-full rounded-full bg-slate-200 dark:bg-slate-800']" />
-                        </div>
-                    </li>
-                </ol>
+                            <!-- Connector Skeleton -->
+                            <div
+                                v-if="index < normalizedSteps.length - 1"
+                                class="flex-1 mx-2 sm:mx-3"
+                                :class="[
+                                    effectiveLabelPlacement === 'bottom' ? 'mb-auto mt-3 sm:mt-4' : '',
+                                    effectiveLabelPlacement === 'top' ? 'mt-auto mb-3 sm:mb-4' : '',
+                                    ['right', 'left'].includes(effectiveLabelPlacement) ? 'my-auto' : '',
+                                ]"
+                            >
+                                <div :class="[indicatorSize.line, 'w-full rounded-full bg-slate-200 dark:bg-slate-800']" />
+                            </div>
+                        </li>
+                    </ol>
+                </div>
 
                 <!-- Vertical / Timeline Orientasi Skeleton -->
                 <ol v-else class="space-y-0">
@@ -758,7 +838,7 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
         </div>
 
         <!-- ===================================================================================== -->
-        <!-- REAL CONTENT STATE: MULTI-STEPPER VARIANTS -->
+        <!-- REAL CONTENT STATE: MULTI-STEPPER VARIANTS (LEBIH DARI 5 DESAIN UNIK) -->
         <!-- ===================================================================================== -->
         <div v-else>
             <!-- 1. TYPE: PROGRESS BAR / SEGMENTED BAR -->
@@ -797,7 +877,7 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
                 </div>
 
                 <!-- Label Bar Bawah -->
-                <div v-if="showLabels" class="hidden sm:grid grid-cols-4 gap-2 pt-1">
+                <div v-if="showLabels" class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                     <button
                         v-for="(step, index) in normalizedSteps"
                         :key="index"
@@ -859,30 +939,26 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
                                 <span v-else>{{ index + 1 }}</span>
                             </span>
 
-                            <!-- Status Badge -->
-                            <span
-                                :class="[
-                                    'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider',
-                                    getStatus(index) === 'active' ? colorTheme.badge : '',
-                                    getStatus(index) === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : '',
-                                    getStatus(index) === 'pending' ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' : '',
-                                    getStatus(index) === 'error' ? errorClasses.badge : '',
-                                ]"
+                            <!-- Status Badge Menggunakan Komponen Pack Badge -->
+                            <Badge
+                                :variant="getStatus(index) === 'active' ? 'solid' : 'soft'"
+                                :color="getStatus(index) === 'error' ? 'danger' : (getStatus(index) === 'completed' ? 'success' : badgeSemanticColor)"
+                                size="xs"
                             >
                                 {{ step.badge || (getStatus(index) === 'completed' ? 'Selesai' : (getStatus(index) === 'active' ? 'Aktif' : (getStatus(index) === 'error' ? 'Error' : 'Pending'))) }}
-                            </span>
+                            </Badge>
                         </div>
 
                         <!-- Judul & Deskripsi Kartu -->
-                        <h4 :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight']">
+                        <div :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight']">
                             {{ step.label }}
-                        </h4>
-                        <p
+                        </div>
+                        <div
                             v-if="showDescription && step.description"
                             :class="[labelSize.desc, 'text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed']"
                         >
                             {{ step.description }}
-                        </p>
+                        </div>
                     </div>
 
                     <!-- Footer Kartu: Timestamp / Opsional Tag -->
@@ -896,52 +972,226 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
                 </button>
             </div>
 
-            <!-- 3. TYPE: CAPSULE PILLS -->
-            <div v-else-if="normalizedType === 'pills'" class="flex flex-wrap items-center gap-2">
-                <template v-for="(step, index) in normalizedSteps" :key="index">
+            <!-- 3. TYPE: CAPSULE PILLS (Terhubung Horizontal dengan Scroll Halus di Mobile) -->
+            <div v-else-if="normalizedType === 'pills'" class="w-full overflow-x-auto scrollbar-none pb-1.5 pt-0.5">
+                <div class="flex items-center gap-2 min-w-max sm:min-w-0 sm:flex-wrap">
+                    <template v-for="(step, index) in normalizedSteps" :key="index">
+                        <button
+                            type="button"
+                            :disabled="!canClick(index)"
+                            @click="goTo(index)"
+                            :class="[
+                                'inline-flex items-center gap-2 transition-all font-medium select-none shadow-2xs shrink-0',
+                                radiusClass,
+                                indicatorSize.pillPadding,
+                                getStatus(index) === 'active' ? getIndicatorClasses('active') : '',
+                                getStatus(index) === 'completed' ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700' : '',
+                                getStatus(index) === 'pending' ? 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800' : '',
+                                getStatus(index) === 'error' ? errorClasses.ring : '',
+                                canClick(index) ? 'cursor-pointer hover:opacity-90' : 'cursor-default',
+                            ]"
+                        >
+                            <span
+                                :class="[
+                                    'inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0',
+                                    getStatus(index) === 'active' ? 'bg-white/20 text-current' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
+                                ]"
+                            >
+                                <span v-if="getStatus(index) === 'completed'" class="material-symbols-outlined text-[13px] leading-none">
+                                    {{ completedIcon }}
+                                </span>
+                                <span v-else-if="getStatus(index) === 'error'" class="material-symbols-outlined text-[13px] leading-none">
+                                    {{ errorIcon }}
+                                </span>
+                                <span v-else>{{ index + 1 }}</span>
+                            </span>
+                            <span class="truncate">{{ step.label }}</span>
+                        </button>
+
+                        <!-- Chevron Separator -->
+                        <span
+                            v-if="index < normalizedSteps.length - 1"
+                            class="material-symbols-outlined text-sm text-slate-300 dark:text-slate-600 select-none leading-none shrink-0"
+                        >
+                            chevron_right
+                        </span>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 4. TYPE: FLOATING / BUBBLE (Desain Gelembung Modern Melayang) -->
+            <div v-else-if="normalizedType === 'floating'" class="w-full overflow-x-auto scrollbar-none pb-2 pt-1">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-max">
+                    <template v-for="(step, index) in normalizedSteps" :key="index">
+                        <button
+                            type="button"
+                            :disabled="!canClick(index)"
+                            @click="goTo(index)"
+                            :class="[
+                                'flex items-center gap-2.5 px-3 py-2 border transition-all duration-200 select-none shadow-xs text-left',
+                                cardRadiusClass,
+                                getStatus(index) === 'active' ? colorTheme.cardActive : '',
+                                getStatus(index) === 'completed' ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900' : '',
+                                getStatus(index) === 'pending' ? 'border-slate-200/70 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50' : '',
+                                getStatus(index) === 'error' ? errorClasses.card : '',
+                                canClick(index) ? 'cursor-pointer hover:shadow-sm' : 'cursor-default opacity-85',
+                            ]"
+                        >
+                            <!-- Nodus Lingkaran -->
+                            <span
+                                :class="[
+                                    'inline-flex items-center justify-center font-bold shrink-0 transition-colors',
+                                    indicatorSize.container,
+                                    radiusClass,
+                                    getIndicatorClasses(getStatus(index)),
+                                ]"
+                            >
+                                <span v-if="getStatus(index) === 'completed'" class="material-symbols-outlined leading-none select-none" :class="indicatorSize.icon">
+                                    {{ completedIcon }}
+                                </span>
+                                <span v-else-if="getStatus(index) === 'error'" class="material-symbols-outlined leading-none select-none" :class="indicatorSize.icon">
+                                    {{ errorIcon }}
+                                </span>
+                                <span v-else-if="variant === 'icon' && step.icon" class="material-symbols-outlined leading-none select-none" :class="indicatorSize.icon">
+                                    {{ step.icon }}
+                                </span>
+                                <span v-else>{{ index + 1 }}</span>
+                            </span>
+
+                            <!-- Info Label & Deskripsi -->
+                            <div class="min-w-0 pr-1">
+                                <div :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight truncate']">
+                                    {{ step.label }}
+                                </div>
+                                <div v-if="showDescription && step.description" :class="[labelSize.desc, 'text-slate-400 dark:text-slate-500 leading-tight mt-0.5 truncate max-w-[130px]']">
+                                    {{ step.description }}
+                                </div>
+                            </div>
+
+                            <!-- Badge Status -->
+                            <Badge
+                                v-if="step.badge || getStatus(index) === 'active'"
+                                :variant="getStatus(index) === 'active' ? 'solid' : 'soft'"
+                                :color="getStatus(index) === 'error' ? 'danger' : (getStatus(index) === 'completed' ? 'success' : badgeSemanticColor)"
+                                size="xs"
+                                class="ml-1 shrink-0"
+                            >
+                                {{ step.badge || (getStatus(index) === 'completed' ? 'Selesai' : (getStatus(index) === 'active' ? 'Aktif' : '')) }}
+                            </Badge>
+                        </button>
+
+                        <!-- Separator -->
+                        <span
+                            v-if="index < normalizedSteps.length - 1"
+                            class="material-symbols-outlined text-slate-300 dark:text-slate-600 select-none text-base shrink-0"
+                        >
+                            chevron_right
+                        </span>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 5. TYPE: MINIMAL UNDERLINE TABS (Stripe / Linear / Vercel Checkout Style) -->
+            <div v-else-if="normalizedType === 'minimal'" class="w-full overflow-x-auto scrollbar-none pb-1">
+                <div class="flex items-center border-b border-slate-200 dark:border-slate-800 min-w-max sm:min-w-0 w-full">
                     <button
+                        v-for="(step, index) in normalizedSteps"
+                        :key="index"
                         type="button"
                         :disabled="!canClick(index)"
                         @click="goTo(index)"
                         :class="[
-                            'inline-flex items-center gap-2 transition-all font-medium select-none shadow-2xs',
-                            radiusClass,
-                            indicatorSize.pillPadding,
-                            getStatus(index) === 'active' ? getIndicatorClasses('active') : '',
-                            getStatus(index) === 'completed' ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700' : '',
-                            getStatus(index) === 'pending' ? 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800' : '',
-                            getStatus(index) === 'error' ? errorClasses.ring : '',
-                            canClick(index) ? 'cursor-pointer hover:opacity-90' : 'cursor-default',
+                            'flex-1 flex items-center justify-center gap-2 py-3 px-3 sm:px-4 border-b-2 font-medium text-xs transition-all relative -mb-[2px] select-none text-left sm:text-center',
+                            getStatus(index) === 'active' ? `${colorTheme.minimalActive}` : '',
+                            getStatus(index) === 'completed' ? 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300' : '',
+                            getStatus(index) === 'pending' ? 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300' : '',
+                            getStatus(index) === 'error' ? 'border-rose-500 text-rose-600 font-bold' : '',
+                            canClick(index) ? 'cursor-pointer' : 'cursor-default',
+                        ]"
+                    >
+                        <!-- Monospace Step Number -->
+                        <span
+                            :class="[
+                                'font-mono text-xs font-bold px-1.5 py-0.5 rounded transition-colors',
+                                getStatus(index) === 'active' ? colorTheme.badge : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400',
+                                getStatus(index) === 'completed' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : '',
+                                getStatus(index) === 'error' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50' : '',
+                            ]"
+                        >
+                            <span v-if="getStatus(index) === 'completed'" class="material-symbols-outlined text-[13px] leading-none align-middle">
+                                {{ completedIcon }}
+                            </span>
+                            <span v-else>0{{ index + 1 }}</span>
+                        </span>
+
+                        <!-- Label -->
+                        <span class="truncate" :class="getStatus(index) === 'active' ? getLabelTextClasses('active') : ''">
+                            {{ step.label }}
+                        </span>
+
+                        <span v-if="step.optional" class="text-[10px] text-slate-400 italic hidden sm:inline">
+                            (Opsional)
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 6. TYPE: SEGMENTED CONNECTED RIBBON BAR -->
+            <div v-else-if="normalizedType === 'segmented'" class="w-full overflow-x-auto scrollbar-none pb-1">
+                <div class="flex items-stretch border border-slate-200/90 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50/50 dark:bg-slate-900/60 divide-x divide-slate-200 dark:divide-slate-800 min-w-max sm:min-w-0 w-full shadow-2xs">
+                    <button
+                        v-for="(step, index) in normalizedSteps"
+                        :key="index"
+                        type="button"
+                        :disabled="!canClick(index)"
+                        @click="goTo(index)"
+                        :class="[
+                            'flex-1 flex items-center gap-3 p-3 sm:p-3.5 transition-all select-none text-left',
+                            getStatus(index) === 'active' ? colorTheme.segmentedActive : '',
+                            getStatus(index) === 'completed' ? 'bg-white/40 dark:bg-slate-800/40' : '',
+                            getStatus(index) === 'pending' ? 'bg-transparent opacity-75' : '',
+                            getStatus(index) === 'error' ? 'bg-rose-50/50 dark:bg-rose-950/30' : '',
+                            canClick(index) ? 'cursor-pointer hover:bg-white/80 dark:hover:bg-slate-800/70' : 'cursor-default',
                         ]"
                     >
                         <span
                             :class="[
-                                'inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0',
-                                getStatus(index) === 'active' ? 'bg-white/20 text-current' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
+                                'inline-flex items-center justify-center font-bold shrink-0 transition-colors',
+                                indicatorSize.container,
+                                radius === 'full' ? 'rounded-lg' : radiusClass,
+                                getIndicatorClasses(getStatus(index)),
                             ]"
                         >
-                            <span v-if="getStatus(index) === 'completed'" class="material-symbols-outlined text-[13px] leading-none">
+                            <span v-if="getStatus(index) === 'completed'" class="material-symbols-outlined leading-none select-none" :class="indicatorSize.icon">
                                 {{ completedIcon }}
                             </span>
-                            <span v-else-if="getStatus(index) === 'error'" class="material-symbols-outlined text-[13px] leading-none">
+                            <span v-else-if="getStatus(index) === 'error'" class="material-symbols-outlined leading-none select-none" :class="indicatorSize.icon">
                                 {{ errorIcon }}
+                            </span>
+                            <span v-else-if="variant === 'icon' && step.icon" class="material-symbols-outlined leading-none select-none" :class="indicatorSize.icon">
+                                {{ step.icon }}
                             </span>
                             <span v-else>{{ index + 1 }}</span>
                         </span>
-                        <span class="truncate">{{ step.label }}</span>
-                    </button>
 
-                    <!-- Chevron Separator -->
-                    <span
-                        v-if="index < normalizedSteps.length - 1"
-                        class="material-symbols-outlined text-sm text-slate-300 dark:text-slate-600 select-none leading-none shrink-0"
-                    >
-                        chevron_right
-                    </span>
-                </template>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5">
+                                <div :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight truncate']">
+                                    {{ step.label }}
+                                </div>
+                                <span v-if="step.optional" class="text-[10px] text-slate-400 italic">
+                                    (Opsional)
+                                </span>
+                            </div>
+                            <div v-if="showDescription && step.description" :class="[labelSize.desc, 'text-slate-400 dark:text-slate-500 mt-0.5 truncate leading-tight']">
+                                {{ step.description }}
+                            </div>
+                        </div>
+                    </button>
+                </div>
             </div>
 
-            <!-- 4. TYPE: COMPACT DOTS -->
+            <!-- 7. TYPE: COMPACT DOTS (Modal / Carousel Friendly) -->
             <div v-else-if="normalizedType === 'dots'" class="flex items-center justify-between gap-4 py-1">
                 <div class="flex items-center gap-2">
                     <button
@@ -972,138 +1222,140 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
                 </div>
             </div>
 
-            <!-- 5. TYPE: CIRCLE (Classic Horizontal & Vertical) atau TIMELINE -->
+            <!-- 8. TYPE: CIRCLE (Classic Horizontal & Vertical) atau 9. TIMELINE -->
             <div v-else>
-                <!-- HORIZONTAL ORIENTATION (Circle) -->
-                <ol
+                <!-- HORIZONTAL ORIENTATION (Circle dengan scroll mulus di Mobile / Tablet) -->
+                <div
                     v-if="orientation === 'horizontal' && normalizedType !== 'timeline'"
-                    class="flex items-start w-full"
+                    class="w-full overflow-x-auto scrollbar-none pb-2 pt-1"
                 >
-                    <li
-                        v-for="(step, index) in normalizedSteps"
-                        :key="index"
-                        :class="['flex items-center', index < normalizedSteps.length - 1 ? 'flex-1' : '']"
-                    >
-                        <!-- Wadah Nodus dan Teks dengan penempatan terarah (bottom, top, right, left) -->
-                        <div
-                            :class="[
-                                'flex items-center gap-2 min-w-0',
-                                effectiveLabelPlacement === 'bottom' ? 'flex-col text-center' : '',
-                                effectiveLabelPlacement === 'top' ? 'flex-col-reverse text-center' : '',
-                                effectiveLabelPlacement === 'right' ? 'flex-row text-left' : '',
-                                effectiveLabelPlacement === 'left' ? 'flex-row-reverse text-right' : '',
-                            ]"
+                    <ol class="flex items-start w-full min-w-max sm:min-w-0">
+                        <li
+                            v-for="(step, index) in normalizedSteps"
+                            :key="index"
+                            :class="['flex items-center', index < normalizedSteps.length - 1 ? 'flex-1' : '']"
                         >
-                            <!-- Step Nodus Button -->
-                            <button
-                                type="button"
-                                :disabled="!canClick(index)"
-                                @click="goTo(index)"
-                                :aria-current="getStatus(index) === 'active' ? 'step' : undefined"
-                                :aria-label="`Langkah ${index + 1}: ${step.label || ''}`"
-                                :class="[
-                                    'inline-flex items-center justify-center transition-all duration-200 shrink-0 select-none leading-none',
-                                    indicatorSize.container,
-                                    radiusClass,
-                                    getIndicatorClasses(getStatus(index)),
-                                    canClick(index) ? 'cursor-pointer' : 'cursor-default',
-                                ]"
-                            >
-                                <slot name="step" :step="step" :index="index" :status="getStatus(index)">
-                                    <!-- Completed: Check icon -->
-                                    <span
-                                        v-if="getStatus(index) === 'completed'"
-                                        class="material-symbols-outlined leading-none select-none"
-                                        :class="indicatorSize.icon"
-                                    >
-                                        {{ completedIcon }}
-                                    </span>
-
-                                    <!-- Error: Error icon -->
-                                    <span
-                                        v-else-if="getStatus(index) === 'error'"
-                                        class="material-symbols-outlined leading-none select-none"
-                                        :class="indicatorSize.icon"
-                                    >
-                                        {{ errorIcon }}
-                                    </span>
-
-                                    <!-- Icon variant -->
-                                    <span
-                                        v-else-if="variant === 'icon' && step.icon"
-                                        class="material-symbols-outlined leading-none select-none"
-                                        :class="indicatorSize.icon"
-                                    >
-                                        {{ step.icon }}
-                                    </span>
-
-                                    <!-- Numbered variant -->
-                                    <span v-else-if="variant === 'numbered'" :class="indicatorSize.text">
-                                        {{ index + 1 }}
-                                    </span>
-
-                                    <!-- Dot variant -->
-                                    <span
-                                        v-else
-                                        :class="[
-                                            indicatorSize.dot,
-                                            radiusClass,
-                                            getStatus(index) === 'active' ? colorTheme.dotActive : 'bg-current',
-                                        ]"
-                                    />
-                                </slot>
-                            </button>
-
-                            <!-- Step Label & Description -->
+                            <!-- Wadah Nodus dan Teks dengan penempatan terarah (bottom, top, right, left) -->
                             <div
-                                v-if="showLabels"
                                 :class="[
-                                    'min-w-0',
-                                    ['bottom', 'top'].includes(effectiveLabelPlacement) ? 'max-w-24 sm:max-w-36' : 'max-w-44',
+                                    'flex items-center gap-2 min-w-0',
+                                    effectiveLabelPlacement === 'bottom' ? 'flex-col text-center' : '',
+                                    effectiveLabelPlacement === 'top' ? 'flex-col-reverse text-center' : '',
+                                    effectiveLabelPlacement === 'right' ? 'flex-row text-left' : '',
+                                    effectiveLabelPlacement === 'left' ? 'flex-row-reverse text-right' : '',
                                 ]"
                             >
-                                <slot name="label" :step="step" :index="index" :status="getStatus(index)">
-                                    <p :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight truncate']">
-                                        {{ step.label }}
-                                    </p>
-                                    <p
-                                        v-if="showDescription && step.description"
-                                        :class="[labelSize.desc, 'text-slate-400 dark:text-slate-500 leading-tight mt-0.5 line-clamp-2']"
-                                    >
-                                        {{ step.description }}
-                                    </p>
-                                    <span
-                                        v-if="step.optional"
-                                        :class="[labelSize.desc, 'text-slate-400 dark:text-slate-500 italic block mt-0.5']"
-                                    >
-                                        Opsional
-                                    </span>
-                                </slot>
+                                <!-- Step Nodus Button -->
+                                <button
+                                    type="button"
+                                    :disabled="!canClick(index)"
+                                    @click="goTo(index)"
+                                    :aria-current="getStatus(index) === 'active' ? 'step' : undefined"
+                                    :aria-label="`Langkah ${index + 1}: ${step.label || ''}`"
+                                    :class="[
+                                        'inline-flex items-center justify-center transition-all duration-200 shrink-0 select-none leading-none',
+                                        indicatorSize.container,
+                                        radiusClass,
+                                        getIndicatorClasses(getStatus(index)),
+                                        canClick(index) ? 'cursor-pointer' : 'cursor-default',
+                                    ]"
+                                >
+                                    <slot name="step" :step="step" :index="index" :status="getStatus(index)">
+                                        <!-- Completed: Check icon -->
+                                        <span
+                                            v-if="getStatus(index) === 'completed'"
+                                            class="material-symbols-outlined leading-none select-none"
+                                            :class="indicatorSize.icon"
+                                        >
+                                            {{ completedIcon }}
+                                        </span>
+
+                                        <!-- Error: Error icon -->
+                                        <span
+                                            v-else-if="getStatus(index) === 'error'"
+                                            class="material-symbols-outlined leading-none select-none"
+                                            :class="indicatorSize.icon"
+                                        >
+                                            {{ errorIcon }}
+                                        </span>
+
+                                        <!-- Icon variant -->
+                                        <span
+                                            v-else-if="variant === 'icon' && step.icon"
+                                            class="material-symbols-outlined leading-none select-none"
+                                            :class="indicatorSize.icon"
+                                        >
+                                            {{ step.icon }}
+                                        </span>
+
+                                        <!-- Numbered variant -->
+                                        <span v-else-if="variant === 'numbered'" :class="indicatorSize.text">
+                                            {{ index + 1 }}
+                                        </span>
+
+                                        <!-- Dot variant -->
+                                        <span
+                                            v-else
+                                            :class="[
+                                                indicatorSize.dot,
+                                                radiusClass,
+                                                getStatus(index) === 'active' ? colorTheme.dotActive : 'bg-current',
+                                            ]"
+                                        />
+                                    </slot>
+                                </button>
+
+                                <!-- Step Label & Description -->
+                                <div
+                                    v-if="showLabels"
+                                    :class="[
+                                        'min-w-0',
+                                        ['bottom', 'top'].includes(effectiveLabelPlacement) ? 'max-w-24 sm:max-w-36' : 'max-w-44',
+                                    ]"
+                                >
+                                    <slot name="label" :step="step" :index="index" :status="getStatus(index)">
+                                        <div :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight truncate']">
+                                            {{ step.label }}
+                                        </div>
+                                        <div
+                                            v-if="showDescription && step.description"
+                                            :class="[labelSize.desc, 'text-slate-400 dark:text-slate-500 leading-tight mt-0.5 line-clamp-2']"
+                                        >
+                                            {{ step.description }}
+                                        </div>
+                                        <span
+                                            v-if="step.optional"
+                                            :class="[labelSize.desc, 'text-slate-400 dark:text-slate-500 italic block mt-0.5']"
+                                        >
+                                            Opsional
+                                        </span>
+                                    </slot>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Connector Line -->
-                        <div
-                            v-if="index < normalizedSteps.length - 1"
-                            class="flex-1 mx-2 sm:mx-3"
-                            :class="[
-                                effectiveLabelPlacement === 'bottom' ? 'mb-auto mt-3.5 sm:mt-[17px]' : '',
-                                effectiveLabelPlacement === 'top' ? 'mt-auto mb-3.5 sm:mb-[17px]' : '',
-                                ['right', 'left'].includes(effectiveLabelPlacement) ? 'my-auto' : '',
-                            ]"
-                        >
+                            <!-- Connector Line -->
                             <div
+                                v-if="index < normalizedSteps.length - 1"
+                                class="flex-1 mx-2 sm:mx-3"
                                 :class="[
-                                    indicatorSize.line,
-                                    'w-full rounded-full transition-colors duration-300',
-                                    getConnectorLineClass(index),
+                                    effectiveLabelPlacement === 'bottom' ? 'mb-auto mt-3.5 sm:mt-[17px]' : '',
+                                    effectiveLabelPlacement === 'top' ? 'mt-auto mb-3.5 sm:mb-[17px]' : '',
+                                    ['right', 'left'].includes(effectiveLabelPlacement) ? 'my-auto' : '',
                                 ]"
-                            />
-                        </div>
-                    </li>
-                </ol>
+                            >
+                                <div
+                                    :class="[
+                                        indicatorSize.line,
+                                        'w-full rounded-full transition-colors duration-300',
+                                        getConnectorLineClass(index),
+                                    ]"
+                                />
+                            </div>
+                        </li>
+                    </ol>
+                </div>
 
-                <!-- VERTICAL ORIENTATION (Circle atau Timeline) -->
+                <!-- VERTICAL ORIENTATION (Circle Vertikal atau Timeline) -->
                 <ol v-else class="space-y-0">
                     <li
                         v-for="(step, index) in normalizedSteps"
@@ -1178,15 +1430,17 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
                         <div :class="['pb-6 pt-1 flex-1 min-w-0', index === normalizedSteps.length - 1 ? 'pb-0' : '']">
                             <slot name="label" :step="step" :index="index" :status="getStatus(index)">
                                 <div class="flex items-center gap-2" :class="effectiveLabelPlacement === 'left' ? 'justify-end' : ''">
-                                    <p :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight']">
+                                    <div :class="[labelSize.label, getLabelTextClasses(getStatus(index)), 'leading-tight']">
                                         {{ step.label }}
-                                    </p>
-                                    <span
+                                    </div>
+                                    <Badge
                                         v-if="step.badge"
-                                        :class="['px-2 py-0.2 text-[10px] font-bold rounded-full', colorTheme.badge]"
+                                        variant="soft"
+                                        :color="badgeSemanticColor"
+                                        size="xs"
                                     >
                                         {{ step.badge }}
-                                    </span>
+                                    </Badge>
                                     <span v-if="step.optional" class="text-slate-400 text-xs italic">
                                         (Opsional)
                                     </span>
@@ -1197,12 +1451,12 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
                                     {{ step.time }}
                                 </div>
 
-                                <p
+                                <div
                                     v-if="showDescription && step.description"
                                     :class="[labelSize.desc, 'text-slate-500 dark:text-slate-400 leading-relaxed mt-1']"
                                 >
                                     {{ step.description }}
-                                </p>
+                                </div>
                             </slot>
 
                             <!-- Slot Konten Langkah Inline pada mode Vertikal/Timeline -->
@@ -1216,17 +1470,17 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
         </div>
 
         <!-- ===================================================================================== -->
-        <!-- STEP CONTENT PANEL (Slot default untuk mode Horizontal/Bar/Cards/Pills/Dots) -->
+        <!-- STEP CONTENT PANEL (Slot default untuk mode Horizontal/Bar/Cards/Pills/Dots/Floating/Minimal/Segmented) -->
         <!-- ===================================================================================== -->
         <div
-            v-if="$slots.content && (orientation === 'horizontal' || ['bar', 'cards', 'pills', 'dots'].includes(normalizedType))"
+            v-if="$slots.content && (orientation === 'horizontal' || ['bar', 'cards', 'pills', 'dots', 'floating', 'minimal', 'segmented'].includes(normalizedType))"
             class="mt-6"
         >
             <slot name="content" :step="normalizedSteps[currentStep]" :index="currentStep" />
         </div>
 
         <!-- ===================================================================================== -->
-        <!-- BILAH NAVIGASI AKSI (Slot #actions atau Tombol Bawaan showActions) -->
+        <!-- BILAH NAVIGASI AKSI (Slot #actions atau Tombol Bawaan showActions dengan Pack UI) -->
         <!-- ===================================================================================== -->
         <div
             v-if="showActions || $slots.actions"
@@ -1241,39 +1495,45 @@ defineExpose({ next, prev, goTo, currentStep, isFirst, isLast });
                 :prev="prev"
                 :goTo="goTo"
             >
-                <button
+                <ButtonSubmit
                     type="button"
+                    variant="outline"
+                    size="sm"
                     :disabled="isFirst"
                     @click="prev"
-                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    icon="arrow_back"
                 >
-                    <span class="material-symbols-outlined text-sm leading-none">arrow_back</span>
                     {{ prevText }}
-                </button>
+                </ButtonSubmit>
 
                 <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">
                     {{ currentStep + 1 }} / {{ normalizedSteps.length }}
                 </span>
 
-                <button
+                <ButtonSubmit
                     v-if="!isLast"
                     type="button"
+                    variant="primary"
+                    :color-theme="color"
+                    size="sm"
                     @click="next"
-                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer"
-                    :class="colorTheme.buttonPrimary"
+                    icon="arrow_forward"
+                    icon-position="right"
                 >
                     {{ nextText }}
-                    <span class="material-symbols-outlined text-sm leading-none">arrow_forward</span>
-                </button>
-                <button
+                </ButtonSubmit>
+
+                <ButtonSubmit
                     v-else
                     type="button"
+                    variant="success"
+                    size="sm"
                     @click="emit('finish', currentStep)"
-                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs shadow-emerald-600/20 transition-all cursor-pointer"
+                    icon="check"
+                    icon-position="right"
                 >
                     {{ finishText }}
-                    <span class="material-symbols-outlined text-sm leading-none">check</span>
-                </button>
+                </ButtonSubmit>
             </slot>
         </div>
     </div>

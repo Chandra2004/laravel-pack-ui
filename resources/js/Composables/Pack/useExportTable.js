@@ -119,16 +119,50 @@ export function useExportTable() {
     };
 
     /**
-     * Mencetak elemen tabel secara terisolasi via jendela print browser
-     * @param {string} elementId - ID atribut dari kontainer tabel
-     * @param {string} [docTitle='Laporan Cetak'] - Judul dokumen cetak
+     * Mencetak elemen tabel secara terisolasi via jendela print browser.
+     * Mendukung pemanggilan via ID elemen DOM string atau langsung menggunakan array objek data.
+     * @param {string|Array<Object>} target - ID elemen DOM atau array objek data
+     * @param {string|Object} [optionsOrTitle='Laporan Cetak'] - Judul dokumen cetak atau objek opsi { title, columns }
      */
-    const printTable = (elementId, docTitle = 'Laporan Cetak') => {
+    const printTable = (target, optionsOrTitle = 'Laporan Cetak') => {
         if (typeof document === 'undefined') return;
 
-        const targetEl = document.getElementById(elementId);
-        if (!targetEl) {
-            console.warn(`[useExportTable] Elemen dengan ID "${elementId}" tidak ditemukan.`);
+        let docTitle = 'Laporan Cetak';
+        let tableHtml = '';
+
+        if (typeof target === 'string') {
+            docTitle = typeof optionsOrTitle === 'string' ? optionsOrTitle : (optionsOrTitle?.title || 'Laporan Cetak');
+            const targetEl = document.getElementById(target);
+            if (!targetEl) {
+                console.warn(`[useExportTable] Elemen dengan ID "${target}" tidak ditemukan.`);
+                return;
+            }
+            tableHtml = targetEl.innerHTML;
+        } else if (Array.isArray(target)) {
+            const opts = typeof optionsOrTitle === 'object' && optionsOrTitle !== null ? optionsOrTitle : { title: optionsOrTitle };
+            docTitle = opts.title || 'Laporan Cetak';
+
+            let cols = [];
+            if (opts.columns && Array.isArray(opts.columns) && opts.columns.length > 0) {
+                cols = opts.columns.map((col) => typeof col === 'string' ? { key: col, label: col } : col);
+            } else if (target.length > 0) {
+                cols = Object.keys(target[0] || {}).map((k) => ({ key: k, label: k }));
+            }
+
+            const thead = `<tr>${cols.map(c => `<th>${String(c.label || c.key).replace(/</g, '&lt;')}</th>`).join('')}</tr>`;
+            const tbody = target.map(row => {
+                const cells = cols.map(c => {
+                    let val = row[c.key];
+                    if (val === null || val === undefined) val = '';
+                    if (typeof val === 'object') val = JSON.stringify(val);
+                    return `<td>${String(val).replace(/</g, '&lt;')}</td>`;
+                }).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            tableHtml = `<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+        } else {
+            console.warn('[useExportTable] Target cetak harus berupa ID string elemen atau array data.');
             return;
         }
 
@@ -143,22 +177,24 @@ export function useExportTable() {
             <html lang="id">
             <head>
                 <meta charset="utf-8">
-                <title>${docTitle}</title>
+                <title>${docTitle.replace(/</g, '&lt;')}</title>
                 <style>
-                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; color: #0f172a; }
-                    h2 { margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #0f172a; }
+                    h2 { margin-bottom: 16px; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-weight: 700; }
                     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-                    th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
-                    th { background-color: #f1f5f9; font-weight: bold; }
+                    th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+                    th { background-color: #f1f5f9; font-weight: 600; color: #334155; }
                     tr:nth-child(even) { background-color: #f8fafc; }
                     @media print {
                         body { padding: 0; }
+                        h2 { border-bottom-color: #000; }
+                        th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
                 </style>
             </head>
             <body>
-                <h2>${docTitle}</h2>
-                <div>${targetEl.innerHTML}</div>
+                <h2>${docTitle.replace(/</g, '&lt;')}</h2>
+                <div>${tableHtml}</div>
                 <script>
                     window.onload = function() {
                         window.focus();

@@ -215,7 +215,10 @@ export function useScrollProgress(options = {}) {
     };
 
     // Status ambang batas atas
-    const isAtTop = computed(() => progress.value <= threshold);
+    const isAtTop = computed(() => {
+        const t = unref(threshold);
+        return progress.value <= (typeof t === 'number' ? t : 1);
+    });
 
     // Status selesai 100%
     const isComplete = computed(() => progress.value >= 99.5);
@@ -225,8 +228,12 @@ export function useScrollProgress(options = {}) {
 
     // Estimasi sisa waktu baca (dalam menit)
     const readingTimeRemaining = computed(() => {
-        if (!wordsCount || wordsCount <= 0) return 0;
-        const totalMinutes = Math.ceil(wordsCount / wordsPerMinute);
+        const count = unref(wordsCount);
+        const wpm = unref(wordsPerMinute);
+        const activeCount = typeof count === 'number' ? count : 0;
+        const activeWpm = typeof wpm === 'number' && wpm > 0 ? wpm : 200;
+        if (activeCount <= 0) return 0;
+        const totalMinutes = Math.ceil(activeCount / activeWpm);
         const remainingMinutes = Math.ceil(totalMinutes * (1 - scrollPercent.value));
         return Math.max(0, remainingMinutes);
     });

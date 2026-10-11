@@ -213,12 +213,16 @@ export function useNotification() {
         }
     };
 
-    return {
+    const notifyInstance = (options) => add(options);
+
+    Object.assign(notifyInstance, {
         notifications,
         defaultPosition,
         defaultDuration,
         setDefaultDuration,
         add,
+        notify: notifyInstance,
+        show: add,
         update,
         remove,
         clear,
@@ -231,5 +235,7 @@ export function useNotification() {
         dark,
         promise,
         initFlashWatcher,
-    };
+    });
+
+    return notifyInstance;
 }

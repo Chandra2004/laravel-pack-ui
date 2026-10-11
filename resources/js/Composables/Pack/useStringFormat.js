@@ -59,9 +59,7 @@ export const titleCase = (text) => {
     if (!text) return '';
     return String(text)
         .toLowerCase()
-        .split(' ')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
+        .replace(/(?:^|\s|-|_)\S/g, (char) => char.toUpperCase());
 };
 
 /**
@@ -84,7 +82,7 @@ export const camelCase = (text) => {
 export const snakeCase = (text) => {
     if (!text) return '';
     return String(text)
-        .replace(/([a-z])([A-Z])/g, '$1_$2')
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
         .replace(/[-\s]+/g, '_')
         .toLowerCase();
 };
@@ -97,7 +95,7 @@ export const snakeCase = (text) => {
 export const kebabCase = (text) => {
     if (!text) return '';
     return String(text)
-        .replace(/([a-z])([A-Z])/g, '$1-$2')
+        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
         .replace(/[_\s]+/g, '-')
         .toLowerCase();
 };
@@ -109,7 +107,11 @@ export const kebabCase = (text) => {
  */
 export const stripHtml = (html) => {
     if (!html) return '';
-    return String(html).replace(/<[^>]*>?/gm, '').trim();
+    return String(html)
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+        .replace(/<[^>]*>?/gm, '')
+        .trim();
 };
 
 /**

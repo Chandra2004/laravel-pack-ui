@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import ButtonSubmit from '../ButtonSubmit.vue';
 
 const props = defineProps({
     editor: {
@@ -42,6 +43,15 @@ const props = defineProps({
         type: String,
         default: 'md',
     },
+    mode: {
+        type: String,
+        default: 'edit',
+        validator: (v) => ['edit', 'preview', 'split'].includes(v),
+    },
+    showModeToggle: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 const emit = defineEmits([
@@ -51,6 +61,8 @@ const emit = defineEmits([
     'toggle-fullscreen',
     'open-help',
     'clear-formatting',
+    'update:mode',
+    'set-mode',
 ]);
 
 const isBlockMenuOpen = ref(false);
@@ -187,17 +199,17 @@ onBeforeUnmount(() => {
     <div
         v-if="editor"
         :class="[
-            'flex flex-wrap items-center justify-between bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800/80 select-none text-slate-700 dark:text-slate-300 backdrop-blur-xs transition-colors',
+            'flex items-center justify-between gap-1.5 bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800/80 select-none text-slate-700 dark:text-slate-300 backdrop-blur-xs transition-colors overflow-hidden sm:flex-wrap',
             sizeClasses.toolbar
         ]"
         role="toolbar"
         aria-label="Toolbar Format Teks"
     >
-        <!-- Left Side: Formatting Controls -->
+        <!-- Left Side: Formatting Controls (Scrollable on small mobile screens, wrapped on tablet/desktop) -->
         <div
             :class="[
-                'flex flex-wrap items-center gap-1 transition-opacity duration-150',
-                isPreviewMode ? 'opacity-40 pointer-events-none' : 'opacity-100'
+                'flex items-center gap-1 transition-opacity duration-150 overflow-x-auto sm:flex-wrap no-scrollbar max-w-full py-0.5',
+                (isPreviewMode || mode === 'preview') ? 'opacity-40 pointer-events-none' : 'opacity-100'
             ]"
         >
             <!-- Group 1: Undo / Redo -->
@@ -647,7 +659,7 @@ onBeforeUnmount(() => {
         <!-- Right Side: Tools & View Mode Toggle -->
         <div class="flex items-center gap-1.5 ml-auto">
             <!-- Optional Slot for Custom Toolbar Actions -->
-            <slot name="extra" />
+            <slot name="extra" :editor="editor" />
 
             <!-- Fullscreen Focus Mode -->
             <button
@@ -686,25 +698,66 @@ onBeforeUnmount(() => {
                 <span :class="['material-symbols-outlined', sizeClasses.icon]">help_outline</span>
             </button>
 
-            <!-- Preview Toggle Button -->
-            <div v-if="showPreviewToggle" class="pl-1.5 border-l border-slate-200/70 dark:border-slate-800">
-                <button
+            <!-- Segmented Mode Switcher (Edit, Pratinjau, Split) using ButtonSubmit -->
+            <div v-if="showModeToggle" class="pl-1.5 border-l border-slate-200/70 dark:border-slate-800 flex items-center">
+                <div class="flex items-center p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-800/80 text-[11px] font-semibold gap-0.5">
+                    <ButtonSubmit
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        :class="mode === 'edit' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                        icon="edit_note"
+                        @click="emit('update:mode', 'edit'); emit('set-mode', 'edit')"
+                        title="Mode Sunting (WYSIWYG Tiptap Editor)"
+                    >
+                        <span class="hidden sm:inline">Edit</span>
+                    </ButtonSubmit>
+
+                    <ButtonSubmit
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        :class="mode === 'preview' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                        icon="visibility"
+                        @click="emit('update:mode', 'preview'); emit('set-mode', 'preview')"
+                        title="Mode Pratinjau (Rendered HTML Teks Murni)"
+                    >
+                        <span class="hidden sm:inline">Pratinjau</span>
+                    </ButtonSubmit>
+
+                    <ButtonSubmit
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        :class="mode === 'split' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                        icon="vertical_split"
+                        @click="emit('update:mode', 'split'); emit('set-mode', 'split')"
+                        title="Mode Belah (Edit & Pratinjau Berdampingan)"
+                    >
+                        <span class="hidden sm:inline">Split</span>
+                    </ButtonSubmit>
+                </div>
+            </div>
+
+            <!-- Fallback Preview Toggle Button (When showModeToggle is false) -->
+            <div v-else-if="showPreviewToggle" class="pl-1.5 border-l border-slate-200/70 dark:border-slate-800">
+                <ButtonSubmit
                     type="button"
-                    @click="emit('toggle-preview')"
+                    variant="ghost"
+                    size="xs"
                     :class="[
-                        'h-7.5 px-3 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer select-none shadow-2xs',
+                        'h-7.5 px-3 text-xs font-semibold flex items-center gap-1.5 transition-all select-none shadow-2xs',
                         btnRadius,
-                        isPreviewMode
+                        isPreviewMode || mode === 'preview'
                             ? themeStyles.previewActive
                             : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                     ]"
-                    :title="isPreviewMode ? 'Kembali ke Mode Edit Teks' : 'Lihat Pratinjau Render HTML'"
+                    :icon="isPreviewMode || mode === 'preview' ? 'edit_note' : 'visibility'"
+                    @click="emit('toggle-preview')"
+                    :title="isPreviewMode || mode === 'preview' ? 'Kembali ke Mode Edit Teks' : 'Lihat Pratinjau Render HTML'"
                 >
-                    <span :class="['material-symbols-outlined text-base leading-none']">
-                        {{ isPreviewMode ? 'edit_note' : 'visibility' }}
-                    </span>
-                    <span class="font-medium">{{ isPreviewMode ? 'Kembali Edit' : 'Pratinjau' }}</span>
-                </button>
+                    <span class="font-medium">{{ isPreviewMode || mode === 'preview' ? 'Kembali Edit' : 'Pratinjau' }}</span>
+                </ButtonSubmit>
             </div>
         </div>
     </div>

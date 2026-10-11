@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+/doc export-ignore
+/.github export-ignore
+.gitignore export-ignore

@@ -153,37 +153,41 @@ const colorStyles = computed(() => {
     return styles[color] || styles.primary;
 });
 
-// Size Mapping
+// Size Mapping (Mematuhi Standar REQUEST.md Bagian 7 & 8: Rasio Optik & Clearance Jarak)
 const sizeStyles = computed(() => {
     switch (props.size) {
         case 'xs':
             return {
-                badge: 'text-[10px] px-1.5 py-0.5 gap-1 font-medium',
-                dot: 'w-1 h-1',
-                icon: 'text-[11px]',
-                remove: 'w-3 h-3 text-[10px] -mr-0.5',
+                badge: 'text-[10px] px-1.5 py-0.5 gap-1.5 font-medium',
+                dot: 'w-1.5 h-1.5',
+                icon: 'text-[10.5px]',
+                removeBtn: 'w-3 h-3 -mr-0.5',
+                removeIcon: 'text-[8.5px]',
             };
         case 'sm':
             return {
                 badge: 'text-[11px] px-2 py-0.5 gap-1.5 font-medium',
                 dot: 'w-1.5 h-1.5',
-                icon: 'text-xs',
-                remove: 'w-3.5 h-3.5 text-xs -mr-0.5',
+                icon: 'text-[11.5px]',
+                removeBtn: 'w-3.5 h-3.5 -mr-0.5',
+                removeIcon: 'text-[9.5px]',
             };
         case 'lg':
             return {
-                badge: 'text-sm px-3.5 py-1.5 gap-2 font-semibold',
+                badge: 'text-sm px-3 py-1 gap-2 font-semibold',
                 dot: 'w-2 h-2',
-                icon: 'text-base',
-                remove: 'w-4.5 h-4.5 text-sm -mr-1',
+                icon: 'text-[15px]',
+                removeBtn: 'w-4 h-4 -mr-1',
+                removeIcon: 'text-[11.5px]',
             };
         case 'md':
         default:
             return {
-                badge: 'text-xs px-2.5 py-1 gap-1.5 font-semibold',
+                badge: 'text-xs px-2.5 py-0.5 gap-1.5 font-semibold',
                 dot: 'w-1.5 h-1.5',
-                icon: 'text-sm',
-                remove: 'w-4 h-4 text-xs -mr-0.5',
+                icon: 'text-[13px]',
+                removeBtn: 'w-3.5 h-3.5 -mr-0.5',
+                removeIcon: 'text-[10px]',
             };
     }
 });
@@ -199,6 +203,14 @@ const roundedClass = computed(() => {
         full: 'rounded-full',
     };
     return map[props.rounded] || 'rounded-full';
+});
+
+// Remove Button Hover Style
+const removeHoverClass = computed(() => {
+    if (props.variant === 'solid') {
+        return 'hover:bg-white/20 hover:text-white dark:hover:bg-white/20 dark:hover:text-white';
+    }
+    return colorStyles.value.removeHover;
 });
 
 // Variant Base Classes
@@ -224,7 +236,8 @@ const onBadgeClick = (event) => {
 };
 
 const onRemove = (event) => {
-    event.stopPropagation();
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
     emit('remove', event);
 };
 </script>
@@ -233,7 +246,7 @@ const onRemove = (event) => {
     <component
         :is="as"
         :class="[
-            'inline-flex items-center justify-center tracking-tight transition-all select-none',
+            'inline-flex items-center justify-center leading-none tracking-tight transition-all select-none',
             variantClass,
             sizeStyles.badge,
             roundedClass,
@@ -244,7 +257,7 @@ const onRemove = (event) => {
         <!-- Status Dot / Pulsing Ping Indicator -->
         <span
             v-if="dot || variant === 'dot'"
-            class="relative flex shrink-0 items-center justify-center"
+            class="relative inline-flex shrink-0 items-center justify-center"
         >
             <span
                 v-if="ping"
@@ -252,7 +265,7 @@ const onRemove = (event) => {
                 :class="colorStyles.dotBg"
             ></span>
             <span
-                class="relative inline-flex rounded-full"
+                class="relative inline-flex rounded-full shrink-0"
                 :class="[sizeStyles.dot, colorStyles.dotBg]"
             ></span>
         </span>
@@ -261,7 +274,7 @@ const onRemove = (event) => {
         <slot name="icon">
             <span
                 v-if="icon"
-                class="material-symbols-outlined select-none shrink-0"
+                class="material-symbols-outlined leading-none select-none shrink-0 flex items-center justify-center"
                 :class="sizeStyles.icon"
             >
                 {{ icon }}
@@ -269,7 +282,7 @@ const onRemove = (event) => {
         </slot>
 
         <!-- Badge Text Content -->
-        <span class="truncate">
+        <span class="truncate leading-none inline-flex items-center">
             <slot />
         </span>
 
@@ -278,11 +291,14 @@ const onRemove = (event) => {
             v-if="removable"
             type="button"
             :aria-label="removeLabel"
-            class="inline-flex items-center justify-center rounded-full transition-colors cursor-pointer focus:outline-hidden"
-            :class="[sizeStyles.remove, colorStyles.removeHover]"
-            @click="onRemove"
+            class="inline-flex items-center justify-center rounded-full leading-none shrink-0 transition-colors cursor-pointer focus:outline-hidden"
+            :class="[sizeStyles.removeBtn, removeHoverClass]"
+            @click.prevent.stop="onRemove"
         >
-            <span class="material-symbols-outlined select-none leading-none text-inherit">
+            <span
+                class="material-symbols-outlined leading-none select-none shrink-0 flex items-center justify-center text-inherit"
+                :class="sizeStyles.removeIcon"
+            >
                 close
             </span>
         </button>

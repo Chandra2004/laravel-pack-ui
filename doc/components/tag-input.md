@@ -1,345 +1,672 @@
-# 🏷️ Tag Input Component (`InputTag.vue` / `TagInput.vue`)
+# TagInput Component
 
-Komponen input tag enterprise modern berbasis Vue 3 dan Tailwind CSS v4 yang fleksibel untuk mengelola daftar kata kunci/tag/kategori. Komponen ini menerapkan penuh **4 Pilar Kustomisasi UI** (Warna, Bentuk, Teks Konten, dan Icon) sesuai standar desain, dilengkapi navigasi keyboard presisi (`Tab`, `Enter`, koma `,`, `Backspace`), pemecahan otomatis saat paste multi-item (*smart paste split*), batas maksimum tag, dropdown options dengan z-index tinggi anti-clipping di dalam Card, serta integrasi langsung via `<InputField type="tag" />`.
+## 01. Overview
 
----
+TagInput (tersedia melalui `<TagInput.vue />` dan `<InputTag.vue />`) adalah komponen formulir interaktif berbasis Vue 3 dan Tailwind CSS untuk mengelola kumpulan kata kunci, label kategori, keahlian, atau tag metadata dalam format chip. Komponen ini dirancang untuk alur kerja aplikasi enterprise dengan performa tinggi, navigasi keyboard lengkap, dan penanganan input hibrida.
 
-## 🎨 4 Pilar Kustomisasi (`peraturan.md`)
+Komponen ini mendukung input teks bebas (*free-form tagging*), pilihan terbatas dari daftar opsi yang telah ditentukan (*strict preset options*), maupun mode hibrida di mana pengguna dapat memilih saran otomatis sekaligus membuat entri baru secara fleksibel.
 
-Komponen `InputTag` dirancang modular agar mudah dikustomisasi sesuai kebutuhan tampilan:
+### Fungsi Utama
+* Mengonversi teks yang diketik menjadi chip tag interaktif secara instan menggunakan pemicu tombol keyboard (`Tab`, `Enter`, atau koma `,`).
+* Menyediakan daftar saran autocomplete dropdown melayang (*floating options*) yang bebas terpotong (*anti-clipping*) dengan z-index tinggi (`z-[9999]`).
+* Mendukung pemecahan teks otomatis saat pengguna menempelkan (*paste*) daftar multi-item yang dipisahkan oleh koma, titik koma, spasi, atau baris baru (`\n`).
+* Menyediakan 10 varian warna semantik (`default`, `primary`, `emerald`, `indigo`, `rose`, `amber`, `purple`, `dark`, `cyan`, dan `random`) dengan 3 gaya kartu (`soft`, `solid`, dan `outline`).
+* Dilengkapi algoritma hash deterministik pada varian `random`, sehingga teks kata yang sama selalu mendapatkan kombinasi warna harmonis yang konsisten.
+* Memiliki kontrol validasi ketat termasuk batas maksimum tag (`maxTags`), pencegahan duplikasi (`allowDuplicates`), konversi otomatis huruf kecil (`lowercase`), dan integrasi pesan kesalahan validasi Laravel (`error`).
+* Mendukung slot kustom penuh (`#tag`, `#option`, `#prefix`) untuk mempersonalisasi tampilan chip dan baris pilihan dropdown.
+* Mengintegrasikan komponen atomik `<Badge.vue />` secara internal untuk konsistensi visual dan kemudahan pemeliharaan desain sistem.
 
-### 1. Warna (Color & Variant)
-* **Pilihan Varian Warna (`tagVariant`)**:
-  - `'default'` (Slate neutral)
-  - `'primary'` (Blue enterprise)
-  - `'emerald'` (Green success)
-  - `'indigo'` (Indigo accent)
-  - `'rose'` (Rose danger/pink)
-  - `'amber'` (Amber warning)
-  - `'purple'` (Purple creative)
-  - `'dark'` (Deep zinc dark mode)
-  - `'cyan'` (Cyan teal)
-  - `'random'` (Algoritma hash deterministik: nama tag yang sama selalu memperoleh kombinasi warna harmonis yang konsisten).
-* **Pilihan Gaya Tampilan (`tagStyle`)**:
-  - `'soft'` (Default): Background lembut berpadu kontras teks semantik.
-  - `'solid'`: Warna penuh pekat kontras tinggi dengan teks putih.
-  - `'outline'`: Background transparan dengan border tegas beraksen warna.
+### Kapan Digunakan
+* **Pengelompokan Artikel & Blog**: Menambahkan tag kategori atau topik berita pada editor konten.
+* **Filter Data & Pencarian Multi-Nilai**: Memilih beberapa kriteria filter sekaligus pada tabel data atau toolbar pencarian.
+* **Manajemen Profil & Keahlian**: Memasukkan daftar keterampilan teknis, bahasa yang dikuasai, atau peran pengguna.
+* **Penetapan Hak Akses & Label Keamanan**: Menetapkan daftar label otorisasi atau peran keamanan sistem.
 
-### 2. Bentuk (Shape & Size)
-* **Border Radius (`radius`)**:
-  - `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'full'`.
-  - Mengontrol kebulatan sudut container input dan chip tag (misal: `radius="full"` untuk input dan chip kapsul elegan). Panel dropdown menu options secara default tetap menggunakan radius standar menu (`rounded-xl`) agar tata letak opsi dan scrollbar tidak terdistorsi.
-* **Ukuran (`size`)**:
-  - `'sm'`: Input ringkas untuk tabel data / toolbar filter.
-  - `'md'`: Ukuran standar formulir enterprise.
-  - `'lg'`: Input menonjol untuk hero section / formulir besar.
+### Kapan Tidak Digunakan
+* **Pilihan Tunggal Sederhana**: Jika pengguna hanya boleh memilih tepat satu opsi dari daftar tetap, gunakan **InputSelect** atau **InputRadio**.
+* **Input Teks Baris Tunggal Biasa**: Jika kolom hanya memerlukan satu nilai teks pendek (seperti nama atau email), gunakan **InputField**.
+* **Pilihan Banyak Status Sederhana**: Jika opsi berjumlah sedikit dan selalu tampil permanen di layar, gunakan **InputCheckbox**.
 
-### 3. Teks Konten (Content & Slots)
-* **Label, Hint, & Error**: Mendukung label informatif, hint panduan, teks error validasi Laravel, placeholder dinamis, dan teks status kosong (`noOptionsText`).
-* **Scoped Slot `#tag`**: Kustomisasi total tampilan chip tag (bisa menambahkan foto avatar, badge status, tombol aksi kustom, dll).
-* **Scoped Slot `#option`**: Kustomisasi baris opsi dropdown (menampilkan deskripsi, icon, atau rating).
-* **Slot `#prefix`**: Menambahkan elemen sebelum daftar tag di dalam kotak input.
-* **Kontrol Input**: Pembatasan jumlah (`maxTags`), pencegahan duplikasi (`allowDuplicates`), konversi otomatis huruf kecil (`lowercase`), dan kustomisasi regex pemisah paste (`pasteSeparators`).
-
-### 4. Icon & Perataan Vertikal (Iconography & Alignment)
-* **Leading Input Icon (`icon`)**: Menampilkan ikon Google Material Symbols di sisi kiri kotak input (misal: `icon="sell"`, `icon="bookmark"`).
-* **Chip Icon (`tagIcon` atau option `icon`)**: Menampilkan ikon spesifik pada setiap chip tag secara otomatis.
-* **Perataan Vertikal Sempurna (True Center Alignment)**: Seluruh teks dan ikon (baik leading icon, chip icon, tombol hapus `close`, maupun tombol `clearable`) dirancang menggunakan `inline-flex items-center justify-center font-medium leading-none` sehingga huruf dan ikon berdiri tepat sejajar di tengah tanpa ada pergeseran offset vertikal.
-* **Anti-Clipping Card & High Z-Index (`z-[9999]`)**: Panel dropdown autocomplete dibungkus secara independen dengan `z-[9999]` dan bayangan `shadow-2xl`. Bersama integrasi `Card.vue` (`overflow="visible"`), dropdown opsi tidak lagi terpotong atau tertahan di dalam batas kartu.
+### Karakteristik Penting
+* **Keyboard-First Workflow**: Navigasi tombol `Tab`, `Enter`, `Backspace`, panah atas/bawah, dan `Escape` dirancang untuk meminimalkan ketergantungan pada mouse.
+* **True Center Alignment**: Teks, ikon Google Material Symbols, tombol hapus individual, dan tombol bersihkan semua diratakan secara vertikal dengan `inline-flex items-center justify-center leading-none`.
+* **Atomic Component Reuse**: Chip tag internal merender komponen `<Badge.vue />` secara native sehingga mewarisi seluruh kemampuan rendering, aksesibilitas, dan styling badge.
+* **Full Dark Mode**: Terintegrasi penuh dengan kelas `dark:` Tailwind CSS, menjaga kontras teks dan keterbacaan chip di berbagai latar belakang tema.
 
 ---
 
-## ✨ Fitur Utama
+## 02. Preview
 
-1. **3 Mode Input Fleksibel**:
-   - **Tag Random (Free-form Text)**: Mengetik kata bebas apa saja, contoh: ketik `olahraga` [Tab] `sepak bola` [Tab] `bulu tangkis` [Tab].
-   - **Tag dengan Option (Strict Preset)**: Opsi hanya dapat dipilih dari daftar dropdown yang tersedia (`:allow-custom="false"`).
-   - **Tag Random + Option (Hybrid Creatable)**: Menampilkan saran dropdown dari `options`, namun pengguna bebas mengetik dan membuat tag baru sendiri (`:allow-custom="true"` + `:options="[...]"`).
-2. **Trigger Separator Cepat**:
-   - Menekan tombol **`Tab`**, **`Enter`**, atau tanda koma (**,**) langsung mengonversi teks menjadi chip tag dan menjaga fokus input untuk pengetikan cepat berantai tanpa jeda.
-   - Mendukung penambahan tag otomatis saat kehilangan fokus (`add-on-blur="true"`).
-3. **Smart Paste Split**:
-   - Mem-paste teks panjang seperti `"laravel, vue, inertia, tailwind"` atau daftar multi-baris (`\n`) langsung dipecah menjadi tag terpisah secara otomatis.
-4. **Kontrol Batas & Duplikasi**:
-   - `maxTags`: Membatasi jumlah maksimal tag dengan badge counter interaktif dan event `@max-reached`.
-   - `allowDuplicates`: Mencegah tag yang sama diinput berulang kali (dilengkapi animasi shake lembut dan feedback visual).
-   - `removeOnBackspace`: Menghapus tag terakhir saat menekan tombol Backspace pada input kosong.
+> [!TIP]
+> Pengujian visual dan showcase interaktif entitas ini tersedia secara native pada portal pratinjau aplikasi:
+>
+> <a href="http://localhost:8000/preview/tag-input" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Komponen TagInput &rarr;</a>
+
+### Ringkasan Blueprint Visual Showcase:
+* **Interactive Playground Workbench**: Kanvas live component dengan simulasi v-model reaktif, pelacak telemetri event, dan generator template kode Vue 3 dinamis.
+* **Panel Kontrol 5 Pilar**: Pengatur 10 varian warna (termasuk visual badge bar), 3 gaya kartu chip (`soft`, `solid`, `outline`), 3 ukuran (`sm`, `md`, `lg`), 7 radius, 6 pilihan ikon material, slider `maxTags`, serta sakelar toggle fungsional.
+* **4 Koleksi Skenario Kasus Nyata**:
+  1. *SEO & Kategori Berita*: Hash warna random konsisten, pill capsule, penambahan cepat.
+  2. *Filter Katalog E-Commerce*: Mode strict preset options (`allowCustom: false`) dengan tombol reset filter.
+  3. *Peran Akses Tim Proyek*: Gaya solid purple dengan kustomisasi scoped slot `#tag` menggunakan `<Badge.vue />`.
+  4. *Validasi Formulir Registrasi*: Simulasi pesan kesalahan validasi dinamis jika tag kurang dari batas minimal.
 
 ---
 
-## 🚀 Cara Penggunaan
+## 03. Usage
 
-### 1. Tag Random (Free-form Text)
+```text
+TagInput Workflow & Skema Penggunaan
+├── 1. Mode Bebas (Tanpa Opsi) [allowCustom = true, showOptions = false / options = []]
+│   ├── Blog Post Topics Bebas
+│   ├── SEO Keywords Dinamis
+│   └── Input Email / Tag Mentah
+├── 2. Mode Hibrida (Bebas + Opsi) [allowCustom = true, showOptions = true]
+│   ├── Kategori Produk Populer + Input Kategori Baru
+│   ├── Keahlian Teknis Disarankan + Tambah Skill Kustom
+│   └── Label Prioritas Fleksibel
+└── 3. Mode Strict (Hanya dari Opsi) [allowCustom = false, showOptions = true]
+    ├── Hak Akses Peran Keamanan / Permissions
+    ├── Taksonomi Departemen Perusahaan Baku
+    └── Filter Katalog Terstandarisasi (E-Commerce)
+```
 
-Mode dasar untuk pengetikan cepat dengan tombol `Tab` atau `Enter`:
+### 3 Skema Inti Penggunaan TagInput
+
+TagInput dirancang dengan 3 skema perilaku utama yang dapat dikombinasikan melalui prop `allowCustom` dan `showOptions`:
+1. **Mode Bebas (Tanpa Opsi)**: Pengguna bebas mengetik kata kunci apa saja. Dropdown saran dinonaktifkan (`showOptions = false` atau `options = []`). Pembuatan tag dipicu seketika saat menekan tombol `Tab`, `Enter`, atau koma `,`.
+2. **Mode Hibrida (Bebas + Ada Opsi)**: Pengguna disajikan dropdown saran autocomplete saat mengetik untuk memilih opsi populer, namun tetap bebas mengetik kata kunci baru di luar daftar opsi (`allowCustom = true`, `showOptions = true`).
+3. **Mode Strict (Hanya dari Opsi)**: Tag yang dimasukkan terkunci secara ketat dan **wajib** berasal dari daftar opsi yang telah ditentukan (`allowCustom = false`, `showOptions = true`). Jika pengguna mencoba mengetik teks di luar opsi, komponen akan menolak kata tersebut, mengosongkan input, dan memancarkan event `@invalid-tag`.
+
+### 1. Penggunaan Dasar Komponen TagInput
 
 ```vue
 <script setup>
 import { ref } from 'vue';
-import InputTag from '@/Components/Pack/InputTag.vue';
+import TagInput from '@/Components/Pack/TagInput.vue';
 
-const categories = ref(['olahraga', 'sepak bola']);
+const categories = ref(['Laravel', 'Vue.js', 'Inertia.js']);
 </script>
 
 <template>
-  <InputTag
-    v-model="categories"
-    label="Kategori Minat"
-    placeholder="Ketik kategori lalu tekan Tab..."
-    hint="Tekan Tab, Enter, atau koma untuk memasukkan tag berikutnya"
-    icon="label"
-    clearable
-  />
+  <div class="max-w-md">
+    <TagInput
+      v-model="categories"
+      label="Kategori Minat"
+      placeholder="Ketik kategori lalu tekan Tab atau Enter..."
+      hint="Tekan Tab, Enter, atau koma untuk menambahkan tag baru"
+      icon="label"
+      clearable
+    />
+  </div>
 </template>
 ```
 
----
+### 2. Integrasi Melalui InputField Facade
 
-### 2. Tag dengan Option (Strict Preset)
-
-Tag hanya boleh dipilih dari daftar pilihan yang tersedia:
-
-```vue
-<script setup>
-import { ref } from 'vue';
-import InputTag from '@/Components/Pack/InputTag.vue';
-
-const selectedSkills = ref(['Vue.js']);
-const skillOptions = [
-  'Laravel',
-  'Vue.js',
-  'Tailwind CSS',
-  'Inertia.js',
-  'PHP',
-  'TypeScript',
-  'PostgreSQL',
-  'Docker'
-];
-</script>
-
-<template>
-  <InputTag
-    v-model="selectedSkills"
-    :options="skillOptions"
-    :allow-custom="false"
-    label="Keahlian Utama (Strict Preset)"
-    placeholder="Pilih keahlian dari daftar..."
-    icon="school"
-    tag-variant="indigo"
-  />
-</template>
-```
-
----
-
-### 3. Tag Random + Option (Hybrid Creatable)
-
-Bisa memilih rekomendasi dari dropdown atau membuat tag kustom baru:
-
-```vue
-<script setup>
-import { ref } from 'vue';
-import InputTag from '@/Components/Pack/InputTag.vue';
-
-const tags = ref(['teknologi']);
-const suggestions = ['teknologi', 'gadget', 'koding', 'ai', 'desain', 'bisnis'];
-</script>
-
-<template>
-  <InputTag
-    v-model="tags"
-    :options="suggestions"
-    :allow-custom="true"
-    label="Topik Artikel"
-    placeholder="Pilih saran atau ketik topik baru..."
-    icon="auto_awesome"
-    tag-variant="primary"
-  />
-</template>
-```
-
----
-
-### 4. Kustomisasi Penuh 4 Pilar (Warna, Bentuk, Icon)
-
-Menggunakan style solid, bentuk kapsul penuh, dan ikon tag kustom:
-
-```vue
-<template>
-  <InputTag
-    v-model="tags"
-    label="Label Keamanan (Solid Capsule)"
-    tag-variant="rose"
-    tag-style="solid"
-    radius="full"
-    tag-icon="verified_user"
-    icon="shield"
-    :max-tags="4"
-    clearable
-  />
-</template>
-```
-
----
-
-### 5. Tag Warna Acak Cerdas (`tagVariant="random"`)
-
-Algoritma hash deterministik menghasilkan variasi warna harmonis otomatis untuk setiap kata:
-
-```vue
-<template>
-  <InputTag
-    v-model="tags"
-    tag-variant="random"
-    :max-tags="6"
-    label="Label Produk (Warna-warni Harmonis)"
-    placeholder="Ketik nama label..."
-    icon="palette"
-    clearable
-  />
-</template>
-```
-
----
-
-### 6. Kustomisasi Scoped Slots (`#tag` & `#option`)
-
-```vue
-<script setup>
-import { ref } from 'vue';
-import InputTag from '@/Components/Pack/InputTag.vue';
-
-const authors = ref(['Chandra']);
-const options = [
-  { label: 'Chandra Tri Antomo', role: 'Lead Architect', icon: 'star' },
-  { label: 'Taylor Otwell', role: 'Laravel Creator', icon: 'code' },
-];
-</script>
-
-<template>
-  <InputTag v-model="authors" :options="options" label="Tim Pengembang">
-    <!-- Kustomisasi Tampilan Chip Tag -->
-    <template #tag="{ tag, remove }">
-      <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-semibold rounded-full shadow-sm">
-        <span class="material-symbols-outlined text-[14px]">person</span>
-        <span>{{ tag }}</span>
-        <button type="button" @click="remove" class="ml-1 hover:text-red-200">
-          <span class="material-symbols-outlined text-[13px]">close</span>
-        </button>
-      </span>
-    </template>
-
-    <!-- Kustomisasi Baris Opsi Dropdown -->
-    <template #option="{ option, selected }">
-      <div class="flex items-center justify-between w-full py-0.5">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-indigo-500 text-base">{{ option.icon || 'badge' }}</span>
-          <div>
-            <div class="text-xs font-medium">{{ option.label }}</div>
-            <div class="text-[10px] text-slate-400">{{ option.role }}</div>
-          </div>
-        </div>
-        <span v-if="selected" class="material-symbols-outlined text-primary-600 text-xs">check</span>
-      </div>
-    </template>
-  </InputTag>
-</template>
-```
-
----
-
-### 7. Integrasi via `<InputField />`
-
-Dapat langsung dipanggil dari komponen facade form utama:
+Komponen ini dapat dipanggil secara modular melalui facade formulir serbaguna `<InputField />`:
 
 ```vue
 <script setup>
 import { ref } from 'vue';
 import InputField from '@/Components/Pack/InputField.vue';
 
-const tags = ref(['olahraga']);
+const skills = ref(['Tailwind CSS', 'TypeScript']);
 </script>
 
 <template>
   <InputField
-    v-model="tags"
+    v-model="skills"
     type="tag"
-    label="Tag Berita"
-    :options="['olahraga', 'politik', 'hiburan', 'otomotif']"
+    label="Keahlian Teknis"
+    :options="['Tailwind CSS', 'TypeScript', 'PHP', 'Docker']"
     :allow-custom="true"
-    tag-variant="purple"
+    tag-variant="indigo"
     tag-style="soft"
-    icon="bookmark"
-    placeholder="Ketik tag..."
+    icon="school"
+    placeholder="Pilih atau ketik keahlian..."
   />
 </template>
 ```
 
 ---
 
-## 🛠️ API Reference
+## 04. Anatomy
 
-### Props
+### 1. Struktur Hierarki Elemen
+```text
+TagInput / InputTag (Root Container)
+│
+├── Label & Counter Header (Flex horizontal space-between)
+│   ├── Label Text & Required Asterisk (*)
+│   └── Max Tags Counter Indicator (e.g. '3 / 8 tag')
+│
+├── Relative Input Wrapper
+│   │
+│   ├── Main Box Container (Flex wrap, Focus-within ring, Border container)
+│   │   │
+│   │   ├── Leading Input Icon Slot / Google Material Symbol
+│   │   │
+│   │   ├── TransitionGroup (Animasi scale & opacity masuk/keluar chip)
+│   │   │   │
+│   │   │   └── Tag Chip Item (Scoped Slot #tag / Komponen <Badge />)
+│   │   │       ├── Leading Chip Icon (Material Symbol)
+│   │   │       ├── Tag Label Text (Truncate, Select-text)
+│   │   │       └── Remove Button 'close' (Hover opacity, Centered icon)
+│   │   │
+│   │   ├── Interactive Text Input Field (Placeholder dinamis, Keydown handler)
+│   │   │
+│   │   └── Clear All Button (Tampil di kanan jika tags > 0 dan clearable=true)
+│   │
+│   └── Dropdown Options Panel (Absolute, Z-[9999], Floating menu, Backdrop blur)
+│       ├── Suggestion Option Item Buttons (Highlighted index, Click handler)
+│       │   ├── Option Icon (Material Symbol)
+│       │   ├── Option Label & Subtext
+│       │   └── Selection State Checkmark
+│       └── Empty State Message (Tampil jika query tidak menemukan opsi)
+│
+└── Hint & Error Message Footer
+    ├── Error Text with Warning Icon (Teks merah jika prop error terisi)
+    └── Hint Guide Text (Teks abu-abu panduan pengisian)
+```
 
-| Prop | Tipe | Default | Deskripsi |
+### 2. Diagram Alur Data Internal
+```mermaid
+graph TD
+    A[Pengguna Mengetik / Paste / Klik] --> B{Pemicu Interaksi}
+    B -->|Tekan Tab / Enter / Koma| C[addTag Input Teks]
+    B -->|Paste Teks Multi-Nilai| D[handlePaste Split Separator]
+    B -->|Klik Opsi Dropdown| E[selectOption Opsi]
+    B -->|Klik Tombol Hapus Tag| F[removeTag Index]
+    B -->|Klik Tombol Bersihkan| G[clearAllTags]
+
+    C --> H{Validasi Tag}
+    D --> H
+    E --> H
+
+    H -->|Cek maxTags Terlampaui| I[Emit @max-tags-reached]
+    H -->|Cek allowDuplicates False & Duplikat| J[Emit @duplicate-tag & Kosongkan Input]
+    H -->|Cek allowCustom False & Tak Ada di Options| K[Abaikan & Kosongkan Input]
+    H -->|Lolos Validasi| L[Update Array currentTags]
+
+    F --> M[Hapus Item dari Array]
+    G --> N[Kosongkan Array Menjadi Kosong]
+
+    L --> O[Emit update:modelValue, change, tag-add]
+    M --> P[Emit update:modelValue, change, tag-remove]
+    N --> Q[Emit update:modelValue, change]
+```
+
+---
+
+## 05. Variants
+
+Komponen menyediakan 10 varian skema warna (`tagVariant`) dan 3 gaya visual kartu chip (`tagStyle`):
+
+### 1. Skema Warna (`tagVariant`)
+
+| Varian Warna | Prop Value | Karakteristik Visual | Kasus Penggunaan yang Direkomendasikan |
 | :--- | :--- | :--- | :--- |
-| `modelValue` | `Array<string\|object>` | `[]` | Nilai array tag terpilih (`v-model`). |
-| `options` | `Array<string\|object>` | `[]` | Daftar opsi saran autocomplete atau opsi tetap. |
-| `allowCustom` | `Boolean` | `true` | Jika `true`, user bisa membuat tag bebas. Jika `false`, hanya boleh memilih dari `options`. |
-| `separatorKeys` | `Array<string>` | `['Tab', 'Enter', ',']` | Tombol keyboard yang memicu pembuatan tag. |
-| `allowDuplicates`| `Boolean` | `false` | Izinkan tag duplikat dimasukkan. |
-| `maxTags` | `Number` | `null` | Batas maksimum tag yang dapat dibuat. |
-| `tagVariant` | `String` | `'default'` | Skema warna chip: `'default'`, `'primary'`, `'emerald'`, `'indigo'`, `'rose'`, `'amber'`, `'purple'`, `'dark'`, `'cyan'`, `'random'`. |
-| `tagStyle` | `String` | `'soft'` | Gaya tampilan chip: `'soft'`, `'solid'`, `'outline'`. |
-| `tagIcon` | `String` | `''` | Ikon Google Material Symbols untuk setiap chip tag. |
-| `icon` | `String` | `''` | Ikon Google Material Symbols di sisi kiri kotak input. |
-| `radius` | `String` | `'xl'` | Border radius container & chip: `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'full'`. |
-| `pasteSeparators`| `RegExp\|String` | `/[,;\n\t]+/` | Regex pemisah saat user mem-paste teks multi-tag. |
-| `addOnBlur` | `Boolean` | `true` | Tambahkan tag otomatis ketika input kehilangan fokus (*blur*). |
-| `removeOnBackspace` | `Boolean` | `true` | Hapus tag terakhir saat tombol Backspace ditekan di input kosong. |
-| `lowercase` | `Boolean` | `false` | Otomatis konversi tag menjadi huruf kecil (*lowercase*). |
-| `clearable` | `Boolean` | `false` | Tampilkan tombol bersihkan semua tag sekaligus. |
-| `removable` | `Boolean` | `true` | Tampilkan tombol `x` pada masing-masing chip tag. |
-| `size` | `String` | `'md'` | Ukuran komponen (`'sm'`, `'md'`, `'lg'`). |
-| `disabled` | `Boolean` | `false` | Nonaktifkan komponen secara menyeluruh. |
-| `readonly` | `Boolean` | `false` | Kunci komponen menjadi mode hanya-baca. |
-| `error` | `String` | `''` | Pesan error validasi form. |
-| `label` | `String` | `''` | Label teks di atas komponen. |
-| `hint` | `String` | `''` | Teks petunjuk bantuan di bawah input. |
-| `noOptionsText` | `String` | `'Tidak ada opsi yang cocok'` | Pesan ketika filter dropdown tidak menemukan hasil. |
+| **Default** | `'default'` *(default)* | Abu-abu slate netral dengan border halus. | Tag metadata umum, arsip dokumen, dan antarmuka monokrom. |
+| **Primary** | `'primary'` | Biru royal profesional berdaya kontras seimbang. | Kategori utama, modul bisnis, dan topik standar. |
+| **Emerald** | `'emerald'` | Hijau zamrud segar dengan nuansa positif. | Tag status aktif, fitur tersertifikasi, dan transaksi berhasil. |
+| **Indigo** | `'indigo'` | Biru nila pekat bernuansa teknologi modern. | Bahasa pemrograman, keahlian teknis, dan arsitektur data. |
+| **Rose** | `'rose'` | Merah mawar tegas berdaya tangkap visual tinggi. | Tag prioritas kritis, label darurat, dan peringatan bug. |
+| **Amber** | `'amber'` | Kuning emas hangat berorientasi perhatian. | Peringatan dalam peninjauan, status draf, dan tag sementara. |
+| **Purple** | `'purple'` | Ungu kreatif yang elegan. | Fitur VIP, akun premium, dan departemen desain. |
+| **Dark** | `'dark'` | Hitam arang / zinc pekat bergaya terminal developer. | Sistem log, baris perintah CLI, dan antarmuka teknis. |
+| **Cyan** | `'cyan'` | Biru toska cerah berdaya baca tajam. | Komputasi cloud, jaringan, dan modul telemetri. |
+| **Random** | `'random'` | Algoritma hash deterministik memetakan setiap kata secara otomatis ke kombinasi warna harmonis. | Daftar tag multi-kategori dinamis di mana setiap nama kata selalu mendapatkan warna konsisten. |
 
----
+### 2. Gaya Visual Chip (`tagStyle`)
 
-### Slots
-
-| Slot | Scope Props | Deskripsi |
+| Gaya Tampilan | Prop Value | Deskripsi Visual |
 | :--- | :--- | :--- |
-| `#tag` | `{ tag, index, remove, icon, variantClasses }` | Kustomisasi template tampilan chip tag. |
-| `#option` | `{ option, selected, highlighted }` | Kustomisasi template setiap baris pilihan dropdown. |
-| `#prefix` | `-` | Slot konten tambahan sebelum daftar chip tag. |
+| **Soft** | `'soft'` *(default)* | Latar belakang warna pastel lembut dengan teks bernuansa senada dan border tipis. |
+| **Solid** | `'solid'` | Warna penuh solid berdaya kontras tinggi dengan teks dan ikon putih bersih. |
+| **Outline** | `'outline'` | Latar belakang transparan dengan garis batas (*border*) berwarna semantik tegas. |
 
 ---
 
-### Events
+## 06. Sizes & Shapes
 
-| Event | Payload | Deskripsi |
+### 1. Skala Ukuran (`size`)
+
+| Ukuran | Prop Value | Tinggi Minimal Wrapper | Dimensi Chip Tag | Ukuran Font Input | Kapan Digunakan |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Small** | `'sm'` | `min-h-7` (~28px) | `px-1.5 py-0.25 text-[11px]` | `text-xs` (12px) | Toolbar filter data, sidebar padat, dan tabel ringkas. |
+| **Medium** | `'md'` *(default)* | `min-h-8.5` (~34px) | `px-2 py-0.5 text-xs` | `text-xs` (12px) | Standar formulir web dan dashboard enterprise. |
+| **Large** | `'lg'` | `min-h-10` (~40px) | `px-2.5 py-0.75 text-xs font-medium` | `text-sm` (14px) | Hero section, pencarian beranda, dan mode aksesibilitas. |
+
+### 2. Kelengkungan Sudut (`radius`)
+
+Prop `radius` secara otomatis menyelaraskan kelengkungan kontainer kotak input dan chip tag di dalamnya:
+* `'none'`: Sudut siku-siku tajam (`rounded-none`).
+* `'sm'`: Kelengkungan mikro (`rounded-sm`).
+* `'md'`: Kelengkungan sedang (`rounded-md`).
+* `'lg'`: Kelengkungan standar modern (`rounded-lg`).
+* `'xl'` *(default)*: Kelengkungan tegas elegan (`rounded-xl`).
+* `'2xl'`: Kelengkungan melengkung halus (`rounded-2xl`).
+* `'full'`: Format kapsul penuh (*pill capsule*).
+
+---
+
+## 07. States
+
+| State | Kondisi Pemicu | Representasi Visual | Perilaku Fungsional |
+| :--- | :--- | :--- | :--- |
+| **Default / Idle** | Komponen siap menerima interaksi | Border abu-abu halus (`border-slate-200 dark:border-slate-800`), placeholder tampil jika kosong. | Menunggu fokus pengguna atau ketikan awal. |
+| **Focused / Active** | Pengguna mengklik atau menekan Tab ke input | Border berubah emerald/aksen dengan ring lembut (`border-emerald-500 ring-2 ring-emerald-500/20`). | Membuka dropdown opsi otomatis jika opsi tersedia. |
+| **Dropdown Open** | Input aktif dan opsi tersedia | Panel melayang muncul tepat di bawah kotak input dengan animasi transisi halus (`z-[9999]`). | Menampilkan daftar saran yang cocok dengan ketikan. |
+| **Option Highlighted** | Menekan panah atas/bawah atau mengarahkan mouse ke baris opsi | Baris opsi berlatar emerald lembut dengan teks tebal. | Menyiapkan opsi untuk dipilih saat menekan Tab atau Enter. |
+| **Max Tags Reached** | Jumlah tag mencapai nilai `maxTags` | Kotak input teks dinonaktifkan, indikator hitungan menunjukkan kapasitas penuh. | Memancarkan event `@max-tags-reached` dan mencegah penambahan tag baru. |
+| **Duplicate Prevented** | Pengguna mengetik tag yang sudah ada (saat `allowDuplicates=false`) | Teks input dikosongkan seketika tanpa menambahkan duplikat. | Menjaga keunikan elemen dalam array dan memancarkan `@duplicate-tag`. |
+| **Disabled** | Prop `disabled="true"` | Opasitas berkurang 60%, kursor `not-allowed`, tombol hapus disembunyikan. | Mengabaikan seluruh aksi keyboard dan klik. |
+| **Readonly** | Prop `readonly="true"` | Teks tidak dapat disunting, tombol hapus disembunyikan. | Hanya menampilkan daftar tag untuk kebutuhan pratinjau. |
+| **Error** | Prop `error` berisi pesan teks | Border berubah merah dengan ring error (`border-rose-300 ring-rose-500/20`), pesan galat tampil di bawah input. | Menginformasikan kegagalan validasi formulir. |
+
+---
+
+## 08. Props / Parameters / Attributes
+
+| Prop | Tipe Data | Default | Pilihan Nilai | Keterangan |
+| :--- | :--- | :--- | :--- | :--- |
+| `modelValue` | `Array\|String` | `[]` | Array String / Objek | Nilai reaktif array tag terpilih (`v-model`). |
+| `options` | `Array` | `[]` | Array String / Objek | Daftar opsi autocomplete atau pilihan tetap. Format objek: `{ label, value, icon, subtext }`. |
+| `allowCustom` | `Boolean` | `true` | `true`, `false` | Jika `true`, pengguna bebas mengetik tag baru. Jika `false`, tag wajib dipilih dari `options`. |
+| `separatorKeys` | `Array` | `['Tab', 'Enter', ',']` | Array String | Tombol keyboard yang memicu pembuatan tag saat mengetik. |
+| `allowDuplicates`| `Boolean` | `false` | `true`, `false` | Mengizinkan atau menolak nilai tag kembar dalam satu daftar. |
+| `maxTags` | `Number` | `null` | Angka Positif | Batas maksimal jumlah tag yang dapat dibuat. |
+| `tagVariant` | `String` | `'default'` | `'default'`, `'primary'`, `'emerald'`, `'indigo'`, `'rose'`, `'amber'`, `'purple'`, `'dark'`, `'cyan'`, `'random'` | Skema warna visual untuk chip tag. |
+| `tagStyle` | `String` | `'soft'` | `'soft'`, `'solid'`, `'outline'` | Gaya tampilan kartu chip tag. |
+| `size` | `String` | `'md'` | `'sm'`, `'md'`, `'lg'` | Skala ukuran padding, font, dan dimensi chip tag. |
+| `radius` | `String` | `'xl'` | `'none'`, `'sm'`, `'md'`, `'lg'`, `'xl'`, `'2xl'`, `'full'` | Kelengkungan sudut kotak input dan chip tag. |
+| `label` | `String` | `''` | String Teks | Teks label formulir di atas kotak input. |
+| `placeholder` | `String` | `'Ketik tag lalu tekan Tab atau Enter...'` | String Teks | Teks placeholder saat belum ada tag yang terpilih. |
+| `hint` | `String` | `''` | String Teks | Teks petunjuk bantuan di bawah kotak input. |
+| `error` | `String` | `''` | String Teks | Pesan galat validasi formulir (mengubah warna border menjadi merah). |
+| `icon` | `String` | `''` | Nama Material Symbol | Ikon pemandu di sisi kiri dalam kotak input (misal: `icon="label"`). |
+| `leadingIcon` | `String` | `''` | Nama Material Symbol | Alias dari prop `icon` untuk keselarasan dengan konvensi penamaan input pack. |
+| `tagIcon` | `String` | `''` | Nama Material Symbol | Ikon yang disematkan secara seragam pada setiap chip tag. |
+| `showOptions` | `Boolean` | `true` | `true`, `false` | Menampilkan atau menyembunyikan panel dropdown saran autocomplete. Jika `false`, saran tidak akan muncul (mode bebas murni). |
+| `addOnBlur` | `Boolean` | `true` | `true`, `false` | Otomatis mengonversi sisa teks ketikan menjadi tag saat input kehilangan fokus (*blur*). |
+| `removable` | `Boolean` | `true` | `true`, `false` | Menampilkan tombol silang `close` pada masing-masing chip tag. |
+| `removeOnBackspace` | `Boolean` | `true` | `true`, `false` | Menghapus tag terakhir saat tombol Backspace ditekan pada kondisi input kosong. |
+| `clearable` | `Boolean` | `true` | `true`, `false` | Menampilkan tombol silang di sisi kanan untuk membersihkan seluruh tag sekaligus. |
+| `pasteSeparators` | `Array` | `[',', ';', '\n', '\t']` | Array Karakter | Karakter pemisah untuk memecah teks saat pengguna melakukan operasi paste. |
+| `lowercase` | `Boolean` | `false` | `true`, `false` | Otomatis mengubah seluruh huruf tag menjadi huruf kecil. |
+| `disabled` | `Boolean` | `false` | `true`, `false` | Menonaktifkan komponen secara menyeluruh. |
+| `readonly` | `Boolean` | `false` | `true`, `false` | Mengunci komponen dalam mode hanya-baca. |
+| `required` | `Boolean` | `false` | `true`, `false` | Menandai bahwa kolom wajib diisi (menampilkan tanda bintang merah). |
+
+### Exposed Methods & Properties (`defineExpose`)
+Komponen mengekspos metode internal yang dapat dipanggil melalui Template Ref:
+* `addTag(text)`: Menambahkan tag baru secara programatis.
+* `removeTag(index)`: Menghapus tag pada indeks tertentu.
+* `clearAllTags()`: Mengosongkan seluruh tag yang ada.
+* `focusInput()`: Memfokuskan kursor pada kotak input teks pengetikan.
+* `currentTags`: Array reaktif daftar tag terpilih saat ini.
+
+---
+
+## 09. Slots / Content
+
+| Slot Name | Scope Props | Deskripsi |
 | :--- | :--- | :--- |
-| `update:modelValue` | `Array` | Dipancarkan saat nilai array tag berubah. |
-| `change` | `Array` | Dipancarkan saat array tag selesai dimodifikasi. |
-| `tag-add` | `String\|Object` | Dipancarkan saat sebuah tag baru ditambahkan. |
-| `tag-remove` | `String\|Object` | Dipancarkan saat sebuah tag dihapus. |
-| `max-reached` | `Number` | Dipancarkan saat user mencoba menambah tag melebihi `maxTags`. |
-| `clear` | `-` | Dipancarkan saat seluruh tag dibersihkan. |
-| `focus` | `FocusEvent` | Dipancarkan saat input difokuskan. |
-| `blur` | `FocusEvent` | Dipancarkan saat input kehilangan fokus. |
+| `tag` | `{ tag, index, remove, icon, variantClasses }` | Menggantikan seluruh template chip tag dengan tata letak kustom (misal menyisipkan Avatar atau badge status). |
+| `option` | `{ option, highlighted }` | Menggantikan tampilan setiap baris opsi pada dropdown autocomplete. |
+| `prefix` | `-` | Menambahkan elemen kustom di sisi paling kiri sebelum daftar chip tag. |
 
 ---
 
-## ⌨️ Navigasi Keyboard
+## 10. Events / Interactions
 
-- **`Tab`**: Mengonversi teks yang sedang diketik menjadi tag seketika, mencegah blur bawaan browser, dan mempertahankan fokus input untuk pengetikan berantai. Jika dropdown terbuka dan opsi disorot, `Tab` memilih opsi tersebut.
-- **`Enter`**: Membuat tag dari input saat ini atau memilih opsi yang aktif dari dropdown.
-- **`,` (Koma)**: Otomatis menyelesaikan tag saat ini dan menyiapkan input untuk tag berikutnya.
-- **`Backspace`**: Jika input sedang kosong, menghapus tag terakhir dari daftar.
-- **`ArrowDown` / `ArrowUp`**: Menavigasi sorotan pilihan pada daftar saran dropdown.
-- **`Escape`**: Menutup dropdown saran autocomplete.
+| Event Name | Payload | Kapan Dipancarkan |
+| :--- | :--- | :--- |
+| `update:modelValue` | `Array` | Dipancarkan secara instan setiap kali ada penambahan, penghapusan, atau pembersihan tag (`v-model`). |
+| `change` | `Array` | Dipancarkan saat status daftar tag selesai dimodifikasi. |
+| `tag-add` | `String` | Dipancarkan tepat saat sebuah tag baru berhasil ditambahkan. |
+| `tag-remove` | `String, Number` | Dipancarkan saat sebuah tag dihapus (mengirimkan teks tag dan indeks posisi). |
+| `max-tags-reached` | `Number` | Dipancarkan saat pengguna mencoba menambahkan tag melebihi batas `maxTags`. |
+| `duplicate-tag` | `String` | Dipancarkan saat pengguna mencoba menambahkan tag yang sudah ada dalam array (saat `allowDuplicates=false`). |
+| `invalid-tag` | `String` | Dipancarkan saat pengguna mengetik kata di luar daftar opsi pada mode strict (`allowCustom=false`). |
+| `clear` | `-` | Dipancarkan saat tombol bersihkan semua tag diklik. |
+| `focus` | `FocusEvent` | Dipancarkan saat kotak input teks menerima fokus. |
+| `blur` | `FocusEvent` | Dipancarkan saat kotak input teks kehilangan fokus. |
+
+---
+
+## 11. Code Example
+
+### 1. Penggunaan Dasar (Basic Example)
+Implementasi minimal input tag bebas untuk kata kunci pencarian:
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import TagInput from '@/Components/Pack/TagInput.vue';
+
+const keywords = ref(['Frontend', 'UI Design']);
+</script>
+
+<template>
+  <TagInput
+    v-model="keywords"
+    label="Kata Kunci Pencarian"
+    placeholder="Ketik kata kunci lalu tekan Enter..."
+    clearable
+  />
+</template>
+```
+
+### 2. Penggunaan Menengah (Intermediate Example)
+Menggunakan saran autocomplete, varian warna deterministik `random`, dan kelengkungan `full` (pill):
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import TagInput from '@/Components/Pack/TagInput.vue';
+
+const articleTopics = ref(['Teknologi', 'Tutorial']);
+const topicSuggestions = [
+    { label: 'Teknologi', icon: 'devices' },
+    { label: 'Kecerdasan Buatan', icon: 'psychology' },
+    { label: 'Keamanan Siber', icon: 'security' },
+    { label: 'Tutorial', icon: 'school' },
+    { label: 'Desain Grafis', icon: 'palette' },
+];
+</script>
+
+<template>
+  <TagInput
+    v-model="articleTopics"
+    :options="topicSuggestions"
+    :allow-custom="true"
+    tag-variant="random"
+    tag-style="soft"
+    radius="full"
+    icon="tag"
+    label="Topik Artikel"
+    placeholder="Pilih topik atau buat baru..."
+    hint="Tekan Tab, Enter, atau koma untuk memisahkan topik"
+  />
+</template>
+```
+
+### 3. Penggunaan Lanjutan / Enterprise (Advanced Example)
+Integrasi formulir pembuatan proyek dengan validasi Inertia Form, pembatasan ketat (`allowCustom: false`), dan penanganan batas maksimum tag:
+
+```vue
+<script setup>
+import { useForm } from '@inertiajs/vue3';
+import TagInput from '@/Components/Pack/TagInput.vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+
+const form = useForm({
+    title: '',
+    department: 'Engineering',
+    assignedRoles: ['Lead Architect'],
+});
+
+const securityRoles = [
+    { label: 'Lead Architect', value: 'lead', icon: 'military_tech', subtext: 'Akses penuh arsitektur' },
+    { label: 'DevOps Engineer', value: 'devops', icon: 'cloud', subtext: 'Deployment & server' },
+    { label: 'Security Officer', value: 'security', icon: 'shield', subtext: 'Audit keamanan' },
+    { label: 'QA Specialist', value: 'qa', icon: 'bug_report', subtext: 'Pengujian kualitas' },
+];
+
+const submitForm = () => {
+    form.post('/projects', {
+        preserveScroll: true,
+    });
+};
+</script>
+
+<template>
+  <form @submit.prevent="submitForm" class="space-y-6 max-w-xl">
+    <TagInput
+      v-model="form.assignedRoles"
+      :options="securityRoles"
+      :allow-custom="false"
+      label="Hak Akses Peran Proyek"
+      placeholder="Pilih peran dari daftar otorisasi..."
+      hint="Maksimal 3 peran keamanan per proyek"
+      icon="admin_panel_settings"
+      tag-variant="purple"
+      tag-style="solid"
+      radius="lg"
+      :max-tags="3"
+      :show-count="true"
+      :error="form.errors.assignedRoles"
+      required
+    />
+
+    <ButtonSubmit
+      type="submit"
+      variant="primary"
+      :loading="form.processing"
+      icon="save"
+    >
+      Simpan Pengaturan Proyek
+    </ButtonSubmit>
+  </form>
+</template>
+```
+
+---
+
+## 12. Result / Behavior
+
+### 1. Pengetikan Cepat Berantai
+Pengguna dapat mengetik kata pertama, menekan `Tab` atau `Enter`, langsung mengetik kata kedua tanpa jeda fokus, dan menekan `Tab` lagi. Tag langsung tertata rapi dalam array `v-model`.
+
+### 2. Pencegahan Blur Bawaan Tab
+Tombol `Tab` secara default dicegat (`e.preventDefault()`) saat terdapat ketikan aktif di input untuk mencegah kursor melompat ke elemen form berikutnya sebelum tag berhasil dibuat.
+
+### 3. Pemecahan Paste Multi-Nilai
+Jika pengguna menyalin teks berformat koma atau baris baru (`"PHP, TypeScript, Go, Python"`) dari dokumen lain lalu menempelkannya (*paste*), fungsi `handlePaste` secara otomatis memecah teks tersebut menjadi 4 chip tag individual yang tervalidasi.
+
+### 4. Navigasi Keyboard Dropdown Cerdas
+Saat daftar opsi disarankan muncul:
+* Menekan tombol `ArrowDown` menyorot opsi berikutnya.
+* Menekan tombol `ArrowUp` menyorot opsi sebelumnya.
+* Menekan tombol `Enter` atau `Tab` memilih opsi yang disorot seketika dan menutup panel saran.
+* Menekan `Escape` menutup panel saran tanpa memodifikasi nilai.
+
+---
+
+## 13. Customization
+
+### 1. Kustomisasi Scoped Slot `#tag` dengan Komponen Badge
+Komponen internal TagInput terintegrasi langsung dengan `<Badge.vue />`. Anda dapat memanfaatkan scoped slot `#tag` untuk mengganti tampilan chip secara spesifik:
+
+```vue
+<template>
+  <TagInput v-model="teamRoles" :options="roleOptions" label="Peran Tim Proyek">
+    <template #tag="{ tag, remove, icon }">
+      <Badge
+        variant="solid"
+        color="purple"
+        size="sm"
+        rounded="md"
+        :icon="icon || 'badge'"
+        :removable="true"
+        @remove="remove"
+      >
+        {{ tag }}
+      </Badge>
+    </template>
+  </TagInput>
+</template>
+```
+
+### 2. Kustomisasi Scoped Slot `#option` Dropdown
+Menyisipkan avatar, ikon khusus, atau status badge pada setiap baris opsi dropdown autocomplete:
+
+```vue
+<template>
+  <TagInput v-model="selectedMembers" :options="memberOptions" label="Tugaskan Anggota">
+    <template #option="{ option, highlighted }">
+      <div class="flex items-center gap-2.5 py-1">
+        <span class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">
+          {{ option.label.charAt(0) }}
+        </span>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold">{{ option.label }}</span>
+          <span class="text-[10px] text-slate-400">{{ option.email }}</span>
+        </div>
+      </div>
+    </template>
+  </TagInput>
+</template>
+```
+
+---
+
+## 14. Accessibility (a11y)
+
+Komponen mematuhi pedoman WAI-ARIA dan WCAG 2.1 Level AA:
+
+### Matriks Dukungan Navigasi Keyboard:
+| Tombol Keyboard | Konteks / Kondisi | Aksi yang Dijalankan |
+| :--- | :--- | :--- |
+| `Tab` | Input memiliki teks ketikan | Mencegah perpindahan fokus, mengonversi teks menjadi tag. |
+| `Enter` | Input memiliki teks ketikan | Mencegah submit form bawaan, mengonversi teks menjadi tag. |
+| `ArrowDown` | Dropdown opsi terbuka | Menyorot opsi berikutnya ke bawah. |
+| `ArrowUp` | Dropdown opsi terbuka | Menyorot opsi sebelumnya ke atas. |
+| `Backspace` | Input teks kosong & ada tag | Menghapus tag terakhir dalam array secara otomatis. |
+| `Escape` | Dropdown opsi terbuka | Menutup panel dropdown dan mengembalikan fokus ke input. |
+
+### Atribut ARIA & Standar Kontras:
+* **Peran Combobox**: Wrapper luar mengelola status dropdown dengan `role="combobox"` dan `aria-expanded`.
+* **Screen Reader Announcement**: Tombol silang individual pada Badge dilengkapi atribut `aria-label="Hapus badge"` untuk memberitahu teknologi asistif.
+* **Focus Restoration**: Mengklik area kosong pada kontainer pembungkus input secara otomatis mengarahkan fokus ke elemen `<input />` internal (`cursor-text`).
+
+---
+
+## 15. Responsive Behavior
+
+### Breakpoint Adaptations:
+| Viewport | Rentang Lebar | Perilaku Antarmuka TagInput |
+| :--- | :--- | :--- |
+| **Mobile** | `< 768px` | Flex wrap penuh dengan `min-w-30` pada kotak input pengetikan, dropdown melayang mengambil lebar penuh kontainer dengan target tap nyaman (38px–42px). |
+| **Tablet** | `768px - 1023px` | Tata letak kolom fleksibel di dalam form grid 2 kolom, teks tag otomatis terpotong (`truncate`) dengan aman pada batas lebar wajar. |
+| **Desktop** | `>= 1024px` | Alur horisontal proporsional, scrollbar kustom halus pada dropdown (`max-h-56`), navigasi keyboard instan. |
+
+### Touch Target & Text Truncation:
+* Tombol silang hapus individual pada tag chip memiliki area klik minimal `w-5 h-5` hingga `w-6 h-6` yang terpusat secara presisi (*true center*).
+* Teks label tag yang sangat panjang dibatasi dengan kelas utilitas `truncate` sehingga tidak pernah memecah tata letak form pada layar ponsel sempit (320px–375px).
+
+---
+
+## 16. Do / Don't
+
+| Panduan Do (Direkomendasikan) | Panduan Don't (Dilarang / Hindari) |
+| :--- | :--- |
+| **Gunakan separatorKeys standar**: Pertahankan `Tab`, `Enter`, dan koma `,` agar pengguna terbiasa dengan pola input tag modern. | **Jangan biarkan kolom tanpa placeholder atau hint**: Selalu beri petunjuk tombol keyboard yang digunakan untuk membuat tag. |
+| **Gunakan allowCustom=false untuk taksonomi kaku**: Kunci nilai tag hanya dari daftar opsi jika data harus cocok persis dengan kolom database (seperti role/permission). | **Jangan gunakan TagInput untuk pilihan tunggal**: Jika nilai hanya boleh 1, gunakan `InputField type="select"`. |
+| **Gunakan varian 'random' untuk label dinamis**: Memberikan warna harmonis otomatis pada tag artikel atau kategori multi-topik. | **Jangan matikan removable jika data dapat diedit**: Mematikan tombol silang pada form edit akan membuat pengguna kebingungan saat ingin menghapus tag. |
+| **Gunakan maxTags dengan showCount**: Berikan visualisasi jumlah kuota tag yang tersisa agar pengguna tidak frustrasi saat batas tercapai. | **Jangan letakkan ratusan opsi autocomplete tanpa filter**: Manfaatkan pencarian teks untuk menyaring daftar opsi panjang agar performa peramban tetap ringan. |
+
+---
+
+## 17. Examples / Recipes
+
+### Resep 1: Formulir Artikel CMS dengan Inertia useForm & Validasi Backend
+Pola integrasi form penulisan artikel lengkap dengan pengiriman data array tag ke Controller Laravel:
+
+```vue
+<script setup>
+import { useForm } from '@inertiajs/vue3';
+import TagInput from '@/Components/Pack/TagInput.vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+
+const form = useForm({
+    title: '',
+    content: '',
+    tags: ['Laravel', 'Vue.js'],
+});
+
+const submitArticle = () => {
+    form.post('/articles', {
+        preserveScroll: true,
+    });
+};
+</script>
+
+<template>
+  <form @submit.prevent="submitArticle" class="space-y-5">
+    <TagInput
+      v-model="form.tags"
+      label="Tag Artikel"
+      placeholder="Ketik topik artikel lalu tekan Tab atau Enter..."
+      hint="Gunakan koma atau Enter untuk menambahkan tag baru"
+      tag-variant="primary"
+      tag-style="soft"
+      icon="tag"
+      :error="form.errors.tags"
+      clearable
+      required
+    />
+
+    <ButtonSubmit type="submit" :loading="form.processing">
+      Publikasikan Artikel
+    </ButtonSubmit>
+  </form>
+</template>
+```
+
+### Resep 2: Filter Pencarian Multi-Kriteria Katalog E-Commerce
+Menyaring katalog produk berdasarkan kriteria tetap yang dapat ditambah dan dihapus seketika:
+
+```vue
+<script setup>
+import { ref, watch } from 'vue';
+import TagInput from '@/Components/Pack/TagInput.vue';
+
+const activeFilters = ref(['Elektronik', 'Gratis Ongkir']);
+const filterCriteria = ['Elektronik', 'Pakaian', 'Gratis Ongkir', 'Diskon 50%', 'Official Store', 'Cicilan 0%'];
+
+const emit = defineEmits(['filter-change']);
+
+watch(activeFilters, (newFilters) => {
+    emit('filter-change', newFilters);
+}, { deep: true });
+</script>
+
+<template>
+  <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+    <TagInput
+      v-model="activeFilters"
+      :options="filterCriteria"
+      :allow-custom="false"
+      label="Filter Aktif"
+      placeholder="Pilih filter produk..."
+      tag-variant="amber"
+      tag-style="soft"
+      icon="filter_alt"
+      clearable
+    />
+  </div>
+</template>
+```
+
+---
+
+## 18. Related Items
+
+| Komponen / Artefak | Hubungan & Integrasi | Kapan Digunakan Bersama |
+| :--- | :--- | :--- |
+| [Badge](/components/badge) | Komponen chip atomik internal | Digunakan di dalam TagInput untuk merender setiap tag individual secara konsisten. |
+| [InputField](/components/input-field) | Facade komponen form utama | Membungkus TagInput dengan sintaks `<InputField type="tag" />`. |
+| [InputSelect](/components/input-select) | Alternatif pilihan tunggal | Digunakan jika pengguna hanya diperbolehkan memilih tepat satu opsi. |
+| [ButtonSubmit](/components/button-submit) | Tombol aksi form | Digunakan bersama TagInput di dalam formulir untuk aksi simpan atau reset. |
+| [FilterToolbar](/components/filter-toolbar) | Wadah filter pencarian tabel | Menempatkan TagInput di bagian atas tabel data untuk filtering multi-kategori. |
+
+---
+
+## 19. Notes / Limitations
+
+* **Ketergantungan Font Google Material Symbols**: Ikon penanda leading (`icon`), ikon chip tag (`tagIcon`), serta ikon dropdown mengandalkan font Google Material Symbols. Pastikan font tersebut telah dimuat pada layout induk aplikasi.
+* **Perilaku Pemecah Paste Karakter Khusus**: Logika `handlePaste` memecah teks berdasarkan array karakter `pasteSeparators` (`[',', ';', '\n', '\t']`). Jika teks tag Anda secara sengaja mengandung karakter koma sebagai bagian dari satu kata, pastikan untuk menyesuaikan prop `pasteSeparators`.
+* **Pencegahan Default Enter & Tab**: Komponen secara sengaja mencegat `event.preventDefault()` pada penekanan tombol `Enter` dan `Tab` saat input memiliki ketikan aktif untuk mencegah formulir HTML terkirim (*accidentally submitted*) sebelum kata selesai diubah menjadi tag.

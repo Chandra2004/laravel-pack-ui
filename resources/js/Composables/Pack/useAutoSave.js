@@ -1,21 +1,24 @@
-import { ref, computed, watch, onMounted, onUnmounted, unref } from 'vue';
-import { formatRelativeTime, formatDate } from './useDateFormat';
+import { ref, computed, watch, onMounted, onUnmounted, unref, getCurrentInstance } from 'vue';
+import { formatRelativeTime, formatDate } from './useDateFormat.js';
 
 /**
  * Enterprise Auto-Save & Form Draft Recovery Composable
  *
- * @param {import('vue').Ref|Object} formTarget - Reactive form object or ref
- * @param {Object} options - Configuration options
- * @param {string} options.key - Unique storage key (e.g. 'post_create', 'blog_edit_42')
- * @param {number} [options.debounceMs=1500] - Debounce delay after user stops typing
- * @param {number} [options.intervalMs=0] - Optional periodic auto-save interval (0 = disabled)
- * @param {'local'|'remote'|'both'} [options.storage='local'] - Target storage destination
- * @param {string} [options.endpoint] - API URL for remote draft saving
- * @param {Function} [options.saveHandler] - Custom async save callback `async (data) => ...`
- * @param {number} [options.expiryDays=7] - Days before an untouched draft expires
- * @param {boolean} [options.autoRestore=false] - Auto-restore draft on mount without prompt
- * @param {Function} [options.onSaved] - Callback invoked when save succeeds `(data, timestamp)`
- * @param {Function} [options.onError] - Callback invoked when save fails `(error)`
+ * Mengelola penyimpanan otomatis formulir (auto-save) ke localStorage maupun endpoint remote API
+ * dengan dukungan debounce, dirty tracking, interval berkala, race condition guard, dan auto-cleanup.
+ *
+ * @param {import('vue').Ref|Object} formTarget - Objek formulir reaktif atau ref
+ * @param {Object} options - Opsi konfigurasi
+ * @param {string} options.key - Kunci unik identifikasi draf (wajib untuk persistensi)
+ * @param {number} [options.debounceMs=1500] - Jeda debounce setelah pengetikan berhenti (ms)
+ * @param {number} [options.intervalMs=0] - Interval periodik penyimpanan berkala (0 = nonaktif)
+ * @param {'local'|'remote'|'both'} [options.storage='local'] - Target tujuan penyimpanan
+ * @param {string} [options.endpoint=''] - URL endpoint API untuk penyimpanan remote
+ * @param {Function} [options.saveHandler=null] - Callback async kustom `async (data) => ...`
+ * @param {number} [options.expiryDays=7] - Masa kedaluwarsa draf dalam hari (0 = permanen)
+ * @param {boolean} [options.autoRestore=false] - Pulihkan draf otomatis saat mount tanpa konfirmasi
+ * @param {Function} [options.onSaved=null] - Callback sukses simpan `(payload, timestamp)`
+ * @param {Function} [options.onError=null] - Callback kegagalan simpan `(error)`
  */
 export function useAutoSave(formTarget, options = {}) {
     const {
@@ -32,7 +35,7 @@ export function useAutoSave(formTarget, options = {}) {
     } = options;
 
     if (!key) {
-        console.warn('[useAutoSave] Warning: "key" is required for draft persistence.');
+        console.warn('[useAutoSave] Warning: Parameter "key" diperlukan untuk persistensi draf.');
     }
 
     const storageKey = key ? `pack_draft_${key}` : null;
@@ -49,42 +52,49 @@ export function useAutoSave(formTarget, options = {}) {
     let debounceTimer = null;
     let intervalTimer = null;
     let lastSavedSnapshot = '';
+    let abortController = null;
+    let stopWatcher = null;
 
     /**
-     * Safely serialize form data to JSON string for dirty checking.
+     * Serialisasi data formulir ke JSON string untuk dirty checking dan perbandingan.
+     * Mendukung Inertia useForm (data() method) maupun objek Vue reaktif biasa.
      */
     const serializeForm = (target) => {
         try {
             const raw = unref(target);
-            // Handle Inertia useForm data() method if present
+            if (!raw) return '';
             const dataToSerialize = typeof raw?.data === 'function' ? raw.data() : raw;
             return JSON.stringify(dataToSerialize || {});
-        } catch (e) {
+        } catch {
             return '';
         }
     };
 
     /**
-     * Compute if current form is dirty compared to last saved state.
+     * Status kotor: true jika nilai formulir saat ini berbeda dari snapshot penyimpanan terakhir.
      */
     const isDirty = computed(() => {
         return serializeForm(formTarget) !== lastSavedSnapshot;
     });
 
-    /** Formatted relative time of last save (e.g. "baru saja", "2 menit yang lalu") */
+    /**
+     * Teks waktu relatif dari penyimpanan terakhir (contoh: "baru saja", "2 menit yang lalu").
+     */
     const lastSavedFormatted = computed(() => {
         if (!lastSaved.value) return '';
         return formatRelativeTime(lastSaved.value);
     });
 
-    /** Formatted time of stored draft */
+    /**
+     * Teks waktu tersimpannya draf yang ditemukan di penyimpanan lokal.
+     */
     const draftTimeFormatted = computed(() => {
         if (!draftSavedAt.value) return '';
         return `${formatRelativeTime(draftSavedAt.value)} (${formatDate(draftSavedAt.value, 'DD/MM HH:mm')})`;
     });
 
     /**
-     * Check and restore draft from localStorage on initial load.
+     * Memeriksa keberadaan draf di localStorage dan memvalidasi masa kedaluwarsa.
      */
     const checkExistingDraft = () => {
         if (!storageKey || typeof window === 'undefined') return;
@@ -96,7 +106,7 @@ export function useAutoSave(formTarget, options = {}) {
             const parsed = JSON.parse(raw);
             if (!parsed || !parsed.data) return;
 
-            // Check expiration
+            // Validasi masa kedaluwarsa draf
             if (parsed.savedAt && expiryDays > 0) {
                 const ageMs = Date.now() - parsed.savedAt;
                 const maxAgeMs = expiryDays * 24 * 60 * 60 * 1000;
@@ -106,7 +116,7 @@ export function useAutoSave(formTarget, options = {}) {
                 }
             }
 
-            // Compare with current initial form data
+            // Bandingkan dengan data inisial formulir saat ini
             const currentSerialized = serializeForm(formTarget);
             const draftSerialized = JSON.stringify(parsed.data);
 
@@ -120,19 +130,22 @@ export function useAutoSave(formTarget, options = {}) {
                 }
             }
         } catch (e) {
-            console.warn('[useAutoSave] Failed to check draft:', e);
+            console.warn('[useAutoSave] Gagal membaca draf dari penyimpanan lokal:', e);
         }
     };
 
     /**
-     * Core save execution function.
+     * Eksekusi penyimpanan inti (Local, Remote, atau keduanya).
      */
     const executeSave = async () => {
         if (isPaused.value) return;
 
         const currentSnapshot = serializeForm(formTarget);
-        // Do not save if data hasn't changed since last save
+        // Cegah penyimpanan redundan jika data belum berubah sejak save terakhir
         if (currentSnapshot === lastSavedSnapshot) {
+            if (status.value === 'saving') {
+                status.value = 'saved';
+            }
             return;
         }
 
@@ -144,7 +157,7 @@ export function useAutoSave(formTarget, options = {}) {
         const timestamp = new Date();
 
         try {
-            // 1. Local Storage save
+            // 1. Simpan ke LocalStorage
             if (storage === 'local' || storage === 'both') {
                 if (storageKey && typeof window !== 'undefined') {
                     localStorage.setItem(
@@ -157,13 +170,20 @@ export function useAutoSave(formTarget, options = {}) {
                 }
             }
 
-            // 2. Remote Save (Custom Handler or Endpoint)
+            // 2. Simpan ke Remote API (Custom Handler atau HTTP Endpoint)
             if (storage === 'remote' || storage === 'both') {
                 if (typeof saveHandler === 'function') {
                     await saveHandler(payload);
                 } else if (endpoint) {
+                    // Batalkan request remote sebelumnya jika masih berjalan (mencegah race condition)
+                    if (abortController) {
+                        abortController.abort();
+                    }
+                    abortController = new AbortController();
+
                     const response = await fetch(endpoint, {
                         method: 'POST',
+                        signal: abortController.signal,
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
@@ -172,7 +192,7 @@ export function useAutoSave(formTarget, options = {}) {
                     });
 
                     if (!response.ok) {
-                        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                 }
             }
@@ -185,9 +205,14 @@ export function useAutoSave(formTarget, options = {}) {
                 onSaved(payload, timestamp);
             }
         } catch (err) {
-            console.error('[useAutoSave] Error saving draft:', err);
+            // Abaikan error pembatalan fetch jika request lama dibatalkan oleh save baru
+            if (err.name === 'AbortError') {
+                return;
+            }
+
+            console.error('[useAutoSave] Gagal menyimpan draf:', err);
             status.value = 'error';
-            lastError.value = err?.message || 'Gagal menyimpan draft.';
+            lastError.value = err?.message || 'Gagal menyimpan draf.';
 
             if (typeof onError === 'function') {
                 onError(err);
@@ -196,7 +221,7 @@ export function useAutoSave(formTarget, options = {}) {
     };
 
     /**
-     * Trigger immediate save without waiting for debounce timer.
+     * Memicu penyimpanan seketika tanpa menunggu jeda debounce timer.
      */
     const saveNow = async () => {
         if (debounceTimer) {
@@ -207,7 +232,8 @@ export function useAutoSave(formTarget, options = {}) {
     };
 
     /**
-     * Restore saved draft into the reactive form.
+     * Memulihkan data draf yang tersimpan ke dalam objek formulir reaktif.
+     * @returns {boolean} True jika pemulihan berhasil
      */
     const restoreDraft = () => {
         if (!draftData.value) return false;
@@ -218,7 +244,7 @@ export function useAutoSave(formTarget, options = {}) {
         try {
             const draft = draftData.value;
 
-            // If it's an Inertia form or object, merge fields
+            // Injeksi nilai draf ke form target (mendukung objek reaktif dan Inertia useForm)
             Object.keys(draft).forEach((prop) => {
                 if (raw[prop] !== undefined) {
                     raw[prop] = draft[prop];
@@ -231,13 +257,13 @@ export function useAutoSave(formTarget, options = {}) {
             lastSaved.value = draftSavedAt.value || new Date();
             return true;
         } catch (e) {
-            console.error('[useAutoSave] Failed to restore draft:', e);
+            console.error('[useAutoSave] Gagal memulihkan draf formulir:', e);
             return false;
         }
     };
 
     /**
-     * Discard and purge the saved draft from storage.
+     * Membuang draf yang tersimpan dari memory dan storage lokal.
      */
     const discardDraft = () => {
         hasDraft.value = false;
@@ -250,48 +276,76 @@ export function useAutoSave(formTarget, options = {}) {
     };
 
     /**
-     * Completely clear draft from storage (call after form submission success).
+     * Membersihkan draf sepenuhnya (dipanggil setelah submit form berhasil ke server).
      */
     const purge = () => {
         discardDraft();
         lastSavedSnapshot = serializeForm(formTarget);
         status.value = 'idle';
         lastSaved.value = null;
+        lastError.value = null;
     };
 
     /**
-     * Pause auto-saving (e.g. during form reset).
+     * Menjeda auto-save sementara (misalnya saat proses submit resmi atau form reset).
      */
     const pause = () => {
         isPaused.value = true;
         status.value = 'paused';
-        if (debounceTimer) clearTimeout(debounceTimer);
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
     };
 
     /**
-     * Resume auto-saving.
+     * Melanjutkan kembali auto-save setelah dijeda.
      */
     const resume = () => {
         isPaused.value = false;
         status.value = 'idle';
     };
 
+    /**
+     * Menghentikan semua timer dan watcher (digunakan untuk cleanup manual).
+     */
+    const cleanup = () => {
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+        if (intervalTimer) {
+            clearInterval(intervalTimer);
+            intervalTimer = null;
+        }
+        if (abortController) {
+            abortController.abort();
+            abortController = null;
+        }
+        if (typeof stopWatcher === 'function') {
+            stopWatcher();
+            stopWatcher = null;
+        }
+    };
+
     // -------------------------------------------------------------
-    // WATCHERS & LIFECYCLE
+    // WATCHERS & LIFECYCLE INITIALIZATION
     // -------------------------------------------------------------
     const startWatching = () => {
-        // Record initial snapshot
+        // Ambil snapshot awal
         lastSavedSnapshot = serializeForm(formTarget);
 
-        // Check draft
+        // Periksa draf yang telah tersimpan sebelumnya
         checkExistingDraft();
 
-        // Watch form changes with debounce
-        watch(
-            () => serializeForm(formTarget),
-            (newVal, oldVal) => {
+        // Pantau mutasi formulir dengan debounce
+        stopWatcher = watch(
+            () => {
+                const raw = unref(formTarget);
+                return typeof raw?.data === 'function' ? raw.data() : raw;
+            },
+            () => {
                 if (isPaused.value) return;
-                if (newVal === oldVal || newVal === lastSavedSnapshot) return;
 
                 status.value = 'saving';
 
@@ -301,12 +355,12 @@ export function useAutoSave(formTarget, options = {}) {
 
                 debounceTimer = setTimeout(() => {
                     executeSave();
-                }, debounceMs);
+                }, unref(debounceMs));
             },
             { deep: true }
         );
 
-        // Optional periodic interval auto-save
+        // Penjadwalan interval auto-save periodik opsional
         if (intervalMs > 0) {
             intervalTimer = setInterval(() => {
                 if (isDirty.value && !isPaused.value) {
@@ -316,14 +370,19 @@ export function useAutoSave(formTarget, options = {}) {
         }
     };
 
-    onMounted(() => {
-        startWatching();
-    });
+    // Bind lifecycle secara aman: jika dipanggil dalam setup komponen, bind onMounted/onUnmounted.
+    // Jika dipanggil di luar konteks komponen (store/worker/test), jalankan watcher langsung.
+    if (getCurrentInstance()) {
+        onMounted(() => {
+            startWatching();
+        });
 
-    onUnmounted(() => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        if (intervalTimer) clearInterval(intervalTimer);
-    });
+        onUnmounted(() => {
+            cleanup();
+        });
+    } else {
+        startWatching();
+    }
 
     return {
         // State
@@ -342,10 +401,13 @@ export function useAutoSave(formTarget, options = {}) {
 
         // Actions
         saveNow,
+        save: saveNow,
         restoreDraft,
         discardDraft,
         purge,
         pause,
         resume,
+        cleanup,
+        destroy: cleanup,
     };
 }

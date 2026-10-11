@@ -1,83 +1,292 @@
-# ⏱️ Composable `useThrottle` & Utilitas `throttle`
+---
+title: "useThrottle"
+description: "Re-ekspor alias dari useDebounce. Composable dan helper throttle untuk membatasi frekuensi eksekusi fungsi maksimal satu kali per interval waktu tertentu, ideal untuk scroll, resize, dan event pointer berkecepatan tinggi."
+---
 
-[← Kembali ke Dokumentasi Utama](../../README.md) | [Lihat useDebounce](use-debounce.md)
+# useThrottle (`useThrottle.js`)
 
-`useThrottle` adalah composable untuk membatasi frekuensi eksekusi fungsi (*rate limiting*) agar hanya dipanggil paling banyak sekali dalam rentang waktu yang ditentukan (*throttle interval*). Sangat penting untuk menangani event intensif seperti pergerakan mouse (*mousemove*), *window scroll*, *window resize*, dan pencegahan klik beruntun (*spam click*).
+## 01. Overview
 
-Dilengkapi pembersihan timer otomatis saat komponen dilepas (*lifecycle cleanup onUnmounted*), method pembatalan manual `.cancel()`, serta utilitas mandiri `throttle()` tanpa ketergantungan siklus hidup Vue.
+`useThrottle` adalah alias re-ekspor dari [useDebounce.js](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Composables/Pack/useDebounce.js). Modul ini mengekspor `throttle` (helper pure) dan `useThrottle` (composable reaktif) yang diimplementasikan di dalam `useDebounce.js` dan dapat diimpor dari dua jalur yang berbeda.
+
+> [!NOTE]
+> Seluruh implementasi throttle berada di `useDebounce.js`. Dokumentasi teknis lengkap, termasuk API, contoh kode, dan diagram arsitektur, tersedia di halaman [useDebounce](/composables/use-debounce).
+
+### 1.1 Apa Entitas Ini
+
+- **Tipe Artefak**: Re-ekspor alias dari `useDebounce.js`.
+- **Lokasi Berkas Sumber**: [useThrottle.js](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Composables/Pack/useThrottle.js).
+- **Ekspor Kunci**: `throttle`, `useThrottle`.
+- **Sumber Implementasi**: [useDebounce.js](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Composables/Pack/useDebounce.js).
+
+### 1.2 Fungsi Utama
+
+- `throttle(fn, interval, options?)`: Helper pure yang membatasi pemanggilan `fn` maksimal satu kali setiap `interval` milidetik.
+- `useThrottle(fn, interval, options?)`: Composable dengan auto-cleanup lifecycle yang otomatis membatalkan throttle aktif saat komponen di-unmount.
+
+### 1.3 Kapan Digunakan
+
+- Event `scroll` atau `resize` yang menembak puluhan kali per detik.
+- Handler pergerakan kursor (`mousemove`, `pointermove`) untuk visualisasi realtime.
+- Tombol refresh atau reload data yang perlu dibatasi frekuensi kliknya.
+- Operasi yang harus berjalan berkala namun tidak boleh menumpuk (berbeda dari debounce yang menunggu jeda).
+
+### 1.4 Karakteristik Penting
+
+- **Leading + Trailing**: Secara default, throttle mengeksekusi di awal interval (leading) DAN di akhir (trailing), memastikan eksekusi pertama langsung dan eksekusi terakhir tidak terlewat.
+- **Kontrol Eksekusi**: Mendukung `.cancel()` untuk membatalkan trailing call yang tertunda dan `.flush()` untuk memaksakan eksekusi segera.
+- **Auto-Cleanup**: `useThrottle` menggunakan guard `getCurrentInstance()` untuk mendaftarkan `onUnmounted` secara aman, bahkan jika dipanggil di luar setup context.
 
 ---
 
-## 🚀 Penggunaan
+## 02. Preview
 
-### 1. Di dalam Komponen Vue (`useThrottle`)
-Otomatis membersihkan timer saat komponen di-unmount:
+> [!TIP]
+> Pengujian fungsional dan showcase composable ini dapat diuji secara native pada portal pratinjau aplikasi:
+>
+> <a href="http://localhost:8000/preview" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Portal Komponen &rarr;</a>
+
+---
+
+## 03. Usage
+
+### Perbedaan Debounce vs Throttle
+
+```text
+Debounce: Tunggu jeda (idle period)
+Event: --A---B---C-----------D---
+Timer:          |reset|reset|wait...|fire!
+Eksekusi:                           D
+
+Throttle: Batas kecepatan berkala
+Event: -A-B-C-D-E-F-G-H-I-J---K
+Interval: |--100ms--|--100ms--|--100ms--|
+Eksekusi:  A         E         I        K
+```
+
+### Contoh Penggunaan
+
+```javascript
+// Dari useThrottle.js
+import { throttle, useThrottle } from '@/Composables/Pack/useThrottle';
+
+// Atau langsung dari useDebounce.js (sama saja)
+import { throttle, useThrottle } from '@/Composables/Pack/useDebounce';
+```
+
+---
+
+## 04. Anatomy
+
+File `useThrottle.js` hanya berisi satu baris:
+
+```javascript
+export { throttle, useThrottle } from './useDebounce';
+```
+
+Semua logika berada di `useDebounce.js`. Lihat [Anatomy di dokumentasi useDebounce](/composables/use-debounce#04-anatomy) untuk diagram lengkap.
+
+---
+
+## 05. Variants
+
+| Fungsi | Deskripsi |
+| :--- | :--- |
+| `throttle(fn, interval)` | Pure helper. Mengembalikan fungsi ter-throttle. |
+| `useThrottle(fn, interval)` | Composable. Otomatis cleanup di `onUnmounted`. |
+| `useThrottledRef(value, interval)` | `Ref` kustom reaktif yang memperbarui nilai ter-throttle. |
+| `useThrottleFn(fn, interval)` | Alias `useThrottle` dengan nama alternatif. |
+
+Semua tersedia sebagai ekspor di `useDebounce.js`.
+
+---
+
+## 06. Sizes
+
+Tidak relevan.
+
+---
+
+## 07. States
+
+Lihat [States di dokumentasi useDebounce](/composables/use-debounce#07-states).
+
+---
+
+## 08. Props / Parameters
+
+### `throttle(fn, interval, options?)`
+
+| Parameter | Tipe | Default | Wajib | Deskripsi |
+| :--- | :--- | :--- | :--- | :--- |
+| `fn` | `Function` | - | Ya | Fungsi target yang akan di-throttle |
+| `interval` | `number` | - | Ya | Interval minimum antar eksekusi dalam milidetik |
+| `options.leading` | `boolean` | `true` | Tidak | Eksekusi di awal interval |
+| `options.trailing` | `boolean` | `true` | Tidak | Eksekusi di akhir interval jika ada pemanggilan yang tertunda |
+
+### `useThrottle(fn, interval, options?)`
+
+Parameter sama dengan `throttle()`. Tambahan: registrasi `onUnmounted` otomatis.
+
+---
+
+## 09. Slots / Content
+
+Tidak relevan.
+
+---
+
+## 10. Events / Interactions / Returns
+
+### Return `useThrottle()`
+
+| Properti / Method | Tipe | Deskripsi |
+| :--- | :--- | :--- |
+| Fungsi ter-throttle | `Function` | Fungsi wrapper yang harus dipanggil alih-alih `fn` asli |
+| `.cancel()` | `Function` | Membatalkan trailing call yang tertunda |
+| `.flush()` | `Function` | Memaksa eksekusi segera dan mereset timer |
+| `.pending()` | `Function` | Mengembalikan `true` jika ada trailing call yang sedang menunggu |
+
+---
+
+## 11. Code Example
+
+### Basic: Throttle Event Scroll
+
+```javascript
+import { useThrottle } from '@/Composables/Pack/useThrottle';
+
+const handleScroll = useThrottle(() => {
+    console.log('Scroll position:', window.scrollY);
+}, 100); // Maksimal 10 kali per detik
+
+window.addEventListener('scroll', handleScroll);
+```
+
+### Intermediate: Throttle Pengiriman Data Posisi Kursor
 
 ```vue
 <script setup>
 import { ref } from 'vue';
 import { useThrottle } from '@/Composables/Pack/useThrottle';
 
-const scrollY = ref(0);
+const cursorX = ref(0);
+const cursorY = ref(0);
 
-// Eksekusi fungsi scroll maksimal 1 kali setiap 200 milidetik
-const handleScroll = useThrottle(() => {
-    scrollY.value = window.scrollY;
-    console.log('Posisi scroll terbaru:', window.scrollY);
-}, 200);
-
-window.addEventListener('scroll', handleScroll, { passive: true });
+const updateCursor = useThrottle((e) => {
+    cursorX.value = e.clientX;
+    cursorY.value = e.clientY;
+}, 50);
 </script>
 
 <template>
-  <div class="fixed top-4 right-4 text-xs font-mono bg-zinc-900 text-white px-2 py-1 rounded">
-    Scroll: {{ scrollY }}px
-  </div>
+    <div @mousemove="updateCursor" class="relative h-64 border rounded-xl">
+        <span class="text-xs text-gray-500">
+            X: {{ cursorX }}, Y: {{ cursorY }}
+        </span>
+    </div>
+</template>
+```
+
+### Advanced: Tombol Refresh dengan Throttle
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import { useThrottle } from '@/Composables/Pack/useThrottle';
+import { useNotification } from '@/Composables/Pack/useNotification';
+
+const { info } = useNotification();
+const loading = ref(false);
+
+const fetchData = useThrottle(async () => {
+    loading.value = true;
+    try {
+        await axios.get('/api/data');
+    } finally {
+        loading.value = false;
+    }
+}, 2000, { trailing: false }); // Hanya leading; tidak ada delay trailing call
+
+const handleRefresh = () => {
+    if (fetchData.pending()) {
+        info('Mohon tunggu sebelum refresh ulang.');
+        return;
+    }
+    fetchData();
+};
+</script>
+
+<template>
+    <button @click="handleRefresh" :disabled="loading" class="btn-primary">
+        {{ loading ? 'Memuat...' : 'Refresh Data' }}
+    </button>
 </template>
 ```
 
 ---
 
-### 2. Utilitas Mandiri Pure Function (`throttle`)
-Dapat di-import langsung di file helper JavaScript, Pinia store, atau service non-komponen:
+## 12. Result / Behavior
 
-```javascript
-import { throttle } from '@/Composables/Pack/useThrottle';
+- Dengan `leading: true, trailing: true` (default): eksekusi pertama langsung terjadi, lalu jika ada pemanggilan baru di akhir interval, eksekusi trailing juga terjadi.
+- Dengan `trailing: false`: setelah eksekusi leading, semua pemanggilan dalam interval diabaikan sepenuhnya hingga interval berikutnya.
+- `.cancel()` membatalkan trailing call — berguna di `onUnmounted` jika cleanup manual diperlukan.
 
-const sendHeartbeat = throttle(() => {
-    fetch('/api/ping');
-}, 5000);
+---
 
-// Panggilan berkali-kali hanya akan dieksekusi 1 kali per 5 detik
-sendHeartbeat();
-sendHeartbeat();
-sendHeartbeat();
+## 13. Customization
 
-// Batalkan penundaan jika diperlukan:
-sendHeartbeat.cancel();
+Lihat [Customization di dokumentasi useDebounce](/composables/use-debounce#13-customization).
+
+---
+
+## 14. Accessibility
+
+Tidak ada pertimbangan aksesibilitas khusus. Throttle adalah teknik performa, bukan UI.
+
+---
+
+## 15. Responsive Behavior
+
+Tidak relevan untuk composable ini.
+
+---
+
+## 16. Do / Don't
+
+**Lakukan:**
+
+- Gunakan throttle (bukan debounce) untuk event yang harus terus berjalan namun dibatasi frekuensinya (scroll, resize, mousemove).
+- Gunakan debounce untuk input yang harus menunggu pengguna berhenti sebelum memicu aksi (search, auto-save).
+
+**Jangan:**
+
+- Jangan menggunakan throttle dengan interval sangat besar (> 1000ms) untuk event scroll; ini akan membuat UI terasa lamban.
+- Jangan lupa membersihkan listener event yang menggunakan throttle melalui `removeEventListener`; composable `useThrottle` hanya membersihkan timer internal, bukan listener DOM.
+
+---
+
+## 17. Examples / Recipes
+
+Lihat [Examples / Recipes di dokumentasi useDebounce](/composables/use-debounce#17-examples--recipes) untuk resep lengkap termasuk kombinasi throttle + debounce.
+
+---
+
+## 18. Related Items
+
+```text
+useThrottle
+├── Implementasi Asli
+│   └── useDebounce.js → Semua implementasi throttle berada di sini
+│
+└── Lihat Juga
+    ├── useScrollProgress.js → Menggunakan throttle internal via requestAnimationFrame
+    └── useServerTable.js    → Menggunakan debounce untuk pencarian
 ```
 
 ---
 
-## 📋 Daftar API & Signature
+## 19. Notes / Limitations
 
-### 1. `useThrottle(fn, limit)`
-| Parameter | Tipe | Default | Deskripsi |
-| :--- | :--- | :--- | :--- |
-| `fn` | `Function` | — | Fungsi target yang akan dibatasi frekuensinya (**Wajib**) |
-| `limit` | `Number` | `300` | Batas interval waktu dalam milidetik |
-
-**Return Value:**
-Fungsi ber-throttle dengan method tambahan:
-* `fn.cancel()`: Membatalkan eksekusi antrean yang tertunda dan mereset status throttle.
-
----
-
-### 2. Perbedaan `useThrottle` vs `useDebounce`
-
-| Kategori | `useThrottle` | `useDebounce` |
-| :--- | :--- | :--- |
-| **Prinsip Kerja** | Menjalankan panggilan pertama, lalu mengabaikan panggilan berikutnya sampai interval waktu habis. | Menunda eksekusi sampai aktivitas pemanggilan benar-benar berhenti selama jeda waktu. |
-| **Kasus Terbaik** | Scroll window, resize, drag-and-drop, rate limit pemicu klik. | Kolom pencarian realtime, auto-save form draft, auto-complete API. |
-| **Pembersihan** | Otomatis via `onUnmounted`. | Otomatis via `onUnmounted`. |
-
+- `useThrottle.js` **hanya** mengekspor `throttle` dan `useThrottle`. Ekspor lain dari `useDebounce.js` (seperti `useDebouncedRef`, `useThrottledRef`, `debounce`) harus diimpor langsung dari `useDebounce.js`.
+- Semua batasan yang berlaku di `useDebounce` juga berlaku di sini. Lihat [Notes / Limitations di useDebounce](/composables/use-debounce#19-notes--limitations).

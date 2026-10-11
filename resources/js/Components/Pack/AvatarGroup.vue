@@ -37,24 +37,29 @@ const remainingCount = computed(() => {
 });
 
 const spacingClass = computed(() => {
-    switch (props.spacing) {
-        case 'tight': return '-space-x-3.5';
-        case 'loose': return '-space-x-1.5';
-        case 'normal':
-        default: return '-space-x-2.5';
-    }
+    const spacingMap = {
+        xs: { tight: '-space-x-2', normal: '-space-x-1.5', loose: '-space-x-1' },
+        sm: { tight: '-space-x-2.5', normal: '-space-x-2', loose: '-space-x-1.5' },
+        md: { tight: '-space-x-3', normal: '-space-x-2.5', loose: '-space-x-1.5' },
+        lg: { tight: '-space-x-4', normal: '-space-x-3', loose: '-space-x-2' },
+        xl: { tight: '-space-x-6', normal: '-space-x-4.5', loose: '-space-x-3' },
+        '2xl': { tight: '-space-x-8', normal: '-space-x-6', loose: '-space-x-4' },
+        '3xl': { tight: '-space-x-10', normal: '-space-x-8', loose: '-space-x-5' },
+    };
+    const current = spacingMap[props.size] || spacingMap.md;
+    return current[props.spacing] || current.normal;
 });
 
 const counterSizeClass = computed(() => {
     switch (props.size) {
-        case 'xs': return 'w-6 h-6 text-[9px]';
-        case 'sm': return 'w-8 h-8 text-xs';
-        case 'lg': return 'w-14 h-14 text-sm';
-        case 'xl': return 'w-20 h-20 text-base';
-        case '2xl': return 'w-28 h-28 text-lg';
-        case '3xl': return 'w-36 h-36 text-xl';
+        case 'xs': return 'w-6 h-6 text-[9px] font-semibold';
+        case 'sm': return 'w-8 h-8 text-[11px] font-semibold';
+        case 'lg': return 'w-12 h-12 text-xs font-semibold';
+        case 'xl': return 'w-16 h-16 text-sm font-semibold';
+        case '2xl': return 'w-20 h-20 text-base font-semibold';
+        case '3xl': return 'w-26 h-26 text-lg font-bold';
         case 'md':
-        default: return 'w-10 h-10 text-xs';
+        default: return 'w-10 h-10 text-xs font-semibold';
     }
 });
 
@@ -72,7 +77,12 @@ const roundedClass = computed(() => {
 </script>
 
 <template>
-    <div class="inline-flex items-center select-none" :class="spacingClass">
+    <div
+        class="inline-flex items-center select-none"
+        :class="spacingClass"
+        role="group"
+        aria-label="Tumpukan avatar tim"
+    >
         <!-- Prop-driven Items -->
         <template v-if="visibleItems.length > 0">
             <Avatar
@@ -93,7 +103,7 @@ const roundedClass = computed(() => {
             <!-- Extra Counter Bubble -->
             <div
                 v-if="remainingCount > 0"
-                class="shrink-0 flex items-center justify-center font-bold font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 ring-2 ring-white dark:ring-slate-900 shadow-2xs hover:scale-105 transition-all duration-150 cursor-pointer"
+                class="shrink-0 flex items-center justify-center font-sans tracking-tight bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 ring-2 ring-white dark:ring-slate-900 shadow-2xs hover:scale-105 transition-all duration-150 cursor-pointer"
                 :class="[counterSizeClass, roundedClass]"
                 :title="`${remainingCount} anggota lainnya`"
             >

@@ -101,7 +101,7 @@ export const formatRelativeTime = (dateInput) => {
     const years = Math.floor(days / 365);
 
     if (seconds < 15) {
-        return 'baru saja';
+        return isFuture ? 'sebentar lagi' : 'baru saja';
     }
 
     let unitText = '';

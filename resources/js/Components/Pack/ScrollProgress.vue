@@ -10,12 +10,12 @@ const props = defineProps({
     },
     type: {
         type: String,
-        default: 'bar', // 'bar' (Inertia/NProgress style), 'floating-pill', 'circular', 'minimal'
+        default: 'bar', // 'bar', 'floating-pill', 'circular', 'minimal', 'inertia'
         validator: (val) => ['bar', 'floating-pill', 'circular', 'minimal', 'inertia'].includes(val),
     },
     position: {
         type: String,
-        default: 'top', // Bar: 'top', 'bottom', 'left', 'right'. Floating/Circular: 'bottom-right', 'bottom-left', 'top-right', 'top-left', 'bottom-center'
+        default: 'top', // Bar: 'top', 'bottom', 'left', 'right', 'inline'. Floating/Circular: 'bottom-right', 'bottom-left', 'top-right', 'top-left', 'bottom-center', 'inline'
     },
     fixed: {
         type: Boolean,
@@ -23,13 +23,13 @@ const props = defineProps({
     },
     zIndex: {
         type: [Number, String],
-        default: 99999, // Standar Inertia/NProgress agar selalu di atas navigasi/header
+        default: 99999, // Standar agar selalu di atas navigasi/header
     },
 
-    // Inertia / NProgress Specific Options (seperti app.js: progress: { color: '#4B5563', showSpinner: true })
+    // Inertia / NProgress Specific Options
     color: {
         type: String,
-        default: '', // Hex string seperti '#4B5563', '#29d', '#0ea5e9', dll
+        default: '', // Hex/RGB string kustom seperti '#6366f1', '#0ea5e9', '#10b981'
     },
     showSpinner: {
         type: Boolean,
@@ -37,14 +37,14 @@ const props = defineProps({
     },
     peg: {
         type: Boolean,
-        default: true, // Efek bayangan pendaran NProgress "peg" di ujung kanan bar
+        default: false, // Default false agar bilah progres selalu bersih tanpa bayangan miring
     },
 
     // 5 Pilar - 1. Warna & Visual
     colorTheme: {
         type: String,
-        default: 'dark', // 'default', 'primary', 'indigo', 'emerald', 'purple', 'amber', 'rose', 'cyan', 'dark', 'rainbow'
-        validator: (val) => ['default', 'primary', 'indigo', 'emerald', 'purple', 'amber', 'rose', 'cyan', 'dark', 'rainbow'].includes(val),
+        default: 'indigo', // 'default', 'dark', 'primary', 'indigo', 'emerald', 'purple', 'amber', 'rose', 'cyan', 'rainbow'
+        validator: (val) => ['default', 'dark', 'primary', 'indigo', 'emerald', 'purple', 'amber', 'rose', 'cyan', 'rainbow'].includes(val),
     },
     variant: {
         type: String,
@@ -57,7 +57,7 @@ const props = defineProps({
     },
     track: {
         type: Boolean,
-        default: false, // Default false untuk Inertia style agar bersih tanpa rel abu-abu di atas layar
+        default: false, // Menampilkan rel latar belakang
     },
     trackColor: {
         type: String,
@@ -71,11 +71,11 @@ const props = defineProps({
     // 5 Pilar - 2. Bentuk & Dimensi
     thickness: {
         type: [String, Number],
-        default: 'sm', // Standar tipis Inertia: 'sm' (3px), 'xs' (2px), 'md' (4px), 'lg' (6px), atau number px
+        default: 'sm', // 'xs' (2px), 'sm' (3px), 'md' (4px), 'lg' (6px), 'xl' (8px), atau number px
     },
     rounded: {
         type: String,
-        default: 'none', // Standar Inertia: 'none' (menempel rata di tepi layar) atau 'full'
+        default: 'none', // 'none', 'sm', 'md', 'lg', 'full'
         validator: (val) => ['none', 'sm', 'md', 'lg', 'full'].includes(val),
     },
     headIndicator: {
@@ -150,7 +150,7 @@ const props = defineProps({
     },
     hideAtTop: {
         type: Boolean,
-        default: false, // Default false agar bar selalu tampil presisi (0% saat di paling atas)
+        default: false, // Sembunyikan saat posisi scroll 0%
     },
     threshold: {
         type: Number,
@@ -160,7 +160,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:progress', 'complete', 'scroll-to-top']);
 
-// Inisialisasi Composable dengan auto-detect
+// Inisialisasi Composable dengan auto-detect & opsi reaktif
 const {
     progress,
     scrollPercent,
@@ -169,11 +169,23 @@ const {
     isComplete,
     readingTimeRemaining,
     scrollToTop,
+    scrollToProgress,
 } = useScrollProgress({
     target: toRef(props, 'target'),
-    threshold: props.threshold,
-    wordsCount: props.wordsCount,
-    wordsPerMinute: props.wordsPerMinute,
+    threshold: toRef(props, 'threshold'),
+    wordsCount: toRef(props, 'wordsCount'),
+    wordsPerMinute: toRef(props, 'wordsPerMinute'),
+});
+
+defineExpose({
+    progress,
+    scrollPercent,
+    isScrolling,
+    isAtTop,
+    isComplete,
+    readingTimeRemaining,
+    scrollToTop,
+    scrollToProgress,
 });
 
 // Watch progress untuk emit
@@ -190,30 +202,29 @@ const isVertical = computed(() => {
     return (props.type === 'bar' || props.type === 'minimal' || props.type === 'inertia') && (props.position === 'left' || props.position === 'right');
 });
 
-// Resolusi warna heksadesimal / CSS untuk NProgress bar, peg, dan spinner
+// Resolusi warna heksadesimal / CSS untuk bar, peg, ring, dan glow
+const themeHexMap = {
+    default: '#6366f1', // Indigo modern
+    dark: '#475569',    // Slate 600
+    primary: '#0ea5e9', // Sky Blue
+    indigo: '#6366f1',  // Indigo
+    emerald: '#10b981', // Emerald
+    purple: '#a855f7',  // Purple
+    amber: '#f59e0b',   // Amber
+    rose: '#f43f5e',    // Rose
+    cyan: '#06b6d4',    // Cyan
+    rainbow: '#6366f1',
+};
+
 const activeColor = computed(() => {
     if (props.color) return props.color;
-
-    const hexThemes = {
-        default: '#4B5563', // Warna default Inertia di app.js
-        dark: '#4B5563',    // #4B5563 (Slate Gray)
-        primary: '#0ea5e9', // Sky Blue
-        indigo: '#6366f1',  // Indigo
-        emerald: '#10b981', // Emerald
-        purple: '#a855f7',  // Purple
-        amber: '#f59e0b',   // Amber
-        rose: '#f43f5e',    // Rose
-        cyan: '#06b6d4',    // Cyan
-        rainbow: null,
-    };
-
-    return hexThemes[props.colorTheme] || '#4B5563';
+    return themeHexMap[props.colorTheme] || '#6366f1';
 });
 
 // Preset ketebalan piksel
 const presetThicknessMap = {
     xs: '2px',
-    sm: '3px',   // Standar Inertia/NProgress
+    sm: '3px',
     md: '4px',
     lg: '6px',
     xl: '8px',
@@ -226,7 +237,7 @@ const thicknessValue = computed(() => {
     return presetThicknessMap[props.thickness] || '3px';
 });
 
-// Style kontainer terluar bar (PASTIKAN SELALU MEMILIKI TINGGI/LEBAR FISIK YANG NYATA)
+// Style kontainer terluar bar
 const containerStyle = computed(() => {
     const style = {
         zIndex: props.zIndex,
@@ -257,97 +268,106 @@ const roundedClass = computed(() => {
     return map[props.rounded] || 'rounded-none';
 });
 
-// Palet warna tema bawaan
+// Palet warna tema lengkap untuk 5 tipe dan 7 varian
 const themeColors = computed(() => {
     const themes = {
         default: {
-            bar: 'bg-[#4B5563]',
-            gradient: 'from-slate-600 via-zinc-700 to-zinc-900',
-            glow: 'rgba(75, 85, 99, 0.5)',
-            text: 'text-zinc-600 dark:text-zinc-400',
-            ring: 'stroke-[#4B5563]',
-            pill: 'border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90',
+            bar: 'bg-indigo-600 dark:bg-indigo-500',
+            softBar: 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
+            gradient: 'from-indigo-500 via-purple-500 to-pink-500',
+            glowColor: 'rgba(99, 102, 241, 0.65)',
+            text: 'text-indigo-600 dark:text-indigo-400',
+            ring: 'stroke-indigo-600 dark:stroke-indigo-400',
+            pill: 'border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/90 dark:bg-indigo-950/70',
         },
         dark: {
-            bar: 'bg-[#4B5563]',
-            gradient: 'from-slate-600 via-zinc-700 to-zinc-900',
-            glow: 'rgba(75, 85, 99, 0.5)',
-            text: 'text-zinc-700 dark:text-zinc-300',
-            ring: 'stroke-[#4B5563]',
-            pill: 'border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90',
+            bar: 'bg-slate-700 dark:bg-slate-400',
+            softBar: 'bg-slate-500/20 text-slate-800 dark:text-slate-200 border-slate-500/30',
+            gradient: 'from-slate-700 via-slate-600 to-zinc-900',
+            glowColor: 'rgba(100, 116, 139, 0.65)',
+            text: 'text-slate-700 dark:text-slate-300',
+            ring: 'stroke-slate-700 dark:stroke-slate-400',
+            pill: 'border-slate-300 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-900/90',
         },
         primary: {
-            bar: 'bg-sky-500',
-            gradient: 'from-sky-400 via-primary-500 to-indigo-600',
-            glow: 'rgba(14, 165, 233, 0.5)',
-            text: 'text-primary-600 dark:text-primary-400',
-            ring: 'stroke-primary-500',
-            pill: 'border-primary-200 dark:border-primary-800/60 bg-primary-50/80 dark:bg-primary-950/70',
+            bar: 'bg-sky-500 dark:bg-sky-400',
+            softBar: 'bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-500/30',
+            gradient: 'from-sky-400 via-blue-500 to-indigo-600',
+            glowColor: 'rgba(14, 165, 233, 0.65)',
+            text: 'text-sky-600 dark:text-sky-400',
+            ring: 'stroke-sky-500 dark:stroke-sky-400',
+            pill: 'border-sky-200 dark:border-sky-800/60 bg-sky-50/90 dark:bg-sky-950/70',
         },
         indigo: {
-            bar: 'bg-indigo-600',
-            gradient: 'from-indigo-500 via-purple-600 to-violet-600',
-            glow: 'rgba(99, 102, 241, 0.5)',
+            bar: 'bg-indigo-600 dark:bg-indigo-500',
+            softBar: 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
+            gradient: 'from-indigo-500 via-purple-500 to-pink-500',
+            glowColor: 'rgba(99, 102, 241, 0.65)',
             text: 'text-indigo-600 dark:text-indigo-400',
-            ring: 'stroke-indigo-600',
-            pill: 'border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/80 dark:bg-indigo-950/70',
+            ring: 'stroke-indigo-600 dark:stroke-indigo-400',
+            pill: 'border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/90 dark:bg-indigo-950/70',
         },
         emerald: {
-            bar: 'bg-emerald-500',
+            bar: 'bg-emerald-500 dark:bg-emerald-400',
+            softBar: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
             gradient: 'from-emerald-400 via-teal-500 to-cyan-500',
-            glow: 'rgba(16, 185, 129, 0.5)',
+            glowColor: 'rgba(16, 185, 129, 0.65)',
             text: 'text-emerald-600 dark:text-emerald-400',
-            ring: 'stroke-emerald-500',
-            pill: 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/70',
+            ring: 'stroke-emerald-500 dark:stroke-emerald-400',
+            pill: 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/90 dark:bg-emerald-950/70',
         },
         purple: {
-            bar: 'bg-purple-600',
+            bar: 'bg-purple-600 dark:bg-purple-500',
+            softBar: 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/30',
             gradient: 'from-purple-500 via-fuchsia-500 to-pink-500',
-            glow: 'rgba(168, 85, 247, 0.5)',
+            glowColor: 'rgba(168, 85, 247, 0.65)',
             text: 'text-purple-600 dark:text-purple-400',
-            ring: 'stroke-purple-600',
-            pill: 'border-purple-200 dark:border-purple-800/60 bg-purple-50/80 dark:bg-purple-950/70',
+            ring: 'stroke-purple-600 dark:stroke-purple-400',
+            pill: 'border-purple-200 dark:border-purple-800/60 bg-purple-50/90 dark:bg-purple-950/70',
         },
         amber: {
-            bar: 'bg-amber-500',
+            bar: 'bg-amber-500 dark:bg-amber-400',
+            softBar: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30',
             gradient: 'from-amber-400 via-orange-500 to-rose-500',
-            glow: 'rgba(245, 158, 11, 0.5)',
+            glowColor: 'rgba(245, 158, 11, 0.65)',
             text: 'text-amber-600 dark:text-amber-400',
-            ring: 'stroke-amber-500',
-            pill: 'border-amber-200 dark:border-amber-800/60 bg-amber-50/80 dark:bg-amber-950/70',
+            ring: 'stroke-amber-500 dark:stroke-amber-400',
+            pill: 'border-amber-200 dark:border-amber-800/60 bg-amber-50/90 dark:bg-amber-950/70',
         },
         rose: {
-            bar: 'bg-rose-500',
-            gradient: 'from-rose-500 via-red-500 to-orange-500',
-            glow: 'rgba(244, 63, 94, 0.5)',
+            bar: 'bg-rose-500 dark:bg-rose-400',
+            softBar: 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30',
+            gradient: 'from-rose-500 via-pink-500 to-red-500',
+            glowColor: 'rgba(244, 63, 94, 0.65)',
             text: 'text-rose-600 dark:text-rose-400',
-            ring: 'stroke-rose-500',
-            pill: 'border-rose-200 dark:border-rose-800/60 bg-rose-50/80 dark:bg-rose-950/70',
+            ring: 'stroke-rose-500 dark:stroke-rose-400',
+            pill: 'border-rose-200 dark:border-rose-800/60 bg-rose-50/90 dark:bg-rose-950/70',
         },
         cyan: {
-            bar: 'bg-cyan-500',
+            bar: 'bg-cyan-500 dark:bg-cyan-400',
+            softBar: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
             gradient: 'from-cyan-400 via-sky-500 to-blue-600',
-            glow: 'rgba(6, 182, 212, 0.5)',
+            glowColor: 'rgba(6, 182, 212, 0.65)',
             text: 'text-cyan-600 dark:text-cyan-400',
-            ring: 'stroke-cyan-500',
-            pill: 'border-cyan-200 dark:border-cyan-800/60 bg-cyan-50/80 dark:bg-cyan-950/70',
+            ring: 'stroke-cyan-500 dark:stroke-cyan-400',
+            pill: 'border-cyan-200 dark:border-cyan-800/60 bg-cyan-50/90 dark:bg-cyan-950/70',
         },
         rainbow: {
             bar: 'bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-cyan-400 to-purple-500',
+            softBar: 'bg-gradient-to-r from-rose-500/30 via-emerald-400/30 to-purple-500/30 border-purple-500/40',
             gradient: 'from-rose-500 via-amber-400 via-emerald-400 via-cyan-400 to-purple-500',
-            glow: 'rgba(236, 72, 153, 0.5)',
+            glowColor: 'rgba(236, 72, 153, 0.65)',
             text: 'text-purple-600 dark:text-purple-400',
-            ring: 'stroke-purple-500',
-            pill: 'border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90',
+            ring: 'stroke-purple-500 dark:stroke-purple-400',
+            pill: 'border-purple-200 dark:border-purple-800 bg-white/90 dark:bg-slate-900/90',
         },
     };
-    return themes[props.colorTheme] || themes.default;
+    return themes[props.colorTheme] || themes.indigo;
 });
 
 // Bar Fill Class
 const barFillClass = computed(() => {
     if (props.barColor) return props.barColor;
-
     if (props.color) return ''; // Gunakan style.backgroundColor
 
     if (props.variant === 'solid') {
@@ -360,8 +380,24 @@ const barFillClass = computed(() => {
             : `bg-gradient-to-r ${themeColors.value.gradient}`;
     }
 
+    if (props.variant === 'soft') {
+        return `${themeColors.value.softBar} border-y`;
+    }
+
     if (props.variant === 'glass') {
-        return `${themeColors.value.bar} opacity-80 backdrop-blur-md`;
+        return 'bg-white/60 dark:bg-white/20 backdrop-blur-md border border-white/30 shadow-sm';
+    }
+
+    if (props.variant === 'surface') {
+        return 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm';
+    }
+
+    if (props.variant === 'glow') {
+        return themeColors.value.bar;
+    }
+
+    if (props.variant === 'outline') {
+        return `${themeColors.value.bar} ring-1 ring-white/30`;
     }
 
     return themeColors.value.bar;
@@ -386,20 +422,21 @@ const barFillStyle = computed(() => {
     }
 
     if (props.glow || props.variant === 'glow') {
-        const glowColor = props.color || themeColors.value.glow;
-        style.boxShadow = `0 0 10px ${glowColor}, 0 0 5px ${glowColor}`;
+        const glowCol = props.color || themeColors.value.glowColor;
+        style.boxShadow = `0 0 12px 1px ${glowCol}, 0 0 4px ${glowCol}`;
     }
 
     return style;
 });
 
-// Efek bayangan NProgress peg di ujung kanan bar
+// Efek pendaran ujung bar (bersih, rata horizontal, tanpa artefak garis miring)
 const pegStyle = computed(() => {
     if (!props.peg) return {};
-    const col = props.color || activeColor.value || '#4B5563';
+    const col = props.color || activeColor.value;
     return {
-        boxShadow: `0 0 12px ${col}, 0 0 6px ${col}`,
-        transform: 'rotate(3deg) translate(0px, -4px)',
+        background: `linear-gradient(to right, transparent, ${col})`,
+        boxShadow: `0 0 8px ${col}`,
+        opacity: 0.85,
     };
 });
 
@@ -407,12 +444,12 @@ const pegStyle = computed(() => {
 const trackFillClass = computed(() => {
     if (props.trackColor) return props.trackColor;
     if (!props.track || props.type === 'minimal') return 'bg-transparent';
-    return 'bg-zinc-200/50 dark:bg-zinc-800/50';
+    return 'bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-xs';
 });
 
 // Posisi bar
 const positionClass = computed(() => {
-    // 1. Mode Inline / Relative (untuk preview, kartu komponen, atau diletakkan di dalam kontainer flex/grid)
+    // 1. Mode Inline / Relative
     if (props.position === 'inline' || props.position === 'relative' || props.position === 'static') {
         return 'relative inline-flex';
     }
@@ -435,23 +472,22 @@ const positionClass = computed(() => {
     }
 
     // 3. Floating & Circular
-    // Jika fixed=false dan posisi bukan salah satu koordinat sudut layar eksplisit, render inline agar tidak lari ke pojok layar
     if (!props.fixed && !['bottom-right', 'bottom-left', 'top-right', 'top-left', 'bottom-center'].includes(props.position)) {
         return 'relative inline-flex';
     }
 
     switch (props.position) {
         case 'bottom-left':
-            return `${isFixed} bottom-6 left-6`;
+            return `${isFixed} bottom-4 left-4 sm:bottom-6 sm:left-6`;
         case 'top-right':
-            return `${isFixed} top-6 right-6`;
+            return `${isFixed} top-4 right-4 sm:top-6 sm:right-6`;
         case 'top-left':
-            return `${isFixed} top-6 left-6`;
+            return `${isFixed} top-4 left-4 sm:top-6 sm:left-6`;
         case 'bottom-center':
-            return `${isFixed} bottom-6 left-1/2 -translate-x-1/2`;
+            return `${isFixed} bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2`;
         case 'bottom-right':
         default:
-            return `${isFixed} bottom-6 right-6`;
+            return `${isFixed} bottom-4 right-4 sm:bottom-6 sm:right-6`;
     }
 });
 
@@ -475,9 +511,32 @@ const handleClick = () => {
     }
 };
 
-// Palet Solid & Soft Background Maps
+// Tooltip Follower Clamping & Placement Logic
+const followerPlacement = computed(() => {
+    if (isVertical.value) {
+        return props.position === 'left' ? 'left-side' : 'right-side';
+    }
+    // Jika bar di atas layar, tooltip wajib menggantung di bawah bar agar tidak keluar viewport / tidak tabrakan dengan header
+    return props.position === 'bottom' ? 'above' : 'below';
+});
+
+// Transform translation dinamis: -0% saat 0, -50% saat 50, -100% saat 100 agar TIDAK PERNAH terpotong di tepi kiri maupun kanan layar!
+const followerTranslateStyle = computed(() => {
+    if (isVertical.value) {
+        const ty = -currentProgress.value;
+        return {
+            transform: `translateY(${ty}%)`,
+        };
+    }
+    const tx = -currentProgress.value;
+    return {
+        transform: `translateX(${tx}%)`,
+    };
+});
+
+// Palet Solid & Soft Background Maps untuk Floating Pill & Circular
 const solidBgMap = {
-    default: 'bg-slate-900 dark:bg-slate-800 text-white',
+    default: 'bg-indigo-600 text-white',
     dark: 'bg-slate-900 dark:bg-slate-800 text-white',
     primary: 'bg-sky-600 text-white',
     indigo: 'bg-indigo-600 text-white',
@@ -490,16 +549,16 @@ const solidBgMap = {
 };
 
 const softBgMap = {
-    default: 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200',
+    default: 'bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300',
     dark: 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200',
-    primary: 'bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300',
-    indigo: 'bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300',
-    emerald: 'bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300',
-    purple: 'bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300',
-    amber: 'bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
-    rose: 'bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300',
-    cyan: 'bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300',
-    rainbow: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white',
+    primary: 'bg-sky-50 dark:bg-sky-950/70 border border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300',
+    indigo: 'bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300',
+    emerald: 'bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300',
+    purple: 'bg-purple-50 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300',
+    amber: 'bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
+    rose: 'bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300',
+    cyan: 'bg-cyan-50 dark:bg-cyan-950/70 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300',
+    rainbow: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700',
 };
 
 // Kalkulasi SVG Circular
@@ -524,7 +583,7 @@ const activeIcon = computed(() => {
     return 'arrow_upward';
 });
 
-// Visibilitas Icon & Text pada Circular
+// Visibilitas Icon & Text pada Circular / Pill
 const hasIcon = computed(() => {
     if (!props.showIcon) return false;
     return !!activeIcon.value;
@@ -567,7 +626,7 @@ const circularContentLayout = computed(() => {
 // Styling Circular Button
 const circularBtnClass = computed(() => {
     const classes = [
-        'group relative flex items-center justify-center rounded-full transition-all duration-200 select-none',
+        'group relative flex items-center justify-center rounded-full transition-all duration-300 select-none shadow-lg',
         isClickable.value ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-default',
     ];
 
@@ -575,17 +634,18 @@ const circularBtnClass = computed(() => {
         if (!props.color) {
             classes.push(solidBgMap[props.colorTheme] || solidBgMap.default);
         }
-        classes.push('shadow-lg');
     } else if (props.variant === 'soft') {
-        classes.push(softBgMap[props.colorTheme] || softBgMap.default, 'shadow-md');
+        classes.push(softBgMap[props.colorTheme] || softBgMap.default);
     } else if (props.variant === 'surface' || props.variant === 'outline') {
-        classes.push('bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 shadow-md');
+        classes.push('bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100');
     } else if (props.variant === 'gradient') {
-        classes.push(`bg-gradient-to-br ${themeColors.value.gradient} text-white shadow-lg`);
+        classes.push(`bg-gradient-to-br ${themeColors.value.gradient} text-white`);
     } else if (props.variant === 'glass') {
-        classes.push('bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/60 shadow-lg');
+        classes.push('bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-700/60 text-slate-800 dark:text-slate-100');
+    } else if (props.variant === 'glow') {
+        classes.push(solidBgMap[props.colorTheme] || solidBgMap.default);
     } else {
-        classes.push(solidBgMap[props.colorTheme] || solidBgMap.default, 'shadow-lg');
+        classes.push(solidBgMap[props.colorTheme] || solidBgMap.default);
     }
 
     return classes.join(' ');
@@ -602,16 +662,18 @@ const circularBtnStyle = computed(() => {
         style.color = '#ffffff';
     }
 
+    if (props.glow || props.variant === 'glow') {
+        const glowCol = props.color || themeColors.value.glowColor;
+        style.boxShadow = `0 0 16px 2px ${glowCol}`;
+    }
+
     return style;
 });
 
 // SVG Circular Track Class
 const circularTrackClass = computed(() => {
     if (props.trackColor) return props.trackColor;
-    if (props.variant === 'solid') {
-        return 'stroke-white/25';
-    }
-    if (props.variant === 'gradient') {
+    if (props.variant === 'solid' || props.variant === 'gradient') {
         return 'stroke-white/20';
     }
     if (props.variant === 'soft') {
@@ -691,21 +753,26 @@ const circularTextColorStyle = computed(() => {
 // Styling Floating Pill
 const floatingPillClass = computed(() => {
     const classes = [
-        'group flex items-center gap-2.5 px-3.5 py-2 rounded-full transition-all duration-200 select-none',
-        isClickable.value ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-default',
+        'group flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-300 select-none shadow-xl',
+        isClickable.value ? 'cursor-pointer hover:scale-[1.03] active:scale-[0.98]' : 'cursor-default',
     ];
 
     if (props.variant === 'solid') {
         if (!props.color) {
             classes.push(solidBgMap[props.colorTheme] || solidBgMap.default);
         }
-        classes.push('shadow-lg');
     } else if (props.variant === 'soft') {
-        classes.push(softBgMap[props.colorTheme] || softBgMap.default, 'shadow-md');
+        classes.push(softBgMap[props.colorTheme] || softBgMap.default);
     } else if (props.variant === 'surface' || props.variant === 'outline') {
-        classes.push('bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-md');
+        classes.push('bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100');
+    } else if (props.variant === 'gradient') {
+        classes.push(`bg-gradient-to-r ${themeColors.value.gradient} text-white`);
+    } else if (props.variant === 'glass') {
+        classes.push('bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-700/60 text-slate-800 dark:text-slate-100');
+    } else if (props.variant === 'glow') {
+        classes.push(solidBgMap[props.colorTheme] || solidBgMap.default);
     } else {
-        classes.push(solidBgMap[props.colorTheme] || solidBgMap.default, 'shadow-lg');
+        classes.push(solidBgMap[props.colorTheme] || solidBgMap.default);
     }
 
     return classes.join(' ');
@@ -717,12 +784,16 @@ const floatingPillStyle = computed(() => {
         style.backgroundColor = props.color;
         style.color = '#ffffff';
     }
+    if (props.glow || props.variant === 'glow') {
+        const glowCol = props.color || themeColors.value.glowColor;
+        style.boxShadow = `0 0 16px 2px ${glowCol}`;
+    }
     return style;
 });
 </script>
 
 <template>
-    <!-- MODE 1, 4, & INERTIA: LINEAR TOP BAR (PERSIS SEPERTI APP.JS / NPROGRESS) -->
+    <!-- MODE 1, 4, & INERTIA: LINEAR BAR -->
     <div
         v-if="type === 'bar' || type === 'minimal' || type === 'inertia'"
         :class="[
@@ -750,59 +821,80 @@ const floatingPillStyle = computed(() => {
                 ]"
                 :style="barFillStyle"
             >
-                <!-- Inertia / NProgress Signature Peg (Glow Shadow di Ujung Bar) -->
+                <!-- Inertia / NProgress Signature Peg (Glow Rata di Ujung Bar) -->
                 <div
                     v-if="peg && currentProgress > 0 && !isVertical"
-                    class="absolute right-0 top-0 w-24 h-full pointer-events-none opacity-100"
+                    class="absolute right-0 top-0 w-16 h-full pointer-events-none"
                     :style="pegStyle"
                 />
 
-                <!-- Percentage Inside Bar -->
+                <!-- Percentage Inside Bar (Untuk Bar dengan Ketebalan Cukup) -->
                 <span
                     v-if="showPercentage && percentagePosition === 'inside' && !isVertical"
-                    class="absolute inset-0 flex items-center justify-end pr-2 text-[10px] font-bold text-white leading-none select-none drop-shadow-sm"
+                    class="absolute inset-0 flex items-center justify-end pr-2 text-[10px] font-bold text-white leading-none select-none drop-shadow-sm font-mono"
                 >
                     <slot name="percentage" :progress="currentProgress">
                         {{ prefix }}{{ Math.round(currentProgress) }}{{ suffix }}
                     </slot>
                 </span>
 
-                <!-- Head Indicator Opsional (Dot / Pulse / Glow Spark / Icon) -->
+                <!-- Head Indicator Refined (Dot / Pulse / Glow Spark / Icon) -->
                 <div
                     v-if="headIndicator !== 'none' && currentProgress > 0"
                     :class="[
-                        'absolute flex items-center justify-center transition-all duration-75',
+                        'absolute flex items-center justify-center transition-all duration-75 z-10',
                         isVertical
                             ? 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2'
                             : 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2',
                     ]"
                 >
-                    <!-- Dot -->
+                    <!-- Dot: Precision Jewel Dot -->
                     <span
                         v-if="headIndicator === 'dot'"
-                        class="w-2.5 h-2.5 rounded-full bg-white shadow-md border border-neutral-300 dark:border-neutral-700"
+                        class="w-3 h-3 rounded-full bg-white shadow-md ring-2 transition-transform"
+                        :style="{
+                            boxShadow: `0 2px 6px rgba(0,0,0,0.25)`,
+                            borderColor: activeColor,
+                        }"
+                        :class="[themeColors.text, 'border-2']"
                     />
 
-                    <!-- Pulse Radar -->
-                    <span v-else-if="headIndicator === 'pulse'" class="relative flex h-3 w-3">
+                    <!-- Pulse: High-Tech Radar Radar -->
+                    <span v-else-if="headIndicator === 'pulse'" class="relative flex items-center justify-center h-4 w-4">
                         <span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                            :style="{ backgroundColor: activeColor }"
                         />
                         <span
-                            class="relative inline-flex rounded-full h-3 w-3 bg-white shadow-md border border-neutral-200"
+                            class="relative inline-flex rounded-full h-2.5 w-2.5 bg-white shadow-md ring-2 ring-white/80"
+                            :style="{ backgroundColor: '#ffffff' }"
                         />
                     </span>
 
-                    <!-- Glow Spark -->
+                    <!-- Glow Spark: Brilliant Radiant Spark Head (No Blurry Smudge) -->
                     <span
                         v-else-if="headIndicator === 'glow-spark'"
-                        class="w-3.5 h-3.5 rounded-full bg-white blur-[1px] shadow-[0_0_10px_2px_rgba(255,255,255,0.9)]"
-                    />
+                        class="relative flex items-center justify-center"
+                    >
+                        <span
+                            class="w-3.5 h-3.5 rounded-full absolute opacity-90 animate-pulse"
+                            :style="{
+                                background: `radial-gradient(circle, ${activeColor} 0%, transparent 70%)`,
+                                transform: 'scale(2.2)',
+                            }"
+                        />
+                        <span
+                            class="w-2.5 h-2.5 rounded-full bg-white ring-2 ring-white/95 shadow-md relative z-10"
+                            :style="{
+                                boxShadow: `0 0 10px 2px ${activeColor}`,
+                            }"
+                        />
+                    </span>
 
-                    <!-- Moving Icon -->
+                    <!-- Moving Icon: Directional Navigator -->
                     <span
                         v-else-if="headIndicator === 'icon'"
-                        class="w-5 h-5 rounded-full bg-white dark:bg-neutral-800 shadow-md flex items-center justify-center border border-neutral-200 dark:border-neutral-700"
+                        class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center border border-slate-200 dark:border-slate-700"
                     >
                         <slot name="icon" :is-complete="isComplete">
                             <span
@@ -815,14 +907,53 @@ const floatingPillStyle = computed(() => {
                     </span>
                 </div>
 
-                <!-- Follower Badge (Persentase Melayang Mengikuti Ujung Bar) -->
+                <!-- Follower Badge Refined (Persentase Melayang Mengikuti Ujung Bar) -->
+                <!-- Menggunakan smart placement: jika bar di top, tooltip menggantung di bawah bar dengan caret ke atas -->
                 <div
-                    v-if="showPercentage && percentagePosition === 'follower' && !isVertical"
-                    class="absolute -top-7 right-0 translate-x-1/2 px-1.5 py-0.5 rounded bg-neutral-900/90 dark:bg-neutral-100/90 text-white dark:text-neutral-900 text-[10px] font-bold shadow-md pointer-events-none backdrop-blur-sm select-none"
+                    v-if="showPercentage && percentagePosition === 'follower'"
+                    :class="[
+                        'absolute pointer-events-none select-none z-30 transition-all duration-75',
+                        followerPlacement === 'below' ? 'top-full mt-2 right-0' : '',
+                        followerPlacement === 'above' ? 'bottom-full mb-2 right-0' : '',
+                        followerPlacement === 'left-side' ? 'left-full ml-2 bottom-0' : '',
+                        followerPlacement === 'right-side' ? 'right-full mr-2 bottom-0' : '',
+                    ]"
+                    :style="followerTranslateStyle"
                 >
-                    <slot name="percentage" :progress="currentProgress">
-                        {{ prefix }}{{ Math.round(currentProgress) }}{{ suffix }}
-                    </slot>
+                    <div
+                        class="relative flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-900/95 dark:bg-slate-950/95 text-white border border-white/15 shadow-xl backdrop-blur-md text-[11px] font-mono font-bold tracking-tight whitespace-nowrap"
+                    >
+                        <!-- Caret Arrow (Pointing to the bar) -->
+                        <span
+                            v-if="followerPlacement === 'below'"
+                            class="absolute -top-1 right-2 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-950 border-t border-l border-white/15"
+                        />
+                        <span
+                            v-else-if="followerPlacement === 'above'"
+                            class="absolute -bottom-1 right-2 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-950 border-b border-r border-white/15"
+                        />
+                        <span
+                            v-else-if="followerPlacement === 'left-side'"
+                            class="absolute -left-1 bottom-1.5 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-950 border-b border-l border-white/15"
+                        />
+                        <span
+                            v-else-if="followerPlacement === 'right-side'"
+                            class="absolute -right-1 bottom-1.5 w-2 h-2 rotate-45 bg-slate-900 dark:bg-slate-950 border-t border-r border-white/15"
+                        />
+
+                        <!-- Percentage Content Slot -->
+                        <slot name="percentage" :progress="currentProgress">
+                            <span>{{ prefix }}{{ Math.round(currentProgress) }}{{ suffix }}</span>
+                        </slot>
+
+                        <!-- Optional Reading Time inside follower -->
+                        <span
+                            v-if="showReadingTime && readingTimeRemaining > 0"
+                            class="text-[9px] font-normal text-slate-300 border-l border-white/20 pl-1.5"
+                        >
+                            ~{{ readingTimeRemaining }}m
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -831,21 +962,22 @@ const floatingPillStyle = computed(() => {
         <div
             v-if="showSpinner"
             :class="[
-                'fixed top-3.5 right-4 pointer-events-none transition-all duration-300 z-[99999]',
+                'fixed top-3.5 right-4 pointer-events-none transition-all duration-300',
                 (isScrolling || currentProgress > 0) ? 'opacity-100 scale-100' : 'opacity-0 scale-75',
             ]"
+            :style="{ zIndex: zIndex }"
         >
             <div
                 class="w-4 h-4 rounded-full border-2 border-transparent animate-spin"
                 :style="{
-                    borderTopColor: color || activeColor || '#4B5563',
-                    borderLeftColor: color || activeColor || '#4B5563',
+                    borderTopColor: color || activeColor,
+                    borderLeftColor: color || activeColor,
                 }"
             />
         </div>
     </div>
 
-    <!-- MODE 2: FLOATING PILL BADGE (SOLID, SURFACE & SOFT) -->
+    <!-- MODE 2: FLOATING PILL (DYNAMIC ISLAND CAPSULE WITH PROGRESS & READING TIME) -->
     <div
         v-else-if="type === 'floating-pill'"
         :class="[
@@ -862,41 +994,42 @@ const floatingPillStyle = computed(() => {
             :title="isClickable ? 'Scroll kembali ke atas' : ''"
             @click="handleClick"
         >
+            <!-- Left Action Icon -->
             <div
-                class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5"
-                :class="variant === 'solid' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'"
+                v-if="hasIcon"
+                class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5 shadow-xs"
+                :class="variant === 'solid' || variant === 'gradient' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'"
             >
                 <slot name="icon" :is-complete="isComplete">
-                    <span
-                        class="material-symbols-outlined text-[15px] leading-none"
-                    >
+                    <span class="material-symbols-outlined text-[16px] leading-none">
                         {{ activeIcon }}
                     </span>
                 </slot>
             </div>
 
+            <!-- Content Details: Label, Reading Time, Percentage, Micro-bar -->
             <div class="flex flex-col text-left">
                 <div class="flex items-center gap-2">
                     <span
                         v-if="label"
                         class="text-[11px] font-semibold hidden sm:inline"
-                        :class="variant === 'solid' ? 'text-white' : 'text-slate-800 dark:text-slate-200'"
+                        :class="variant === 'solid' || variant === 'gradient' ? 'text-white' : 'text-slate-800 dark:text-slate-200'"
                     >
                         {{ label }}
                     </span>
 
                     <span
                         v-if="showReadingTime && readingTimeRemaining > 0"
-                        class="text-[10px] font-normal"
-                        :class="variant === 'solid' ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'"
+                        class="text-[10px] font-medium"
+                        :class="variant === 'solid' || variant === 'gradient' ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'"
                     >
                         ~{{ readingTimeRemaining }} mnt
                     </span>
 
                     <span
                         v-if="showPercentage"
-                        class="text-xs font-black leading-none"
-                        :class="variant === 'solid' ? 'text-white' : 'text-slate-900 dark:text-white'"
+                        class="text-xs font-mono font-bold leading-none"
+                        :class="variant === 'solid' || variant === 'gradient' ? 'text-white' : 'text-slate-900 dark:text-white'"
                     >
                         <slot name="percentage" :progress="currentProgress">
                             {{ prefix }}{{ Math.round(currentProgress) }}{{ suffix }}
@@ -904,13 +1037,14 @@ const floatingPillStyle = computed(() => {
                     </span>
                 </div>
 
+                <!-- Integrated Micro Progress Bar -->
                 <div
-                    class="w-20 h-1 mt-1 rounded-full overflow-hidden"
-                    :class="variant === 'solid' ? 'bg-white/30' : 'bg-slate-200 dark:bg-slate-700'"
+                    class="w-24 h-1.5 mt-1.5 rounded-full overflow-hidden"
+                    :class="variant === 'solid' || variant === 'gradient' ? 'bg-white/25' : 'bg-slate-200 dark:bg-slate-700'"
                 >
                     <div
                         class="h-full rounded-full transition-[width] duration-75 ease-out"
-                        :class="variant === 'solid' ? 'bg-white' : themeColors.bar"
+                        :class="variant === 'solid' || variant === 'gradient' ? 'bg-white' : themeColors.bar"
                         :style="{ width: `${currentProgress}%` }"
                     />
                 </div>
@@ -918,7 +1052,7 @@ const floatingPillStyle = computed(() => {
         </button>
     </div>
 
-    <!-- MODE 3: CIRCULAR SVG RING (WITH BACK-TO-TOP & SOLID ICON + TEKS) -->
+    <!-- MODE 3: CIRCULAR SVG GAUGE (WITH BACK-TO-TOP & PROPORTIONAL CONTENT) -->
     <div
         v-else-if="type === 'circular'"
         :class="[
@@ -940,6 +1074,7 @@ const floatingPillStyle = computed(() => {
                 :height="circleSize"
                 class="absolute inset-0 -rotate-90 transform pointer-events-none"
             >
+                <!-- Track Ring -->
                 <circle
                     :cx="circleSize / 2"
                     :cy="circleSize / 2"
@@ -949,6 +1084,7 @@ const floatingPillStyle = computed(() => {
                     :class="[circularTrackClass, 'transition-colors']"
                 />
 
+                <!-- Active Progress Ring -->
                 <circle
                     :cx="circleSize / 2"
                     :cy="circleSize / 2"
@@ -966,7 +1102,7 @@ const floatingPillStyle = computed(() => {
                 />
             </svg>
 
-            <!-- KONTEN GABUNGAN ICON + TEKS (SOLID, TERPUSAT, BERSIH) -->
+            <!-- Centered Content: Icon & Percentage Text -->
             <div
                 class="relative z-10 flex flex-col items-center justify-center text-center select-none pointer-events-none"
                 :class="circularContentLayout.gap"
@@ -988,7 +1124,7 @@ const floatingPillStyle = computed(() => {
                     <!-- Teks / Percentage -->
                     <span
                         v-if="hasText"
-                        class="font-black leading-none tracking-tight"
+                        class="font-mono font-bold leading-none tracking-tight"
                         :class="[
                             circularContentLayout.textSize,
                             circularTextColorClass,

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
 import { useClickOutside } from '@/Composables/Pack/useClickOutside.js';
+import Badge from './Badge.vue';
 
 const props = defineProps({
     /**
@@ -75,15 +76,15 @@ const props = defineProps({
     radius: {
         type: String,
         default: 'xl',
-        validator: (v) => ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'].includes(v),
+        validator: (v) => ['none', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'full'].includes(v),
     },
     /**
-     * 2. BENTUK: Ukuran komponen (sm, md, lg)
+     * 2. BENTUK: Ukuran komponen (xs, sm, md, lg, xl)
      */
     size: {
         type: String,
         default: 'md',
-        validator: (v) => ['sm', 'md', 'lg'].includes(v),
+        validator: (v) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(v),
     },
     /**
      * 3. TEKS KONTEN: Label, placeholder, hint, error
@@ -123,9 +124,22 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    leadingIcon: {
+        type: String,
+        default: '',
+    },
     tagIcon: {
         type: String,
         default: '',
+    },
+    /**
+     * Opsi dropdown / saran autocomplete:
+     * - true: dropdown saran opsi dimunculkan saat fokus/mengetik (jika options tersedia)
+     * - false: dropdown saran opsi tidak dimunculkan sama sekali (murni input tag tanpa autocomplete)
+     */
+    showOptions: {
+        type: Boolean,
+        default: true,
     },
     /**
      * Buat tag otomatis saat input kehilangan fokus (blur)
@@ -171,7 +185,21 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['update:modelValue', 'change', 'tag-add', 'tag-remove', 'max-tags-reached']);
+const emit = defineEmits([
+    'update:modelValue',
+    'change',
+    'tag-add',
+    'tag-remove',
+    'max-tags-reached',
+    'duplicate-tag',
+    'invalid-tag',
+    'clear',
+    'focus',
+    'blur',
+]);
+
+// Ikon leading yang aktif (mendukung prop leadingIcon maupun alias icon)
+const effectiveLeadingIcon = computed(() => props.leadingIcon || props.icon || '');
 
 // State Internal
 const containerRef = ref(null);
@@ -228,6 +256,7 @@ const getTagIcon = (tagText) => {
 
 // Filter Options Berdasarkan Ketikan Input dan Exclude Tag yang Sudah Dipilih
 const filteredOptions = computed(() => {
+    if (!props.showOptions || normalizedOptions.value.length === 0) return [];
     const query = inputValue.value.trim().toLowerCase();
     return normalizedOptions.value.filter((opt) => {
         const isAlreadySelected = !props.allowDuplicates && currentTags.value.some((t) => t.toLowerCase() === opt.label.toLowerCase());
@@ -320,6 +349,53 @@ const getTagClasses = (tagText) => {
     }
 };
 
+// Normalisasi warna untuk Badge component
+const getBadgeColor = (tagText) => {
+    if (props.tagVariant === 'random') {
+        const colors = ['emerald', 'primary', 'purple', 'warning', 'danger', 'info', 'indigo'];
+        let hash = 0;
+        for (let i = 0; i < tagText.length; i++) {
+            hash = tagText.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return colors[Math.abs(hash) % colors.length];
+    }
+    switch (props.tagVariant) {
+        case 'primary': return 'primary';
+        case 'emerald': return 'emerald';
+        case 'indigo': return 'indigo';
+        case 'rose': return 'danger';
+        case 'amber': return 'warning';
+        case 'purple': return 'purple';
+        case 'cyan': return 'info';
+        case 'dark':
+        case 'default':
+        default: return 'neutral';
+    }
+};
+
+const badgeSize = computed(() => {
+    switch (props.size) {
+        case 'xs': return 'xs';
+        case 'sm': return 'xs';
+        case 'lg': return 'md';
+        case 'xl': return 'lg';
+        case 'md':
+        default: return 'sm';
+    }
+});
+
+const getBadgeRounded = (r) => {
+    if (r === '2xl' || r === '3xl') return 'xl';
+    return r || 'full';
+};
+
+const getDarkBadgeClasses = () => {
+    if (props.tagVariant !== 'dark') return '';
+    if (props.tagStyle === 'solid') return 'bg-zinc-900! text-white! border-zinc-800!';
+    if (props.tagStyle === 'outline') return 'border-zinc-800! text-zinc-900! dark:text-zinc-100!';
+    return 'bg-zinc-100! text-zinc-800! dark:bg-zinc-800! dark:text-zinc-100!';
+};
+
 // 2. BENTUK: Helper class radius
 const getRadiusClass = (radius) => {
     switch (radius) {
@@ -328,6 +404,7 @@ const getRadiusClass = (radius) => {
         case 'md': return 'rounded-md';
         case 'lg': return 'rounded-lg';
         case '2xl': return 'rounded-2xl';
+        case '3xl': return 'rounded-3xl';
         case 'full': return 'rounded-full';
         case 'xl':
         default: return 'rounded-xl';
@@ -342,6 +419,7 @@ const getChipRadiusClass = (radius) => {
         case 'lg': return 'rounded-md';
         case 'xl': return 'rounded-lg';
         case '2xl': return 'rounded-xl';
+        case '3xl': return 'rounded-2xl';
         case 'full': return 'rounded-full';
         default: return 'rounded-lg';
     }
@@ -350,6 +428,18 @@ const getChipRadiusClass = (radius) => {
 // 2. BENTUK & UKURAN: Proporsi ukuran terstandarisasi dengan centering presisi
 const sizeClasses = computed(() => {
     switch (props.size) {
+        case 'xs':
+            return {
+                wrapper: 'min-h-7 p-1 text-xs gap-1',
+                tag: 'px-1.5 py-0.5 text-[10px] gap-0.5',
+                tagIcon: 'text-[11px]',
+                removeBtn: 'w-2.5 h-2.5',
+                removeIcon: 'text-[10px]',
+                input: 'text-xs py-0.5 px-0.5 min-w-16',
+                clearBtn: 'w-4 h-4',
+                clearIcon: 'text-[12px]',
+                inputIcon: 'text-[13px]',
+            };
         case 'sm':
             return {
                 wrapper: 'min-h-8 p-1 text-xs gap-1',
@@ -373,6 +463,18 @@ const sizeClasses = computed(() => {
                 clearBtn: 'w-7 h-7',
                 clearIcon: 'text-[18px]',
                 inputIcon: 'text-[20px]',
+            };
+        case 'xl':
+            return {
+                wrapper: 'min-h-14 p-2.5 text-lg gap-2.5',
+                tag: 'px-3.5 py-1.5 text-base gap-2 font-semibold',
+                tagIcon: 'text-[18px]',
+                removeBtn: 'w-5 h-5',
+                removeIcon: 'text-[16px]',
+                input: 'text-lg py-1.5 px-2 min-w-40',
+                clearBtn: 'w-8 h-8',
+                clearIcon: 'text-[20px]',
+                inputIcon: 'text-[22px]',
             };
         case 'md':
         default:
@@ -410,16 +512,18 @@ const addTag = (text) => {
 
     // Cek apakah tag sudah ada jika duplikasi dilarang
     if (!props.allowDuplicates && currentTags.value.some((t) => t.toLowerCase() === cleanText.toLowerCase())) {
+        emit('duplicate-tag', cleanText);
         inputValue.value = '';
         return;
     }
 
-    // Jika allowCustom false, hanya boleh memilih dari options
+    // Jika allowCustom false (strict mode), hanya boleh memilih dari options
     if (!props.allowCustom) {
         const matchesOption = normalizedOptions.value.some(
             (opt) => opt.label.toLowerCase() === cleanText.toLowerCase()
         );
         if (!matchesOption) {
+            emit('invalid-tag', cleanText);
             inputValue.value = '';
             return;
         }
@@ -541,7 +645,7 @@ const handlePaste = (e) => {
 const handleFocus = () => {
     if (props.disabled || props.readonly) return;
     isFocused.value = true;
-    if (normalizedOptions.value.length > 0) {
+    if (props.showOptions && normalizedOptions.value.length > 0) {
         openDropdown();
     }
 };
@@ -557,13 +661,14 @@ const handleBlur = () => {
 };
 
 const handleInput = () => {
-    if (normalizedOptions.value.length > 0 && !isDropdownOpen.value) {
+    if (props.showOptions && normalizedOptions.value.length > 0 && !isDropdownOpen.value) {
         openDropdown();
     }
     highlightedIndex.value = -1;
 };
 
 const openDropdown = () => {
+    if (!props.showOptions || normalizedOptions.value.length === 0) return;
     isDropdownOpen.value = true;
 };
 
@@ -576,6 +681,14 @@ const selectOption = (opt) => {
     addTag(opt.label);
     closeDropdown();
 };
+
+defineExpose({
+    addTag,
+    removeTag,
+    clearAllTags,
+    focusInput,
+    currentTags,
+});
 </script>
 
 <template>
@@ -612,11 +725,11 @@ const selectOption = (opt) => {
                 <!-- 4. ICON: Leading Input Icon (opsional) -->
                 <slot name="prefix">
                     <span
-                        v-if="icon"
+                        v-if="effectiveLeadingIcon"
                         class="material-symbols-outlined text-slate-400 dark:text-slate-500 select-none shrink-0 leading-none pl-1"
                         :class="sizeClasses.inputIcon"
                     >
-                        {{ icon }}
+                        {{ effectiveLeadingIcon }}
                     </span>
                 </slot>
 
@@ -639,45 +752,18 @@ const selectOption = (opt) => {
                             :icon="getTagIcon(tag)"
                             :variant-classes="getTagClasses(tag)"
                         >
-                            <div
-                                class="inline-flex items-center justify-center border shadow-2xs select-none shrink-0 font-medium leading-none"
-                                :class="[
-                                    sizeClasses.tag,
-                                    getChipRadiusClass(radius),
-                                    getTagClasses(tag),
-                                ]"
+                            <Badge
+                                :variant="tagStyle"
+                                :color="getBadgeColor(tag)"
+                                :size="badgeSize"
+                                :rounded="getBadgeRounded(radius)"
+                                :icon="getTagIcon(tag)"
+                                :removable="removable && !disabled && !readonly"
+                                :class="getDarkBadgeClasses()"
+                                @remove="removeTag(index)"
                             >
-                                <!-- 4. ICON: Leading Tag Icon (jika ada) -->
-                                <span
-                                    v-if="getTagIcon(tag)"
-                                    class="material-symbols-outlined shrink-0 leading-none select-none"
-                                    :class="sizeClasses.tagIcon"
-                                >
-                                    {{ getTagIcon(tag) }}
-                                </span>
-
-                                <!-- 3. TEKS KONTEN: Label Tag -->
-                                <span class="truncate max-w-56 leading-none select-text flex items-center">
-                                    {{ tag }}
-                                </span>
-
-                                <!-- Tombol Hapus Tag 'x' dengan Rata Tengah Sempurna -->
-                                <button
-                                    v-if="removable && !disabled && !readonly"
-                                    type="button"
-                                    class="inline-flex items-center justify-center shrink-0 rounded-full text-current opacity-60 hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/15 transition-all cursor-pointer"
-                                    :class="sizeClasses.removeBtn"
-                                    :title="`Hapus tag ${tag}`"
-                                    @click.stop="removeTag(index)"
-                                >
-                                    <span
-                                        class="material-symbols-outlined leading-none select-none"
-                                        :class="sizeClasses.removeIcon"
-                                    >
-                                        close
-                                    </span>
-                                </button>
-                            </div>
+                                {{ tag }}
+                            </Badge>
                         </slot>
                     </template>
                 </TransitionGroup>
@@ -690,7 +776,7 @@ const selectOption = (opt) => {
                     :placeholder="currentTags.length === 0 ? placeholder : ''"
                     :disabled="disabled || (maxTags !== null && currentTags.length >= maxTags)"
                     :readonly="readonly"
-                    class="flex-1 bg-transparent border-none outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 disabled:cursor-not-allowed"
+                    class="flex-1 bg-transparent border-none outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 disabled:cursor-not-allowed min-w-30 max-w-full"
                     :class="sizeClasses.input"
                     @keydown="handleKeyDown"
                     @paste="handlePaste"
@@ -734,7 +820,7 @@ const selectOption = (opt) => {
                 leave-to-class="opacity-0 translate-y-1 scale-98"
             >
                 <div
-                    v-if="isDropdownOpen && filteredOptions.length > 0"
+                    v-if="showOptions && isDropdownOpen && filteredOptions.length > 0"
                     class="absolute left-0 right-0 top-full z-9999 mt-1.5 w-full max-h-56 overflow-y-auto p-1.5 bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 rounded-xl backdrop-blur-md space-y-0.5 focus:outline-none"
                 >
                     <button
@@ -767,12 +853,12 @@ const selectOption = (opt) => {
         </div>
 
         <!-- Hint & Error Messages -->
-        <p v-if="error" class="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
+        <div v-if="error" class="m-0 p-0 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px]">error</span>
             <span>{{ error }}</span>
-        </p>
-        <p v-else-if="hint" class="text-xs text-slate-500 dark:text-slate-400">
+        </div>
+        <div v-else-if="hint" class="m-0 p-0 text-xs text-slate-500 dark:text-slate-400">
             {{ hint }}
-        </p>
+        </div>
     </div>
 </template>

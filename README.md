@@ -7,285 +7,292 @@
 [![Inertia.js](https://img.shields.io/badge/Inertia.js-Vue%203-9553e9.svg?style=flat-square&logo=inertia)](https://inertiajs.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4.x-38bdf8.svg?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
 
-**Laravel Pack UI** adalah paket komponen antarmuka (*UI Component Kit*) dan composables *enterprise-grade* yang dirancang khusus untuk ekosistem **Laravel + Inertia.js + Vue 3**, ditenagai oleh **Tailwind CSS v4** dan **Google Material Symbols**.
+Laravel Pack UI adalah paket antarmuka enterprise dan koleksi composables modern untuk ekosistem Laravel, Inertia.js, dan Vue 3, ditenagai oleh Tailwind CSS v4 serta Google Material Symbols.
 
-Paket ini mengadopsi filosofi *headless-copy* (seperti halnya **Shadcn UI** dan **Laravel Breeze**): seluruh kode komponen dipublikasikan langsung ke dalam direktori `resources/js/` project Anda. Pendekatan ini memberikan kebebasan penuh bagi developer untuk menyesuaikan desain, memperluas fitur, dan menikmati performa tanpa beban *runtime wrapper* tambahan.
-
----
-
-## 🌟 Mengapa Memilih Laravel Pack UI?
-
-* 🚀 **Smart Auto-Installer**: Mendeteksi secara cerdas apakah project Anda sudah memiliki Vue 3, Inertia.js, Ziggy Router, Tailwind v4, atau Google Icons, dan otomatis mengonfigurasinya dari nol jika belum tersedia.
-* 🧭 **Ziggy Router Terintegrasi**: Pemasangan otomatis `tightenco/ziggy` dan `ziggy-js` lengkap dengan penyuntikan directive `@routes` pada blade dan plugin `ZiggyVue` pada Vue entrypoint (`route('nama.rute')`).
-* 🎨 **Desain Modern & Konsisten**: Standar border-radius harmonis (`rounded-xl` untuk input dan `rounded-2xl` untuk card/dialog), shadow lembut (`shadow-2xs`), serta tipografi Google Material Symbols.
-* 🔒 **Sistem Form & Validasi Tangguh**: `InputField.vue` universal mencakup 10+ tipe input (email regex, phone auto-hyphen, currency mask `Rp 1.500.000`, 4-tahap password strength meter, autocomplete search).
-* 📁 **Rich File Upload & Lightbox**: Mendukung 4 varian unggah berkas (`avatar`, `dropzone` hero, `grid` galeri multi-foto, dan `list` tabel dokumen) lengkap dengan pembersih memory leak blob dan modal preview resolusi penuh.
-* ⚡ **Kompatibel Penuh Tailwind CSS v4**: Menggunakan engine performa tinggi `@tailwindcss/vite` dengan konfigurasi dark mode instan `@custom-variant dark`.
-* 🌓 **Manajemen Tema Bawaan**: Composable `useTheme` terintegrasi dengan `ButtonTheme.vue` yang mendukung mode Terang, Gelap, dan Sinkronisasi Preferensi OS (*System*).
+Paket ini menerapkan filosofi **headless-copy** (arsitektur penerbitan langsung mirip Shadcn UI dan Laravel Breeze): seluruh kode komponen, composable, dan layout disalin langsung ke direktori `resources/js/` aplikasi Anda. Hal ini memberikan kebebasan mutlak dan kepemilikan penuh atas kode antarmuka tanpa beban abstraksi runtime pihak ketiga.
 
 ---
 
-## 📦 Komponen & Composables yang Disediakan
+## Daftar Isi
 
-| Komponen | Deskripsi Singkat |
-|---|---|
-| **`InputField.vue`** | Universal form control facade mendukung teks, sandi, angka, tanggal, upload file, select, switch, checkbox, radio, color, range slider, dan textarea. |
-| **`TableComponent.vue`** | Tabel data enterprise dengan 5 pilar kustomisasi (warna semantik, bentuk radius/size, teks/header judul & bilah aksi massal, ikon, responsif sticky first column & scroll indicator), multi-column skeleton loader, dan ekspor CSV. |
-| **`Pagination.vue`** | Paginator enterprise responsif dengan 5 pilar UI (warna semantik, bentuk radius/size, teks/scoped slots, ikon Google Material Symbols, & responsif mobile), 5 varian desain anti-monoton (`joined`, `pills`, `flat`, `card`, `default`), tombol First/Last page, per-page selector, dan jump-to-page. [Dokumentasi Lengkap →](doc/components/pagination.md) |
-| **`Modal.vue`** | Dialog popup & confirmation overlay dengan transisi Tailwind halus, varian status (info, danger, success, warning), dan focus-trap. |
-| **`Alert.vue`** | Banner notifikasi inline (solid, soft, outline) dengan strip aksen warna ramping dan progress bar auto-close. |
-| **`ToastNotification.vue`** | Sistem floating notification global dengan kustomisasi 4 pilar (warna semantik/varian, bentuk radius/size, scoped slots, & icon) dilengkapi real-time countdown. |
-| **`ButtonSubmit.vue`** | Tombol aksi polimorfik dengan dukungan Google Icons, indikator loading spinner, dan ragam varian warna kontras tinggi. |
-| **`ButtonTheme.vue`** | Pengubah tema dark/light mode dengan 4 pilihan tampilan (icon-only, button, switch pill, dan segmented 3-way). |
-| **`Avatar.vue`** | Foto profil user / inisial nama otomatis dengan status indicator (online, away, busy, offline) dan group stack. |
-| **`Badge.vue`** | Label status serbaguna (soft, solid, outline, dot) dengan pulsing live ping, ikon, skema warna semantik, dan aksi remove. |
-| **`Breadcrumb.vue`** | Navigasi hirarki responsif dengan auto-collapse path panjang, ikon home, dan separator kustom. |
-| **`Card.vue`** | Container serbaguna dengan dukungan collapsible body, loading overlay, header icon, dan actions slot. |
-| **`ConfirmDialog.vue`** | Dialog konfirmasi destruktif/penting global (Promise async) yang terhubung langsung ke `useConfirm.js`. |
-| **`Dropdown.vue`** | Menu aksi popover enterprise dengan 5 pilar UI, 5 varian desain anti-monoton (`rich` 2-baris card, `glassmorphic`, `pills`, `bordered`, `default`), navigasi keyboard WAI-ARIA lengkap, auto click-outside, dan slot header/footer. [Dokumentasi Lengkap →](doc/components/dropdown.md) |
-| **`Sidebar.vue`** | Bilah navigasi samping enterprise dengan arsitektur Dual-API (Compound Components deklaratif & Config-Driven array `:items`), collapsible desktop, mobile drawer, dan integrasi `useSidebar.js`. [Dokumentasi Lengkap →](doc/components/sidebar.md) |
-| **`Skeleton.vue`** | Placeholder loading loader dinamis & hemat memori dengan 5 pilar kustomisasi, 7 preset halaman siap pakai (stats, table, card, profile, form, article, feed), varian atomik (text, circular, icon, rounded), animasi pure CSS shimmer wave/pulse, dan conditional wrapper (`:loading`). [Dokumentasi Lengkap →](doc/components/skeleton.md) |
-| **`Stepper.vue`** | Stepper alur kerja & progress wizard multi-tahap dengan 5 pilar kustomisasi, 6 varian tipe (multi-stepper cards, segmented bar, circle, pills, vertical timeline, dots), penempatan informasi terarah (kanan, kiri, atas, bawah), skeleton loading adaptif, dan bilah navigasi aksi. [Dokumentasi Lengkap →](doc/components/stepper.md) |
-| **`Tabs.vue`** | Navigasi panel konten enterprise dengan 5 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks/deskripsi 2 baris, ikon posisi left/top, responsif scroll panah halus), 4 layout (underline, pills, segmented, enclosed), dan WAI-ARIA. |
-| **`FileDropzone.vue`** | Area drag-and-drop file upload mandiri (hero banner, galeri foto grid, dokumen list, avatar) lengkap dengan validasi MIME/ukuran, thumbnail lightbox, dan pencegahan memory leak blob. |
-| **`FilterToolbar.vue`** | Bilah filter data tabel dinamis dengan pencarian debounced, tombol preset tanggal cepat, dropdown status, reset filter aktif ber-counter badge, dan integrasi otomatis `useServerTable.js`. |
-| **`ProductGallery.vue`** | Galeri produk & media modular dengan penampil foto hero, thumbnail berlabel caption, floating badges, dan modal lightbox zoom layar penuh. |
-| **`RichTextEditor.vue`** | Editor teks kaya (*WYSIWYG*) modular berbasis Tiptap headless dengan toolbar kustom Tailwind, format heading/inline/alignment, modal tautan & gambar, dan pratinjau HTML. |
-| **`Rating.vue`** | Komponen rating interaktif/tampilan dengan presisi fraksional (skor desimal bebas seperti 1.3/5), kustomisasi ikon & warna, rentang skor dinamis, dan aksesibilitas keyboard. |
-| **`CtaButton.vue`** | Tombol CTA (*Call-to-Action*) konversi tinggi dengan 5 pilar UI, 8 tema warna, sekali tekan langsung (`direct`), split button (`split`), menu aksi anak (`menu`), speed-dial FAB melayang (`fab`), hold-to-confirm (`hold`), salin clipboard (`copy`), widget melayang WhatsApp resmi (`whatsapp`), dan scroll to top (`to-top`). [Dokumentasi Lengkap →](doc/components/cta-button.md) |
-| **`LocationPicker.vue`** | Komponen pemilih tag lokasi interaktif berbasis Leaflet & OpenStreetMap: pin marker *draggable*, auto *reverse-geocoding*, deteksi GPS instan, pencarian tempat, dan output lat/lng. |
-| **`InputTag.vue`** / **`TagInput.vue`** | Komponen input tag enterprise dengan 4 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks/scoped slots `#tag` & `#option`, ikon & perataan vertikal presisi), 3 mode (random, preset, hybrid), auto-paste split, dan dropdown anti-clipping di Card. |
-| **`ScrollProgress.vue`** | Indikator progres scroll cerdas berkinerja tinggi (60fps passive listener) dengan 5 pilar UI, 4 mode tampilan anti-monoton (`bar`, `floating-pill`, `circular`, `minimal`), 9 tema warna solid, perpaduan terpusat **Icon + Teks**, target kontainer lokal, estimasi waktu baca, dan tombol terintegrasi *Scroll to Top*. [Dokumentasi Lengkap →](doc/components/scroll-progress.md) |
-| **`DragDrop.vue`** | Komponen drag and drop universal zero-dependency: sortable list satu dimensi, responsive grid cards reordering, enterprise Kanban board antar kolom, dan touch device support. [Dokumentasi Lengkap →](doc/components/drag-drop.md) |
-| **`CartDrawer.vue`** | Slide-over drawer keranjang belanja enterprise dengan reaktivitas global, persistensi ganda, bar progres gratis ongkir dinamis, stepper kuantitas real-time, voucher diskon bertingkat, dan catatan pembeli per item. [Dokumentasi Lengkap →](doc/components/cart-drawer.md) |
-| **`AutoSaveStatus.vue`** | Indikator visual status auto-save formulir real-time (saving, saved, error, idle) dan banner pemulihan draf belum tersimpan (*draft recovery alert*). [Dokumentasi Lengkap →](doc/components/auto-save-status.md) |
-
-
-### 🧩 Composables (State Helpers)
-* **`useUnsavedChanges.js`** – Pelindung navigasi formulir ganda (pencegah penutupan tab/browser `beforeunload` dan pencegat rute Inertia SPA) dengan modal konfirmasi `ConfirmDialog.vue`. [Dokumentasi Lengkap →](doc/composables/use-unsaved-changes.md)
-* **`useAutoSave.js`** – State helper penyimpanan formulir otomatis di latar belakang dengan dirty-checking cerdas, timer debounce, batas kedaluwarsa draf, dan pemulihan draf lokal/remote. [Dokumentasi Lengkap →](doc/composables/use-auto-save.md)
-* **`useCart.js`** – State manager keranjang belanja global singleton dengan kalkulasi otomatis subtotal/diskon voucher/pajak PPN/ongkir, persistensi ganda `localStorage`, dan sinkronisasi drawer. [Dokumentasi Lengkap →](doc/composables/use-cart.md)
-* **`useOfflineSync.js`** – Antrean mutasi data saat pengguna offline (Outbox Pattern) berbasis IndexedDB + auto fallback localStorage dengan sinkronisasi otomatis dan exponential retry. [Dokumentasi Lengkap →](doc/composables/use-offline-sync.md)
-* **`useScrollProgress.js`** – Helper pelacakan progres scroll reaktif (window maupun kontainer elemen lokal) dengan kalkulasi sisa waktu baca, status ambang atas, dan fungsi scroll mulus kembali ke atas (`scrollToTop`).
-* **`useClipboard.js`** – Helper penyalinan teks ke clipboard dengan status `copied` reaktif dan fallback legacy browser.
-* **`useDebounce.js`** – Pengontrol jeda eksekusi fungsi berat, debounce form pencarian realtime, dan auto-save draft.
-* **`useThrottle.js`** – Pembatas frekuensi eksekusi fungsi (*rate limiting*) untuk event window scroll, resize, dan pencegahan spam klik.
-* **`useExportTable.js`** – Ekspor array data tabel ke format CSV (BOM UTF-8 siap Microsoft Excel), format JSON, atau cetak dokumen terisolasi.
-* **`useInitials.js`** – Helper ekstraksi inisial nama reaktif (pembersihan gelar, email parser, multi-kata) terintegrasi pembuatan warna avatar deterministik konsisten (DJB2 hash), gradient Tailwind, dan props siap pakai untuk Avatar UI.
-* **`useFormat.js`** – Helper pemformatan lengkap & terstandarisasi: Rupiah IDR, tanggal Indonesia, relative time, telepon +62, byte size, PCI-DSS sensitive data masking, inisial nama & warna avatar, slugify URL SEO, pemotongan teks (word-boundary truncate), format angka ringkas (K/M/B), kalkulasi durasi, case converters (camel/snake/kebab/title), dan strip HTML.
-* **`useDateFormat.js`** – Helper pemformatan tanggal Indonesia terstandarisasi, relative time ('5 menit yang lalu'), durasi waktu (digital, human, short), dan parsing tanggal.
-* **`useNumberFormat.js`** – Helper pemformatan angka finansial: Rupiah IDR (`formatRupiah`), angka desimal/ribuan, persentase, compact numbers (K/M/B), ordinal ('ke-3'), dan konversi ukuran bytes.
-* **`useStringFormat.js`** – Helper manipulasi teks: slugify URL SEO ramah simbol, word-boundary truncate dengan ellipsis, casing converters (titleCase, camelCase, snakeCase, kebabCase), dan pembersih stripHtml.
-* **`useMask.js`** – Helper proteksi privasi & sensor data sensitif (PCI-DSS): masking nomor kartu bank, email, nomor HP, NIK KTP, serta pemformatan nomor telepon internasional/nasional.
-* **`useFormat.js`** – Aggregator barrel hook yang menggabungkan seluruh modul pemformatan di atas (`useDateFormat`, `useNumberFormat`, `useStringFormat`, `useMask`, `useInitials`) dalam satu antarmuka praktis & 100% backward compatible.
-* **`useLocalStorage.js`** – Sinkronisasi state reaktif Vue dengan `localStorage` browser dilengkapi auto JSON parsing dan sinkronisasi lintas-tab.
-* **`useNetworkStatus.js`** – Pemantau status koneksi internet browser (`online`/`offline`) dan estimasi kecepatan jaringan.
-* **`useServerTable.js`** – State manager penyinkron data tabel (search query, sorting asc/desc, custom filter, dan paginasi) dengan URL query string Inertia secara otomatis.
-* **`useConfirm.js`** – Pemicu dialog konfirmasi destruktif berbasis asynchronous `Promise<boolean>` yang terintegrasi dengan `<ConfirmDialog.vue>`.
-* **`usePermission.js`** – Helper otorisasi hak akses (RBAC) instan (`can`, `hasRole`, `canAny`, `isSuperAdmin`) kompatibel dengan `spatie/laravel-permission` dan Laravel Gates.
-* **`useNotification.js`** – Pemicu notifikasi toast reaktif dari mana saja (`notify.success()`, `notify.error()`, `notify.purple()`, `notify.dark()`), sinkron otomatis dengan session flash Laravel.
-* **`useTheme.js`** – State manager tema gelap/terang dengan persistensi `localStorage` dan sinkronisasi preferensi sistem operasi.
-* **`useClickOutside.js`** – Helper penutup otomatis popover, dropdown, atau menu saat pengguna mengklik di luar area elemen.
-* **`useFormValidation.js`** – Skema validasi formulir reaktif dengan preset aturan umum dan sinkronisasi galat backend Laravel.
-* **`useSidebar.js`** – State manager reaktif bilah navigasi samping (ciut desktop, drawer seluler, shortcut `Ctrl+B`, dan persistensi `localStorage`). [Dokumentasi Lengkap →](doc/composables/use-sidebar.md)
+- [Fitur Utama v2.0.0](#fitur-utama-v200)
+- [Prasyarat Sistem](#prasyarat-sistem)
+- [Panduan Instalasi](#panduan-instalasi)
+- [Katalog Komponen UI](#katalog-komponen-ui)
+- [Katalog Composables](#katalog-composables)
+- [Contoh Penggunaan Praktis](#contoh-penggunaan-praktis)
+  - [1. Universal InputField](#1-universal-inputfield)
+  - [2. Server Table & Export](#2-server-table--export)
+  - [3. Auto-Save & Offline Sync](#3-auto-save--offline-sync)
+  - [4. Rich Text Editor (Tiptap)](#4-rich-text-editor-tiptap)
+  - [5. Media Player](#5-media-player)
+  - [6. UI Dashboard Layout](#6-ui-dashboard-layout)
+- [Integrasi Backend Laravel](#integrasi-backend-laravel)
+- [Konfigurasi Lingkungan](#konfigurasi-lingkungan)
+- [Panduan Migrasi ke v2.0.0](#panduan-migrasi-ke-v200)
+- [Lisensi](#lisensi)
 
 ---
 
-## 🚀 Instalasi di Project Laravel
+## Fitur Utama v2.0.0
 
-Karena paket ini telah terdaftar resmi di **Packagist.org**, Anda dapat langsung memasangnya menggunakan **`composer require`** tanpa perlu menambahkan konfigurasi repositori manual.
+- **30+ Komponen Antarmuka Teruji:** Mencakup elemen form interaktif, navigasi bertingkat, layout modular, media interaktif, hingga visualisasi data.
+- **26 Composables Modular:** Solusi siap pakai untuk validasi formulir, pencegah kehilangan data (*unsaved changes guard*), siklus sinkronisasi luring (*offline outbox pattern*), manajemen tema, pemformatan, hingga aksesibilitas.
+- **Arsitektur Komponen Majemuk (Compound Architecture):** Komponen kompleks seperti `Sidebar`, `Skeleton`, `InputField`, `ProductGallery`, dan `RichTextEditor` disusun secara modular dengan sub-komponen terisolasi.
+- **Smart Auto-Installer:** Perintah Artisan cerdas yang mengaudit dependensi sistem, mengonfigurasi `app.blade.php`, `app.js`, `app.css`, `vite.config.js`, dan middleware sesi flash secara otomatis.
+- **Standar Desain Terpadu:** Mendukung 5 dimensi kontrol visual konsisten (Desain, Warna, Gaya, Radius, dan Ukuran) dengan dukungan dark mode bawaan dan pemenuhan kontras WCAG 2.1.
+- **Zero Runtime Overhead:** Komponen menjadi bagian langsung dari proyek Laravel Anda, mudah diubah, ditata ulang, dan dioptimalkan sesuai kebutuhan aplikasi.
 
-### Langkah 1: Pasang Paket via Composer
+---
 
-Jalankan perintah berikut di terminal project Laravel Anda:
+## Prasyarat Sistem
+
+| Komponen | Versi Minimum yang Didukung |
+| --- | --- |
+| PHP | ^8.2 (Termasuk PHP 8.3 & 8.4) |
+| Laravel Framework | 11.x atau 12.x |
+| Node.js | >= 18.x (Rekomendasi Node 20 LTS) |
+| Vue | ^3.4 |
+| Inertia.js (Vue) | ^1.0 atau ^2.0 |
+| Tailwind CSS | v4.x (Tersedia panduan fallback untuk v3.x) |
+
+---
+
+## Panduan Instalasi
+
+### 1. Pemasangan Paket via Composer
+
+Jalankan perintah Composer di direktori utama aplikasi Laravel:
 
 ```bash
 composer require chandra2004/laravel-pack-ui
 ```
 
----
+### 2. Eksekusi Smart Installer
 
-### Langkah 2: Jalankan Smart Auto-Installer
-
-Setelah paket berhasil diunduh oleh Composer, jalankan perintah instalasi cerdas:
+Jalankan perintah Artisan installer untuk mengaudit lingkungan, menginstal dependensi prasyarat, dan mempublikasikan berkas:
 
 ```bash
 php artisan pack:install
 ```
 
-#### 💡 Apa Saja yang Dilakukan Smart Auto-Installer?
-Perintah ini akan memeriksa lingkungan project Anda secara otomatis:
-1. **Pemeriksaan & Instalasi Otomatis Backend (Composer)**:
-   - Jika project belum memiliki `inertiajs/inertia-laravel`, installer mengeksekusi `composer require inertiajs/inertia-laravel`.
-   - Jika project belum memiliki `tightenco/ziggy`, installer mengeksekusi `composer require tightenco/ziggy`.
-2. **Pemeriksaan & Instalasi Frontend (Node.js/npm)**:
-   - Memastikan `vue` (^3.5) dan `@vitejs/plugin-vue` (^6.0) terpasang.
-   - Memastikan `@inertiajs/vue3` (^2.0) terpasang.
-   - Memastikan `ziggy-js` (^2.4) terpasang untuk navigasi rute Laravel di Vue.
-   - Memastikan `tailwindcss` (^4.0) dan `@tailwindcss/vite` terpasang.
-   - Memastikan `material-symbols` (^0.47) terpasang.
-3. **Konfigurasi Otomatis Template & Entrypoint**:
-   - **`resources/views/app.blade.php`**: Menyisipkan directive `@routes`, `@inertiaHead`, dan `@inertia` secara otomatis.
-   - **`resources/js/app.js`**: Mengonfigurasi `createInertiaApp` dan mendaftarkan plugin `ZiggyVue` (`createApp().use(ZiggyVue)`).
-   - **`resources/css/app.css`**: Menyisipkan directive `@import 'tailwindcss';` dan `@import 'material-symbols';`.
-   - **`vite.config.js`**: Mengonfigurasi plugin `vue()`, `tailwindcss()`, dan path alias `'ziggy-js'` serta `'@'`.
-4. **Konfigurasi Flash Session Inertia (`HandleInertiaRequests.php`)**:
-   - Otomatis membuat atau memperbarui method `share()` pada `app/Http/Middleware/HandleInertiaRequests.php` untuk membagikan session flash (`success`, `error`, `warning`, `info`, `message`, `alert`).
-   - Mendaftarkan middleware ke `bootstrap/app.php` (Laravel 11/12) sehingga setiap redirect controller dengan `->with('success', '...')` otomatis memicu toast notification di frontend melalui `useNotification.js`.
-5. **Penerbitan Komponen, Composables & Layouts**:
-   - Menyalin seluruh file komponen ke `resources/js/Components/Pack/`.
-   - Menyalin seluruh file composable ke `resources/js/Composables/Pack/`.
-   - Menyalin seluruh file tata letak dasbor ke `resources/js/Layouts/`.
+Opsi eksekusi installer:
 
-#### Opsi Perintah Tambahan:
-```bash
-# Otomatis pasang seluruh dependensi prasyarat tanpa pertanyaan konfirmasi
-php artisan pack:install --all
+- `php artisan pack:install --all` : Mengotomatiskan seluruh konfirmasi instalasi dependensi Composer dan Node.
+- `php artisan pack:install --force` : Menimpa berkas komponen, composables, atau layout yang sudah ada di direktori `resources/js/`.
+- `php artisan pack:install --all --force` : Rekomendasi instalasi bersih pada proyek baru.
+- `php artisan pack:install --tag=pack-ui-components` : Hanya mempublikasikan komponen UI.
+- `php artisan pack:install --tag=pack-ui-composables` : Hanya mempublikasikan modul composables.
+- `php artisan pack:install --tag=pack-ui-layouts` : Hanya mempublikasikan layout dashboard.
 
-# Timpa seluruh berkas komponen jika sebelumnya sudah pernah dipasang (Sangat disarankan saat Update)
-php artisan pack:install --force
+### 3. Kompilasi Aset Frontend
 
-# Pilihan terbaik untuk project Laravel yang baru dibuat (fresh install):
-php artisan pack:install --all --force
-```
-
----
-
-## 🔄 Panduan Pembaruan Versi (Upgrade & Update Guide)
-
-Ketika paket `chandra2004/laravel-pack-ui` merilis pembaruan versi (baik berupa **Patch**, **Minor**, maupun **Major**), ikuti 3 langkah berikut agar aplikasi Anda mendapatkan fitur, perbaikan bug, dan komponen terbaru:
-
-### Langkah 1: Update Versi Package via Composer
-
-Jalankan perintah berikut di terminal project Anda:
+Setelah installer selesai, jalankan kompilasi aset frontend:
 
 ```bash
-composer update chandra2004/laravel-pack-ui
-```
-
-#### 📌 Ketentuan Batasan Versi (*Version Constraints*):
-* **Pembaruan Patch (`v1.3.0` $\to$ `v1.3.1`) & Minor (`v1.3.0` $\to$ `v1.4.0`)**:  
-  Jika file `composer.json` project Anda menggunakan format default `"chandra2004/laravel-pack-ui": "^1.3"`, Composer akan **otomatis menarik versi patch dan minor terbaru** yang kompatibel saat Anda mengeksekusi `composer update`.
-* **Pembaruan Mayor / Breaking Changes (`v1.x` $\to$ `v2.0.0`)**:  
-  Composer sengaja **tidak** mengupdate ke versi mayor secara otomatis guna mencegah error akibat perubahan struktur API (*breaking changes*). Untuk beralih ke versi mayor baru, perbarui constraint secara eksplisit:
-  ```bash
-  composer require chandra2004/laravel-pack-ui:^2.0
-  ```
-
----
-
-### Langkah 2: Terbitkan Ulang Komponen Terbaru ke Project Anda
-
-> [!IMPORTANT]
-> Karena komponen Vue dan Composables disalin langsung (*published*) ke dalam direktori aplikasi Anda (`resources/js/Components/Pack/` dan `resources/js/Composables/Pack/`), menjalankan `composer update` saja **hanya memperbarui berkas di folder `vendor/`**, bukan berkas komponen yang digunakan di project Anda.
-
-Jalankan perintah installer dengan opsi `--force` untuk menyinkronkan berkas komponen terbaru ke project Anda:
-
-```bash
-php artisan pack:install --force
-```
-
-Atau jika Anda hanya ingin memperbarui file komponen UI saja tanpa menyentuh file konfigurasi blade/app:
-```bash
-# Terbitkan ulang komponen UI
-php artisan vendor:publish --tag=pack-ui-components --force
-
-# Terbitkan ulang composables
-php artisan vendor:publish --tag=pack-ui-composables --force
-```
-
-> [!WARNING]
-> **Penting Sebelum Menjalankan `--force`:**  
-> Jika Anda pernah memodifikasi kode secara manual di dalam berkas `resources/js/Components/Pack/...`, opsi `--force` akan **menimpa (*overwrite*)** perubahan kustom tersebut. Pastikan Anda telah melakukan `git commit` atau backup kode terlebih dahulu.
-
----
-
-### Langkah 3: Kompilasi Ulang Asset Frontend
-
-Setelah berkas komponen terbaru diperbarui di project Anda, jalankan build Vite:
-
-```bash
-npm run build
-# atau untuk lingkungan development:
 npm run dev
 ```
 
 ---
 
-## 📖 Contoh Penggunaan Sederhana
+## Katalog Komponen UI
 
-Semua komponen dapat langsung di-import menggunakan path alias standar `@/Components/Pack/...`:
+Seluruh komponen ditempatkan di `resources/js/Components/Pack/`.
 
-### 1. Form Lengkap dengan Validasi (`InputField.vue` & `ButtonSubmit.vue`)
+### 1. Formulir dan Input
+
+| Komponen | Deskripsi | Sub-Komponen / Fitur Utama |
+| --- | --- | --- |
+| `InputField.vue` | Form input universal terpadu | Mendukung 15 sub-tipe: `text`, `textarea`, `select`, `checkbox`, `radio`, `switch`, `datepicker`, `color`, `range`, `file`, `otp`, `mask`, `repeater`, `tag`, dan `location`. Dilengkapi watch validation dan password meter. |
+| `ButtonSubmit.vue` | Tombol submit aksi dengan indikator pemrosesan | State loading dinamis, spinner bawaan, pencegah double-click, opsi disabled aman. |
+| `CtaButton.vue` | Tombol call-to-action multifungsi | Variasi visual solid, outline, soft, efek kilau hover, dan dukungan rute internal. |
+| `TagInput.vue` | Input tag/label interaktif | Penambahan via keyboard (Enter/Koma), pencegahan duplikat, batasan maksimal tag, autocomplete suggestions. |
+| `InputRepeater.vue` | Formulir data dinamis berulang | Tambah/hapus baris formulir, reorder baris, validasi skema array bertingkat. |
+| `LocationPicker.vue` | Pemilih koordinat geografis interaktif | Integrasi Leaflet & OpenStreetMap, reverse geocoding, pencarian alamat, input manual latitude/longitude. |
+
+### 2. Tampilan Data dan Konten
+
+| Komponen | Deskripsi | Sub-Komponen / Fitur Utama |
+| --- | --- | --- |
+| `TableComponent.vue` | Tabel data enterprise | Pencarian instan, sorting multi-kolom, filter dinamis, seleksi baris massal, pagination terintegrasi, dan opsi ekspor. |
+| `Card.vue` | Kontainer kartu konten fleksibel | Header, body, footer modular, border aksen, interaksi hover, serta varian `CardSlider` dan `CardProduct`. |
+| `Badge.vue` | Label status visual kompak | Skala warna semantik (success, warning, error, info), dot indicator, dan variasi border/soft. |
+| `Avatar.vue` | Tampilan profil pengguna | Foto profil, inisial fallback cerdas (`useInitials`), indikator status online/offline, dan `AvatarGroup` dengan badge sisa. |
+| `Rating.vue` | Penilaian bintang interaktif | Dukungan nilai desimal/setengah bintang, hover preview, mode baca-saja (*read-only*), dan kustomisasi ikon. |
+| `Skeleton.vue` | Placeholder pemuatan konten (*skeleton loading*) | Compound sub-komponen: `Avatar`, `Badge`, `Button`, `Card`, `Image`, `Input`, `Layout`, `Shape`, dan `Text` dengan animasi shimmer/pulse. |
+
+### 3. Navigasi dan Tata Letak
+
+| Komponen | Deskripsi | Sub-Komponen / Fitur Utama |
+| --- | --- | --- |
+| `UIDashboardLayout.vue` | Kerangka dashboard aplikasi lengkap | Pengelolaan responsif desktop/mobile, sinkronisasi state sidebar, integrasi header & breadcrumb. |
+| `Sidebar.vue` | Navigasi samping bertingkat | Arsitektur majemuk: `SidebarHeader`, `SidebarNav`, `SidebarGroup`, `SidebarItem`, `SidebarToggle`, `SidebarFooter`, dan `SidebarFlyoutProvider` untuk mode collapsed. |
+| `Breadcrumb.vue` | Jejak navigasi hirarkis | Penanganan pemotongan teks panjang, ikon pemisah kustom, dan dukungan rute Inertia/Ziggy. |
+| `Pagination.vue` | Kontrol paginasi data | Nomor halaman cerdas (ellipsis), tombol navigasi prev/next, pemilih ukuran per-halaman (*per page*), dan info rentang data. |
+| `Stepper.vue` | Alur tahapan formulir (*multi-step wizard*) | Orientasi horizontal/vertikal, status tahapan (selesai, aktif, pending, error), validasi transisi antar tahap. |
+| `Tabs.vue` | Navigasi panel bertab | Gaya underline, pill, boxed, keyboard arrow navigation, dan dukungan sinkronisasi query URL. |
+| `ScrollProgress.vue` | Indikator progres gulir halaman | Bar progres di atas layar atau lingkaran floating dengan persentase dan tombol kembali ke atas (*back-to-top*). |
+
+### 4. Umpan Balik dan Dialog
+
+| Komponen | Deskripsi | Sub-Komponen / Fitur Utama |
+| --- | --- | --- |
+| `Alert.vue` | Banner peringatan dan pengumuman | Varian solid, soft, outline, aksi tombol tersemat, mode dismissible, integrasi flash session Laravel. |
+| `ToastNotification.vue` | Notifikasi mengambang (*toast*) | Manajemen stack notifikasi, auto-dismiss dengan progress timer, posisi multi-sudut, dan integrasi `useNotification`. |
+| `Modal.vue` | Dialog modal serbaguna | Backdrop backdrop-blur, trap focus keyboard (Esc untuk tutup), transisi halus, ukuran dari sm hingga full. |
+| `ConfirmDialog.vue` | Dialog konfirmasi aksi destruktif | Integrasi Promise melalui composable `useConfirm`, pesan kustom, dan varian tombol konfirmasi bahaya. |
+| `AutoSaveStatus.vue` | Indikator status penyimpanan otomatis | Menampilkan status tersimpan, sedang menyimpan, error, dan stempel waktu penyimpanan terakhir via `useAutoSave`. |
+
+### 5. Media dan Utilitas Lanjutan
+
+| Komponen | Deskripsi | Sub-Komponen / Fitur Utama |
+| --- | --- | --- |
+| `MediaPlayer.vue` | Pemutar video dan audio kustom | Kontrol kustom penuh, pintasan keyboard, Picture-in-Picture, fullscreen, theater mode, kontrol kecepatan playback, dan penanganan audio buffer. |
+| `RichTextEditor.vue` | Editor teks kaya berbasis Tiptap | Menu bubble mengambang, toolbar format lengkap, modal penyematan tautan, modal unggah gambar, dan mode pratinjau HTML. |
+| `ProductGallery.vue` | Galeri pratinjau produk interaktif | Galeri thumbnail geser, zoom interaktif saat hover, dan modal lightbox layar penuh (`ProductGalleryLightbox`). |
+| `FileDropzone.vue` | Area unggah berkas drag-and-drop | Validasi tipe MIME, pembatasan ukuran berkas, preview thumbnail gambar, dan indikator progres unggahan. |
+| `DragDrop.vue` | Kontainer penyusunan ulang elemen drag-and-drop | Pengurutan daftar (*reorderable list*), transfer antar kolom (Kanban), animasi perpindahan halus. |
+| `CartDrawer.vue` | Laci keranjang belanja meluncur (*slide-over*) | Tampilan item keranjang, modifikasi jumlah kuantitas, kalkulasi subtotal/pajak/diskon terhubung dengan `useCart`. |
+| `ButtonTheme.vue` | Tombol pengalih tema tampilan | Mode terang (*light*), gelap (*dark*), dan sistem (*system preference*), transisi rotasi ikon Material Symbols. |
+
+---
+
+## Katalog Composables
+
+Seluruh composables ditempatkan di `resources/js/Composables/Pack/`.
+
+### 1. Manajemen State & Sinkronisasi Data
+
+| Composable | Deskripsi |
+| --- | --- |
+| `useAutoSave(saveFn, options)` | Melakukan auto-save berkala dengan debounce otomatis pada form data, melacak status penyimpanan dan waktu terakhir tersimpan. |
+| `useOfflineSync(storeName, syncFn)` | Mengimplementasikan pola outbox berbasis IndexedDB untuk mencatat mutasi saat luring dan menyinkronkannya kembali saat daring. |
+| `useLocalStorage(key, defaultValue)` | State reaktif yang disinkronkan langsung dengan Web LocalStorage secara null-safe. |
+| `useCart(options)` | Pengelolaan keranjang belanja reaktif (tambah, kurang, hapus, kupon, perhitungan total, persistensi storage). |
+
+### 2. Formulir & Interaktivitas Input
+
+| Composable | Deskripsi |
+| --- | --- |
+| `useFormValidation(rules)` | Engine validasi form reaktif untuk mengevaluasi aturan validasi kustom di sisi klien secara instan. |
+| `useUnsavedChanges(isDirty, message)` | Melindungi form dari navigasi tidak sengaja (mencegah penutupan tab atau perubahan rute Inertia jika ada perubahan belum disimpan). |
+| `useMask(pattern)` | Memformat input teks berdasarkan pola masker tertentu (nomor telepon, NPWP, kartu kredit, mata uang). |
+
+### 3. Data Tabel & Ekspor
+
+| Composable | Deskripsi |
+| --- | --- |
+| `useServerTable(endpoint, options)` | Sinkronisasi tabel data dengan backend Laravel (search, sort, filter, per-page) melalui Inertia Visit atau API fetch. |
+| `useExportTable(data, columns, options)` | Mengekspor kumpulan data tabel ke format CSV, Excel (XLSX), atau tampilan siap cetak (*print preview*). |
+
+### 4. Dialog, UI & Notifikasi
+
+| Composable | Deskripsi |
+| --- | --- |
+| `useConfirm()` | Membuka modal konfirmasi berbasis asynchronous Promise (`const confirmed = await confirm({...})`). |
+| `useNotification()` | Mengirim notifikasi toast reaktif dengan tipe success, error, warning, info, atau loading. |
+| `usePopover()` | Mengontrol posisi dan visibilitas elemen melayang (*popover/dropdown*) dengan proteksi klik di luar. |
+| `useClickOutside(targetRef, handler)` | Mendeteksi interaksi klik di luar elemen referensi untuk menutup modal, dropdown, atau menu. |
+| `useScrollProgress()` | Menghitung persentase gulir jendela atau kontainer dan status keterbacaan dokumen. |
+| `useTheme()` | Mengelola tema aplikasi (light/dark/system) dan menyinkronkan class `.dark` pada dokumen HTML. |
+| `useSidebar()` | Mengelola status buka-tutup, collapse, dan responsivitas menu samping (*sidebar*). |
+
+### 5. Utilitas & Transformasi Data
+
+| Composable | Deskripsi |
+| --- | --- |
+| `useDebounce(fn, delay)` | Menunda eksekusi fungsi hingga jeda waktu tertentu berlalu sejak pemanggilan terakhir. |
+| `useThrottle(fn, interval)` | Membatasi frekuensi eksekusi fungsi agar berjalan maksimal satu kali dalam interval tertentu. |
+| `useClipboard()` | Menyalin teks ke clipboard sistem operasi dengan penanganan fallback dan umpan balik status berhasil. |
+| `useFormat()` | Utilitas format angka, tanggal, dan string terpadu dalam satu gerbang composable. |
+| `useDateFormat(date, format)` | Memformat tanggal dan waktu ke berbagai format standar internasional maupun lokal Indonesia. |
+| `useNumberFormat(number, options)` | Memformat angka numerik ke format mata uang (Rupiah/IDR, USD), persen, atau pembagi ribuan. |
+| `useStringFormat()` | Manipulasi teks (slug, truncate, capitalize, camelCase, snake_case, titleCase). |
+| `useInitials(name)` | Mengekstrak inisial nama secara aman untuk ditampilkan pada komponen `Avatar`. |
+| `useNetworkStatus()` | Memantau status konektivitas jaringan pengguna (online/offline) secara langsung (*real-time*). |
+| `usePermission(userPermissions)` | Memeriksa kepemilikan izin akses (*permission*) atau peran (*role*) pengguna di antarmuka Vue. |
+
+---
+
+## Contoh Penggunaan Praktis
+
+### 1. Universal InputField
+
+Komponen `InputField` menangani berbagai variasi formulir secara otomatis hanya dengan mengubah prop `type`:
 
 ```vue
 <script setup>
-import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import InputField from '@/Components/Pack/InputField.vue';
 import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
 
-const form = useForm({
-    name: '',
+const form = ref({
+    fullName: '',
     email: '',
-    password: '',
-    role: 'merchant',
-    is_active: true,
+    role: 'editor',
+    birthDate: '',
+    bio: '',
+    terms: false,
 });
 
-const submit = () => {
-    form.post(route('users.store'));
+const isSubmitting = ref(false);
+
+const handleSubmit = () => {
+    isSubmitting.value = true;
+    // Logika pengiriman form...
 };
 </script>
 
 <template>
-    <form @submit.prevent="submit" class="space-y-4 max-w-lg">
-        <!-- Input Teks Biasa -->
+    <form @submit.prevent="handleSubmit" class="space-y-4 max-w-lg">
         <InputField
-            v-model="form.name"
+            v-model="form.fullName"
+            type="text"
             label="Nama Lengkap"
-            placeholder="Masukkan nama pengguna..."
-            icon="person"
-            :error="form.errors.name"
+            placeholder="Masukkan nama lengkap"
             required
         />
 
-        <!-- Input Email dengan Live Validation -->
         <InputField
             v-model="form.email"
             type="email"
             label="Alamat Email"
             placeholder="nama@domain.com"
-            icon="mail"
-            :error="form.errors.email"
             required
         />
 
-        <!-- Input Password dengan Indikator Kekuatan & Toggle Visibility -->
         <InputField
-            v-model="form.password"
-            type="password"
-            label="Kata Sandi Akun"
-            placeholder="Minimal 8 karakter..."
-            :error="form.errors.password"
-            required
+            v-model="form.role"
+            type="select"
+            label="Peran Pengguna"
+            :options="[
+                { label: 'Administrator', value: 'admin' },
+                { label: 'Editor Konten', value: 'editor' },
+                { label: 'Peninjau', value: 'reviewer' },
+            ]"
         />
 
-        <!-- Switch Toggle -->
         <InputField
-            v-model="form.is_active"
-            type="switch"
-            label="Aktifkan Akun"
-            subtext="Pengguna dapat langsung login setelah pendaftaran"
+            v-model="form.birthDate"
+            type="datepicker"
+            label="Tanggal Lahir"
         />
 
-        <!-- Tombol Submit dengan Auto Loading Spinner -->
-        <ButtonSubmit
-            type="submit"
-            variant="primary"
-            icon="check_circle"
-            :loading="form.processing"
-        >
-            Simpan Data
+        <InputField
+            v-model="form.bio"
+            type="textarea"
+            label="Biografi Singkat"
+            :rows="3"
+        />
+
+        <InputField
+            v-model="form.terms"
+            type="checkbox"
+            label="Saya menyetujui syarat dan ketentuan layanan"
+        />
+
+        <ButtonSubmit :loading="isSubmitting">
+            Simpan Perubahan
         </ButtonSubmit>
     </form>
 </template>
@@ -293,141 +300,355 @@ const submit = () => {
 
 ---
 
-### 2. Notifikasi Toast & Dialog Konfirmasi (`useNotification` & `Modal.vue`)
+### 2. Server Table & Export
+
+Implementasi tabel dengan pengurutan, pencarian, dan tombol ekspor:
 
 ```vue
 <script setup>
-import { ref } from 'vue';
-import Modal from '@/Components/Pack/Modal.vue';
-import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
-import ToastNotification from '@/Components/Pack/ToastNotification.vue';
-import { useNotification } from '@/Composables/Pack/useNotification.js';
+import TableComponent from '@/Components/Pack/TableComponent.vue';
+import { useServerTable } from '@/Composables/Pack/useServerTable';
+import { useExportTable } from '@/Composables/Pack/useExportTable';
 
-const notify = useNotification();
-const showDeleteModal = ref(false);
+const props = defineProps({
+    users: Object, // Paginator dari Laravel Controller
+});
 
-const handleDelete = () => {
-    showDeleteModal.value = false;
-    // Memicu notifikasi toast mengambang
-    notify.success('Data layanan berhasil dihapus secara permanen!');
+const { query, onSort, onSearch } = useServerTable('/users');
+const { exportToCsv } = useExportTable();
+
+const columns = [
+    { key: 'id', label: 'ID', sortable: true },
+    { key: 'name', label: 'Nama Pengguna', sortable: true },
+    { key: 'email', label: 'Email' },
+    { key: 'role', label: 'Peran' },
+    { key: 'created_at', label: 'Terdaftar' },
+];
+
+const handleExport = () => {
+    exportToCsv(props.users.data, columns, 'daftar-pengguna.csv');
 };
 </script>
 
 <template>
-    <div class="p-6 space-y-4">
-        <ButtonSubmit variant="danger" icon="delete" @click="showDeleteModal = true">
-            Hapus Layanan
-        </ButtonSubmit>
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold">Daftar Pengguna</h1>
+            <button
+                type="button"
+                @click="handleExport"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm"
+            >
+                Ekspor CSV
+            </button>
+        </div>
 
-        <!-- Dialog Modal Konfirmasi -->
-        <Modal
-            v-model="showDeleteModal"
-            variant="danger"
-            title="Konfirmasi Hapus"
-            context="Tindakan Berisiko"
-            confirm-text="Ya, Hapus Sekarang"
-            cancel-text="Batalkan"
-            @confirm="handleDelete"
-        >
-            <p class="text-xs text-slate-600 dark:text-slate-300">
-                Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.
-            </p>
-        </Modal>
-
-        <!-- Kontainer Global Toast (Cukup pasang 1x di App Layout Anda) -->
-        <ToastNotification position="top-right" />
+        <TableComponent
+            :columns="columns"
+            :data="users.data"
+            :pagination="users"
+            @sort="onSort"
+            @search="onSearch"
+        />
     </div>
 </template>
 ```
 
 ---
 
-### 3. Pengubah Tema Dark / Light (`ButtonTheme.vue`)
+### 3. Auto-Save & Offline Sync
+
+Menyimpan draf secara otomatis saat pengguna mengetik dan mencadangkan data jika koneksi terputus:
 
 ```vue
 <script setup>
-import ButtonTheme from '@/Components/Pack/ButtonTheme.vue';
+import { ref, watch } from 'vue';
+import { useAutoSave } from '@/Composables/Pack/useAutoSave';
+import { useOfflineSync } from '@/Composables/Pack/useOfflineSync';
+import AutoSaveStatus from '@/Components/Pack/AutoSaveStatus.vue';
+import InputField from '@/Components/Pack/InputField.vue';
+import axios from 'axios';
+
+const documentData = ref({
+    title: '',
+    content: '',
+});
+
+// Composable Offline Sync (Outbox Pattern)
+const { addToOutbox, isOnline } = useOfflineSync('documents_store', async (item) => {
+    await axios.post('/api/documents', item);
+});
+
+// Composable Auto Save
+const { status, lastSaved, triggerSave } = useAutoSave(async () => {
+    if (isOnline.value) {
+        await axios.post('/api/documents/draft', documentData.value);
+    } else {
+        await addToOutbox(documentData.value);
+    }
+}, { delay: 1500 });
+
+watch(documentData, () => {
+    triggerSave();
+}, { deep: true });
 </script>
 
 <template>
-    <header class="flex items-center justify-between p-4 border-b">
-        <h1 class="text-lg font-bold">Dashboard</h1>
+    <div class="space-y-4 max-w-2xl">
+        <div class="flex justify-between items-center">
+            <h2 class="text-lg font-semibold">Tulis Dokumen</h2>
+            <AutoSaveStatus :status="status" :last-saved="lastSaved" />
+        </div>
 
-        <!-- Tombol Pengubah Tema (Bisa pilih variant: switch, icon, button, segmented) -->
-        <ButtonTheme variant="switch" show-label />
-    </header>
+        <InputField
+            v-model="documentData.title"
+            label="Judul Dokumen"
+            placeholder="Masukkan judul..."
+        />
+
+        <InputField
+            v-model="documentData.content"
+            type="textarea"
+            label="Isi Dokumen"
+            :rows="6"
+        />
+    </div>
 </template>
 ```
 
 ---
 
-## 📚 Dokumentasi Lengkap (Documentation Index)
+### 4. Rich Text Editor (Tiptap)
 
-Dokumentasi teknis menyeluruh yang mengupas tuntas seluruh daftar properti (*props*), *events*, *slots*, *method expose*, aturan validasi, serta contoh implementasi praktis telah dikelompokkan secara terstruktur dan modular di dalam direktori [`doc/`](doc/setup.md):
+Editor teks dengan bilah alat lengkap dan menu mengambang:
 
-### 🛠️ Prasyarat & Instalasi
-* 📖 [**Panduan Setup & Instalasi (`doc/setup.md`)**](doc/setup.md) — Font Google Material Symbols, konfigurasi Tailwind CSS v4 / v3, konfigurasi backend Middleware Laravel `HandleInertiaRequests`, dan optimasi build bundler Vite.
+```vue
+<script setup>
+import { ref } from 'vue';
+import RichTextEditor from '@/Components/Pack/RichTextEditor.vue';
 
-### 🏛️ Tata Letak (Layouts)
-* 🖥️ [**UIDashboardLayout (`UIDashboardLayout.vue`)**](doc/layouts/ui-dashboard-layout.md) — Kerangka tata letak dasbor (*shell layout*) enterprise siap pakai dengan integrasi modular `SidebarComponent.vue`, bilah atas (*topbar*), modal pencarian global `⌘K`, lencana notifikasi, saklar tema, breadcrumbs, dan profil pengguna.
+const articleBody = ref('<h2>Pengenalan</h2><p>Tulis artikel menarik di sini...</p>');
+</script>
 
-### 🧩 Komponen UI (Components)
-* 🔔 [**Alert (`Alert.vue`)**](doc/components/alert.md) — Inline banner alert dengan auto-close, progress countdown bar, varian (`soft`, `solid`, `outline`), & dismissible.
-* 👤 [**Avatar & AvatarGroup (`Avatar.vue` / `AvatarGroup.vue`)**](doc/components/avatar.md) — Foto profil avatar dengan fitur Profile Dropdown Menu terintegrasi, cincin cerita Instagram (Story Ring), indikator radar pulse online, verified badge, tumpukan tim AvatarGroup, dan 5 pilar UI.
-* 🏷️ [**Badge (`Badge.vue`)**](doc/components/badge.md) — Label status (varian `soft`, `solid`, `outline`, `dot`), pulsing ping indicator, ikon, & removable tag.
-* 🧭 [**Breadcrumb (`Breadcrumb.vue`)**](doc/components/breadcrumb.md) — Navigasi breadcrumb terintegrasi Inertia Link dengan auto-collapse ellipsis & penjajaran presisi ikon.
-* 🔘 [**ButtonSubmit (`ButtonSubmit.vue`)**](doc/components/button-submit.md) — Tombol aksi polimorfik (`button`, `Link`, `a`) dengan model interaktif media sosial (YouTube Like/Dislike segmented pill, YouTube Subscribe dengan bell notification, Instagram Heart Like pop, Instagram Follow), pendaran ambient glow, gradien, dan 5 pilar UI.
-* 🌓 [**ButtonTheme (`ButtonTheme.vue`)**](doc/components/button-theme.md) — Tombol pengubah mode gelap/terang (varian `icon`, `button`, `switch`, `segmented`) tersinkronisasi OS & localStorage.
-* 🃏 [**Card & Subkomponen (`Card.vue` / `CardSlider.vue` / `CardProduct.vue`)**](doc/components/card.md) — Kontainer kartu multifungsi dengan 5 pilar UI (warna tema, bentuk radius/variant, teks/badges, icon, responsif), product card e-commerce (dual-image hover swap, rating, diskon, stok urgency bar, flash sale countdown), card slider dengan tombol prev/next & touch swipe, 3D flip card, dan spotlight radial glow Linear/Vercel.
-* 🛡️ [**ConfirmDialog (`ConfirmDialog.vue`)**](doc/composables/use-confirm.md) — Dialog konfirmasi modal destruktif global terhubung langsung dengan `useConfirm()`.
-* 🔽 [**Dropdown (`Dropdown.vue`)**](doc/components/dropdown.md) — Menu aksi popover dengan navigasi keyboard lengkap (ARIA compliant) & click-outside dismissal.
-* 📝 [**InputField & Sub-Komponen (`InputField.vue`)**](doc/components/input-field.md) — Facade universal form input mendelegasikan 12 sub-komponen: Text, Password, DatePicker, File (Dropzone), Select, Color, Radio, Checkbox, Textarea, Range, Switch, OTP, & Mask.
-* 🪟 [**Modal (`Modal.vue`)**](doc/components/modal.md) — Dialog overlay via `<Teleport>` dengan Focus Trap, ukuran responsif (`sm` hingga `full`), posisi dialog, & Expose API.
-* 📄 [**Pagination (`Pagination.vue`)**](doc/components/pagination.md) — Komponen navigasi halaman kompatibel Laravel `LengthAwarePaginator` dan mode client-side.
-* 📑 [**SidebarComponent (`SidebarComponent.vue` / `Sidebar.vue`)**](doc/components/sidebar.md) — Bilah samping modular mandiri (*standalone*) dengan 5 pilar kustomisasi (warna aksen, gaya item soft/solid/outline, radius, varian bordered/floating), menu bertingkat, mobile drawer, dan slot kustom.
-* 💀 [**Skeleton (`Skeleton.vue`)**](doc/components/skeleton.md) — Kerangka placeholder loader dengan efek animasi shimmer wave modern untuk teks, avatar, kartu, dan tabel.
-* 🪜 [**Stepper (`Stepper.vue`)**](doc/components/stepper.md) — Penunjuk alur wizard multi-langkah horizontal/vertikal, mode sekuensial linear, & penanda status error.
-* 📊 [**TableComponent (`TableComponent.vue`)**](doc/components/table.md) — Tabel data enterprise dengan 5 pilar kustomisasi (warna semantik, bentuk radius/size, teks/header judul & bilah aksi massal, ikon, responsif sticky first column & scroll indicator), multi-column skeleton loader, dan ekspor CSV.
-* 📑 [**Tabs (`Tabs.vue`)**](doc/components/tabs.md) — Navigasi tab modular dengan 5 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks & deskripsi 2 baris, ikon left/top, responsif scroll panah), 4 tata letak modern (underline floating, pills, macOS segmented, folder cards), dan aksesibilitas WAI-ARIA.
-* 📁 [**FileDropzone (`FileDropzone.vue`)**](doc/components/file-dropzone.md) — Area unggah berkas drag-and-drop mandiri dengan 4 varian tata letak, pratinjau thumbnail, progress bar, validasi otomatis, dan pembersih memori blob URL.
-* 🔍 [**FilterToolbar (`FilterToolbar.vue`)**](doc/components/filter-toolbar.md) — Bilah penyaringan data tabel terpadu dengan pencarian debounced, tombol preset tanggal cepat, dropdown status, tombol reset dinamis ber-counter badge, dan integrasi otomatis `useServerTable.js`.
-* 🖼️ [**ProductGallery (`ProductGallery.vue`)**](doc/components/product-gallery.md) — Galeri foto produk modular untuk e-commerce/showroom dengan 5 pilar standar UI (warna tema Pack UI, bentuk radius/aspect, thumbnail caption cards, floating badges dengan icon & penjelasan yang mengalir kebawah lalu kesamping, serta gestur usap sentuh mobile *touch swipe* dan modal lightbox zoom).
-* 📝 [**RichTextEditor (`RichTextEditor.vue`)**](doc/components/rich-text-editor.md) — Editor teks kaya modern minimalis bertenaga Tiptap v2 dengan 5 pilar kustomisasi, unggah berkas gambar lokal (drag & drop / paste), pratinjau responsif multi-viewport (Desktop, Tablet, Mobile), dan statistik kata/karakter.
-* ⭐ [**Rating (`Rating.vue`)**](doc/components/rating.md) — Komponen rating interaktif & display dengan 5 pilar standar UI (warna tema Pack UI, bentuk varian `card`/`pill`/`radius`, teks sentimen deskriptif, ikon Material Symbols animasi, & responsif sentuhan mobile *touchmove*), presisi fraksional desimal (`1.3/5`), serta integrasi pola Rating Review & Breakdown Drawer responsif (*Bottom Sheet* di HP & *Slide-over* di Desktop).
-* 🚀 [**CTA Button (`CtaButton.vue` / `ButtonCta.vue`)**](doc/components/cta-button.md) — Tombol konversi tinggi (tipe `direct`, `split`, `menu` child options, speed-dial `fab`, `hold` to confirm, dan `copy`) dengan animasi glow & shine.
-* 📍 [**LocationPicker (`LocationPicker.vue` / `InputLocation.vue`)**](doc/components/location-picker.md) — Komponen pemilih titik tag lokasi peta interaktif (Leaflet + OpenStreetMap), deteksi GPS instan, auto *reverse-geocoding*, dan perolehan koordinat lat/lng.
-* 🏷️ [**TagInput (`InputTag.vue` / `TagInput.vue`)**](doc/components/tag-input.md) — Komponen input tag fleksibel dengan 4 pilar kustomisasi (warna soft/solid/outline, bentuk radius/size, teks/scoped slots `#tag` & `#option`, ikon & perataan vertikal presisi), dropdown anti-clipping di Card, navigasi Tab/Enter, auto-split paste, limit max-tags, dan varian warna acak harmonis.
-* 📜 [**ScrollProgress (`ScrollProgress.vue`)**](doc/components/scroll-progress.md) — Indikator progres scroll cerdas berkinerja tinggi (60fps passive listener) dengan 5 pilar UI, 4 mode tampilan anti-monoton (`bar`, `floating-pill`, `circular`, `minimal`), 9 tema warna solid, perpaduan Icon + Teks, dan estimasi waktu baca.
-* 💬 [**ToastNotification (`ToastNotification.vue`)**](doc/components/toast.md) — Floating toast notification system dengan 4 pilar kustomisasi (warna semantik/varian, bentuk radius/size, teks/scoped slot, & icon), countdown bar, 6 posisi sudut layar, & multi-toast stack.
-* 🛒 [**CartDrawer (`CartDrawer.vue`)**](doc/components/cart-drawer.md) — Panel drawer keranjang belanja enterprise dengan reaktivitas global `useCart`, stepper kuantitas, validasi stok, kupon diskon berjenjang, dan bar progres gratis ongkir.
-* 💾 [**AutoSaveStatus (`AutoSaveStatus.vue`)**](doc/components/auto-save-status.md) — Indikator status penyimpanan draf otomatis dan banner pemulihan draf form kotor (`idle`, `saving`, `saved`, `error`).
-
-### ⚙️ Composables
-* 🎯 [**`useClickOutside`**](doc/composables/use-click-outside.md) — Hook pendeteksi interaksi klik di luar elemen target (dropdown, popover, modal).
-* 📋 [**`useClipboard`**](doc/composables/use-clipboard.md) — Penyalinan teks ke clipboard dengan status copied reaktif dan fallback legacy browser.
-* 🛡️ [**`useConfirm`**](doc/composables/use-confirm.md) — Dialog konfirmasi berbasis Promise async terintegrasi modal dialog global.
-* ⏱️ [**`useDebounce`**](doc/composables/use-debounce.md) — Pengontrol laju eksekusi fungsi penundaan input realtime dan ref reaktif tertunda.
-* ⚡ [**`useThrottle`**](doc/composables/use-throttle.md) — Pembatas frekuensi pemanggilan fungsi (*rate limiting*) untuk scroll, resize, dan anti-spam click.
-* 📤 [**`useExportTable`**](doc/composables/use-export-table.md) — Ekspor array data tabel ke format CSV Excel (BOM UTF-8), JSON, dan print preview.
-* 🔤 [**`useInitials`**](doc/composables/use-initials.md) — Ekstraksi inisial nama reaktif pintar, pembersihan gelar, dan warna avatar deterministik konsisten berbasis hashing string.
-* 🇮🇩 [**`useFormat`**](doc/composables/use-format.md) — Utilitas formatting standar Indonesia (Rupiah, tanggal lokal, relative time, telepon, byte, masking, inisial, slugify, truncate, durasi, compact number, & case converters).
-* 🛡️ [**`useFormValidation`**](doc/composables/use-form-validation.md) — Validasi skema form reaktif dengan preset rules (`required`, `email`, `min`, `max`, `confirmed`, dll) serta sinkronisasi galat Laravel.
-* 💾 [**`useLocalStorage`**](doc/composables/use-local-storage.md) — Penyimpanan state reaktif di localStorage dengan sinkronisasi lintas-tab.
-* 🌐 [**`useNetworkStatus`**](doc/composables/use-network-status.md) — Pemantau konektivitas jaringan internet (online/offline) & kecepatan.
-* 💬 [**`useNotification`**](doc/composables/use-notification.md) — State manager & trigger API toast notification (`notify.success`, `notify.error`, `notify.promise`, aksi undo callback).
-* 🔑 [**`usePermission`**](doc/composables/use-permission.md) — Otorisasi hak akses frontend (RBAC) kompatibel Spatie Laravel Permission dan Laravel Gates.
-* 📊 [**`useServerTable`**](doc/composables/use-server-table.md) — Sinkronisasi otomatis state data table (search, sort, filter, pagination) dengan query URL Inertia.js.
-* 🌓 [**`useTheme`**](doc/composables/use-theme.md) — State manager pengatur tema gelap/terang, sinkronisasi OS mediaQuery, & class `.dark` Tailwind CSS.
-* 📜 [**`useScrollProgress`**](doc/composables/use-scroll-progress.md) — Pelacakan progres scroll reaktif (window / kontainer elemen lokal) dengan kalkulasi sisa waktu baca, status ambang batas atas, dan fungsi scroll to top.
-* 🛒 [**`useCart`**](doc/composables/use-cart.md) — State manager keranjang belanja e-commerce multi-item dengan kalkulasi diskon kupon, ambang batas gratis ongkir, dan persistensi ganda.
-* 💾 [**`useAutoSave`**](doc/composables/use-auto-save.md) — Composable penyimpanan draf otomatis latar belakang dengan dirty diffing, timer debounce, dan pemulihan draf form.
-* 🛡️ [**`useUnsavedChanges`**](doc/composables/use-unsaved-changes.md) — Pencegah navigasi tidak sengaja saat formulir dalam kondisi kotor (`isDirty`) untuk browser refresh dan router SPA Inertia.
-* 📶 [**`useOfflineSync`**](doc/composables/use-offline-sync.md) — Antrean mutasi data saat pengguna offline (Outbox Pattern) berbasis IndexedDB + auto-fallback localStorage yang 100% berjalan di browser tanpa background worker daemon Laravel.
-
+<template>
+    <div class="max-w-3xl">
+        <RichTextEditor
+            v-model="articleBody"
+            label="Konten Artikel"
+            placeholder="Mulai menulis konten..."
+        />
+    </div>
+</template>
+```
 
 ---
 
-## 📄 Lisensi
+### 5. Media Player
 
-Paket ini dirilis di bawah lisensi terbuka [MIT License](LICENSE.md) &copy; 2026 **[Chandra Tri Antomo](https://github.com/Chandra2004)**.
-Bebas digunakan untuk project pribadi maupun komersial.
+Pemutar video/audio dengan kustomisasi kontrol:
+
+```vue
+<script setup>
+import MediaPlayer from '@/Components/Pack/MediaPlayer.vue';
+</script>
+
+<template>
+    <div class="max-w-4xl">
+        <MediaPlayer
+            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+            title="Demo Video Laravel Pack UI"
+            poster="/images/poster.jpg"
+            :aspect-ratio="'16/9'"
+        />
+    </div>
+</template>
+```
+
+---
+
+### 6. UI Dashboard Layout
+
+Kerangka dashboard dengan Sidebar modular dan tombol pengalih tema:
+
+```vue
+<script setup>
+import UIDashboardLayout from '@/Layouts/Pack/UIDashboardLayout.vue';
+import ButtonTheme from '@/Components/Pack/ButtonTheme.vue';
+</script>
+
+<template>
+    <UIDashboardLayout app-name="Enterprise App">
+        <template #header-actions>
+            <ButtonTheme />
+        </template>
+
+        <div class="p-6">
+            <h1 class="text-2xl font-bold mb-4">Ringkasan Dashboard</h1>
+            <p class="text-neutral-600 dark:text-neutral-400">
+                Selamat datang di sistem manajemen dashboard.
+            </p>
+        </div>
+    </UIDashboardLayout>
+</template>
+```
+
+---
+
+## Integrasi Backend Laravel
+
+### 1. Flash Session Middleware (`HandleInertiaRequests.php`)
+
+Agar flash session dari Controller Laravel otomatis tertangkap oleh komponen `Alert` dan `ToastNotification`, daftarkan kunci flash pada method `share()`:
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use Illuminate\Http\Request;
+use Inertia\Middleware;
+
+class HandleInertiaRequests extends Middleware
+{
+    protected $rootView = 'app';
+
+    public function share(Request $request): array
+    {
+        return [
+            ...parent::share($request),
+            'flash' => [
+                'info'    => fn() => $request->session()->get('info'),
+                'success' => fn() => $request->session()->get('success'),
+                'warning' => fn() => $request->session()->get('warning'),
+                'error'   => fn() => $request->session()->get('error'),
+                'message' => fn() => $request->session()->get('message'),
+                'alert'   => fn() => $request->session()->get('alert'),
+            ],
+        ];
+    }
+}
+```
+
+### 2. Cara Mengirim Notifikasi dari Controller
+
+```php
+// Mengirim notifikasi Toast sederhana
+return redirect()->back()->with('success', 'Data profil berhasil diperbarui.');
+return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses data.');
+
+// Mengirim banner Alert terstruktur
+return redirect()->back()->with('alert', [
+    'type'        => 'warning',
+    'title'       => 'Pemberitahuan Akun',
+    'message'     => 'Harap lakukan verifikasi nomor ponsel sebelum bertransaksi.',
+    'variant'     => 'soft',
+    'dismissible' => true,
+]);
+```
+
+---
+
+## Konfigurasi Lingkungan
+
+> [!NOTE]
+> Seluruh pengaturan di bawah ini telah dikonfigurasi secara otomatis jika Anda menggunakan perintah `php artisan pack:install`. Bagian ini dicantumkan sebagai referensi arsitektur teknis proyek Anda.
+
+### 1. Google Material Symbols
+
+Tambahkan pada bagian `<head>` di `resources/views/app.blade.php`:
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Symbols+Outlined" rel="stylesheet">
+```
+
+### 2. Tailwind CSS v4 & Dark Mode
+
+Pada berkas `resources/css/app.css`:
+
+```css
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+```
+
+### 3. Optimasi Code Splitting (`vite.config.js`)
+
+Untuk memisahkan pustaka pihak ketiga ke dalam vendor chunk dan menghindari peringatan batas ukuran berkas:
+
+```javascript
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.js'],
+            refresh: true,
+        }),
+        vue({
+            template: {
+                transformAssetUrls: {
+                    base: null,
+                    includeAbsolute: false,
+                },
+            },
+        }),
+        tailwindcss(),
+    ],
+    resolve: {
+        alias: {
+            'ziggy-js': path.resolve('vendor/tightenco/ziggy'),
+            '@': path.resolve(__dirname, './resources/js'),
+        },
+    },
+    build: {
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['vue', '@inertiajs/vue3', 'axios'],
+                },
+            },
+        },
+    },
+});
+```
+
+---
+
+## Panduan Migrasi ke v2.0.0
+
+Pembaruan dari versi v1.x ke v2.0.0 membawa arsitektur komponen majemuk dan peningkatan performa besar:
+
+1. **Perbarui Dependensi Composer:**
+   ```bash
+   composer require chandra2004/laravel-pack-ui:^2.0
+   ```
+
+2. **Perbarui Berkas Komponen dan Composables:**
+   Jalankan installer dengan flag `--force` untuk menyinkronkan pembaruan komponen ke dalam direktori aplikasi (pastikan pekerjaan sebelumnya telah dicatat di Git):
+   ```bash
+   php artisan pack:install --force
+   ```
+
+3. **Catatan Perubahan Arsitektur v2.0.0:**
+   - **Sidebar Majemuk:** `Sidebar.vue` kini menggunakan compound components (`SidebarHeader`, `SidebarNav`, `SidebarGroup`, `SidebarItem`, `SidebarToggle`, `SidebarFooter`).
+   - **Skeleton Majemuk:** `Skeleton.vue` menyediakan 9 sub-varian terisolasi (`SkeletonAvatar`, `SkeletonCard`, dll).
+   - **Komponen Baru Ditambahkan:** `MediaPlayer.vue`, composable `usePopover.js`, serta penyempurnaan integrasi Leaflet & Tiptap.
+   - **Dukungan Tailwind CSS v4:** Seluruh token styling telah diselaraskan dengan standar Tailwind CSS v4.
+
+4. **Kompilasi Ulang Aset:**
+   ```bash
+   npm run build
+   ```
+
+---
+
+## Lisensi
+
+Paket ini dirilis di bawah lisensi terbuka [MIT License](LICENSE.md) Copyright (c) 2026 Chandra Tri Antomo.

@@ -19,7 +19,7 @@ const props = defineProps({
     },
 
     /**
-     * 2. PILAR WARNA (color & colorTheme)
+     * 2. PILAR WARNA (color & colorTheme & dynamic colors)
      */
     colorTheme: {
         type: String,
@@ -27,11 +27,19 @@ const props = defineProps({
     },
     color: {
         type: String,
-        default: 'amber', // amber | yellow | rose | red | emerald | blue | purple | indigo | custom hex
+        default: 'amber', // preset string atau custom hex/rgb/hsl
+    },
+    activeColor: {
+        type: String,
+        default: '', // alias eksplisit warna aktif (contoh: '#ff5722')
     },
     inactiveColor: {
         type: String,
-        default: '',
+        default: '', // custom hex / rgb / warna untuk bintang tidak aktif (contoh: '#cbd5e1')
+    },
+    colors: {
+        type: [Object, Array],
+        default: null, // threshold warna bertingkat dinamis berdasarkan skor: misal { 1: '#ef4444', 3: '#eab308', 5: '#10b981' } atau array
     },
 
     /**
@@ -85,15 +93,17 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    locale: {
+        type: String,
+        default: 'id', // 'id' | 'en' | 'es' | 'fr'
+    },
     descriptiveTexts: {
-        type: Object,
-        default: () => ({
-            1: 'Sangat Buruk',
-            2: 'Buruk',
-            3: 'Cukup',
-            4: 'Puas',
-            5: 'Sangat Puas',
-        }),
+        type: [Object, Array, Function],
+        default: null, // Kustomisasi deskripsi: Object { 1: 'Buruk', 5: 'Puas' }, Array ['E', 'D', 'C', 'B', 'A'], atau Function (val, max) => string
+    },
+    formatter: {
+        type: Function,
+        default: null, // Kustomisasi penuh teks nilai numerik (val, max) => string
     },
     count: {
         type: Number,
@@ -101,7 +111,7 @@ const props = defineProps({
     },
     countLabel: {
         type: String,
-        default: 'ulasan',
+        default: '', // jika kosong, otomatis 'ulasan' (id) atau 'reviews' (en)
     },
     label: {
         type: String,
@@ -125,7 +135,7 @@ const props = defineProps({
      */
     responsive: {
         type: Boolean,
-        default: false,
+        default: true,
     },
     readonly: {
         type: Boolean,
@@ -183,17 +193,51 @@ const colorMap = {
     rose: '#f43f5e',
     red: '#ef4444',
     emerald: '#10b981',
+    green: '#10b981',
     blue: '#3b82f6',
     purple: '#a855f7',
     indigo: '#6366f1',
     cyan: '#06b6d4',
+    teal: '#14b8a6',
+    orange: '#f97316',
+    lime: '#84cc16',
+    pink: '#ec4899',
+    dark: '#334155',
+    slate: '#64748b',
 };
 
 const activeColorHex = computed(() => {
+    // 1. Threshold warna bertingkat dinamis (colors prop)
+    if (props.colors) {
+        const val = effectiveValue.value;
+        const starLevel = Math.max(1, Math.min(props.max, Math.ceil(val) || 1));
+        if (Array.isArray(props.colors)) {
+            const idx = starLevel - 1;
+            if (props.colors[idx]) {
+                const c = props.colors[idx];
+                return colorMap[c] || themeMap[c] || c;
+            }
+        } else if (typeof props.colors === 'object') {
+            if (props.colors[starLevel]) {
+                const c = props.colors[starLevel];
+                return colorMap[c] || themeMap[c] || c;
+            }
+        }
+    }
+
+    // 2. Tema warna bawaan (colorTheme)
     if (props.colorTheme && themeMap[props.colorTheme]) {
         return themeMap[props.colorTheme];
     }
-    return colorMap[props.color] || props.color;
+
+    // 3. Warna eksplisit (activeColor atau color)
+    const target = props.activeColor || props.color || 'amber';
+    return colorMap[target] || themeMap[target] || target;
+});
+
+const inactiveColorHex = computed(() => {
+    if (!props.inactiveColor) return '';
+    return colorMap[props.inactiveColor] || themeMap[props.inactiveColor] || props.inactiveColor;
 });
 
 // Radius mapping
@@ -219,22 +263,22 @@ const sizeClasses = computed(() => {
             sm: {
                 icon: 'text-sm sm:text-base w-4 sm:w-5 h-4 sm:h-5',
                 text: 'text-xs',
-                gap: 'gap-0.5',
+                gap: 'gap-0.5 sm:gap-1',
             },
             md: {
-                icon: 'text-lg sm:text-2xl w-5 sm:w-6 h-5 sm:h-6',
+                icon: 'text-base sm:text-xl md:text-2xl w-5 sm:w-5.5 md:w-6 h-5 sm:h-5.5 md:h-6',
                 text: 'text-xs sm:text-sm',
                 gap: 'gap-1',
             },
             lg: {
-                icon: 'text-2xl sm:text-3xl w-6 sm:w-8 h-6 sm:h-8',
-                text: 'text-sm sm:text-base',
-                gap: 'gap-1.5',
+                icon: 'text-xl sm:text-2xl md:text-3xl w-6 sm:w-7 md:w-8 h-6 sm:h-7 md:h-8',
+                text: 'text-xs sm:text-sm md:text-base',
+                gap: 'gap-1 sm:gap-1.5',
             },
             xl: {
-                icon: 'text-3xl sm:text-4xl w-8 sm:w-10 h-8 sm:h-10',
-                text: 'text-base sm:text-lg',
-                gap: 'gap-1.5 sm:gap-2',
+                icon: 'text-2xl sm:text-3xl md:text-4xl w-7 sm:w-8 md:w-10 h-7 sm:h-8 md:h-10',
+                text: 'text-sm sm:text-base md:text-lg',
+                gap: 'gap-1 sm:gap-1.5 md:gap-2',
             },
         };
         return responsiveSizes[props.size] || responsiveSizes.md;
@@ -349,13 +393,12 @@ const handleClick = (event, index) => {
 // Touch Handling for Mobile responsiveness
 const starsContainerRef = ref(null);
 
-const handleTouchMove = (event) => {
-    if (props.readonly || props.disabled || !starsContainerRef.value) return;
-    const touch = event.touches[0];
+const calculateTouchValue = (touch) => {
+    if (!starsContainerRef.value) return null;
     const rect = starsContainerRef.value.getBoundingClientRect();
     const x = touch.clientX - rect.left;
     const width = rect.width;
-    const fraction = Math.max(0, Math.min(1, x / width));
+    const fraction = Math.max(0.01, Math.min(1, x / width));
     let val = fraction * props.max;
 
     if (props.precision !== 'any') {
@@ -365,18 +408,49 @@ const handleTouchMove = (event) => {
         }
     }
 
-    val = Math.max(0, Math.min(props.max, Number(val.toFixed(2))));
-    hoverValue.value = val;
-    isHovering.value = true;
-    emit('hover', val);
+    return Math.max(0, Math.min(props.max, Number(val.toFixed(2))));
+};
+
+const handleTouchStart = (event) => {
+    if (props.readonly || props.disabled) return;
+    const touch = event.touches[0];
+    const val = calculateTouchValue(touch);
+    if (val !== null) {
+        hoverValue.value = val;
+        isHovering.value = true;
+        emit('hover', val);
+    }
+};
+
+const handleTouchMove = (event) => {
+    if (props.readonly || props.disabled) return;
+    const touch = event.touches[0];
+    const val = calculateTouchValue(touch);
+    if (val !== null) {
+        hoverValue.value = val;
+        isHovering.value = true;
+        emit('hover', val);
+    }
 };
 
 const handleTouchEnd = () => {
     if (props.readonly || props.disabled) return;
     if (hoverValue.value !== null) {
-        emit('update:modelValue', hoverValue.value);
-        emit('change', hoverValue.value);
+        const finalVal = hoverValue.value;
+        if (props.clearable && Math.abs(props.modelValue - finalVal) < 0.05) {
+            emit('update:modelValue', 0);
+            emit('change', 0);
+        } else {
+            emit('update:modelValue', finalVal);
+            emit('change', finalVal);
+        }
     }
+    isHovering.value = false;
+    hoverValue.value = null;
+    emit('hover', null);
+};
+
+const handleTouchCancel = () => {
     isHovering.value = false;
     hoverValue.value = null;
     emit('hover', null);
@@ -409,9 +483,78 @@ const handleKeyDown = (event) => {
     }
 };
 
+// Built-in localization dictionaries
+const defaultLocales = {
+    id: {
+        5: { 1: 'Sangat Buruk', 2: 'Buruk', 3: 'Cukup', 4: 'Puas', 5: 'Sangat Puas' },
+        10: { 1: 'Mengerikan', 2: 'Sangat Buruk', 3: 'Buruk', 4: 'Kurang', 5: 'Cukup', 6: 'Lumayan', 7: 'Baik', 8: 'Bagus', 9: 'Sangat Bagus', 10: 'Luar Biasa' },
+    },
+    en: {
+        5: { 1: 'Very Poor', 2: 'Poor', 3: 'Average', 4: 'Good', 5: 'Excellent' },
+        10: { 1: 'Terrible', 2: 'Very Bad', 3: 'Bad', 4: 'Poor', 5: 'Average', 6: 'Fair', 7: 'Good', 8: 'Very Good', 9: 'Great', 10: 'Masterpiece' },
+    },
+    es: {
+        5: { 1: 'Muy malo', 2: 'Malo', 3: 'Regular', 4: 'Bueno', 5: 'Excelente' },
+        10: { 1: 'Pésimo', 2: 'Muy malo', 3: 'Malo', 4: 'Deficiente', 5: 'Regular', 6: 'Aceptable', 7: 'Bueno', 8: 'Muy bueno', 9: 'Fantástico', 10: 'Excelente' },
+    },
+    fr: {
+        5: { 1: 'Très mauvais', 2: 'Mauvais', 3: 'Moyen', 4: 'Bon', 5: 'Excellent' },
+        10: { 1: 'Terrible', 2: 'Très mauvais', 3: 'Mauvais', 4: 'Médiocre', 5: 'Moyen', 6: 'Passable', 7: 'Bon', 8: 'Très bon', 9: 'Génial', 10: 'Parfait' },
+    },
+};
+
+const resolvedCountLabel = computed(() => {
+    if (props.countLabel) return props.countLabel;
+    switch (props.locale) {
+        case 'en': return 'reviews';
+        case 'es': return 'reseñas';
+        case 'fr': return 'avis';
+        default: return 'ulasan';
+    }
+});
+
+// Descriptive label based on rounded star level, custom function, or custom dictionary
+const descriptiveText = computed(() => {
+    const val = effectiveValue.value;
+    if (val <= 0) return '';
+    const starLevel = Math.max(1, Math.min(props.max, Math.ceil(val)));
+
+    // 1. Jika descriptiveTexts adalah Function callback (val, max) => string
+    if (typeof props.descriptiveTexts === 'function') {
+        return props.descriptiveTexts(val, props.max);
+    }
+
+    // 2. Jika descriptiveTexts adalah Array ['Buruk', ..., 'Puas']
+    if (Array.isArray(props.descriptiveTexts)) {
+        const item = props.descriptiveTexts[starLevel - 1];
+        if (item !== undefined) return String(item);
+    }
+
+    // 3. Jika descriptiveTexts adalah Object kustom { 1: '...', 5: '...' }
+    if (props.descriptiveTexts && typeof props.descriptiveTexts === 'object') {
+        if (props.descriptiveTexts[starLevel] !== undefined) {
+            return String(props.descriptiveTexts[starLevel]);
+        }
+    }
+
+    // 4. Fallback ke kamus bahasa bawaan (locale: id, en, es, fr)
+    const loc = defaultLocales[props.locale] || defaultLocales.id;
+    const tier = props.max > 5 && loc[10] ? loc[10] : (loc[5] || loc[10]);
+    if (tier && tier[starLevel]) {
+        return tier[starLevel];
+    }
+
+    // Interpolasi proporsional 5 bintang jika skala bintang kustom > 5
+    const normalized5 = Math.max(1, Math.min(5, Math.ceil((val / props.max) * 5)));
+    return loc[5]?.[normalized5] || '';
+});
+
 // Formatted display text
 const formattedValue = computed(() => {
     const val = effectiveValue.value;
+    if (typeof props.formatter === 'function') {
+        return props.formatter(val, props.max);
+    }
     const rounded = Number.isInteger(val) ? val.toString() : val.toFixed(1);
 
     if (props.valueFormat === 'single') {
@@ -426,23 +569,19 @@ const formattedValue = computed(() => {
     return `${rounded} / ${props.max}`;
 });
 
-// Descriptive label based on rounded star level
-const descriptiveText = computed(() => {
-    const starLevel = Math.ceil(effectiveValue.value);
-    return props.descriptiveTexts[starLevel] || '';
-});
-
 defineExpose({
     effectiveValue,
     hoverValue,
     activeColorHex,
+    inactiveColorHex,
     descriptiveText,
+    formattedValue,
 });
 </script>
 
 <template>
     <div
-        class="inline-flex flex-col text-left select-none"
+        class="inline-flex flex-col text-left select-none max-w-full"
         :class="containerVariantClasses"
     >
         <!-- Label Header -->
@@ -458,8 +597,8 @@ defineExpose({
         <!-- Rating Container (Horizontal or Vertical) -->
         <div
             :class="[
-                'inline-flex items-center flex-wrap',
-                valuePosition === 'bottom' ? 'flex-col items-start gap-1.5' : 'flex-row gap-2.5',
+                'inline-flex items-center flex-wrap max-w-full',
+                valuePosition === 'bottom' ? 'flex-col items-start gap-1 sm:gap-1.5' : 'flex-row gap-2 sm:gap-2.5',
                 disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
             ]"
         >
@@ -477,10 +616,12 @@ defineExpose({
                 :tabindex="readonly || disabled ? -1 : 0"
                 @keydown="handleKeyDown"
                 @mouseleave="handleMouseLeave"
-                @touchmove="handleTouchMove"
+                @touchstart.passive="handleTouchStart"
+                @touchmove.passive="handleTouchMove"
                 @touchend="handleTouchEnd"
+                @touchcancel="handleTouchCancel"
                 :class="[
-                    'inline-flex items-center focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500/30 rounded-lg touch-none',
+                    'inline-flex items-center focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500/30 rounded-lg touch-none max-w-full overflow-x-auto sm:overflow-visible py-0.5',
                     sizeClasses.gap,
                     readonly ? 'cursor-default' : (disabled ? 'cursor-not-allowed' : 'cursor-pointer')
                 ]"
@@ -508,10 +649,10 @@ defineExpose({
                             :class="[
                                 'material-symbols-outlined flex items-center justify-center leading-none transition-colors select-none',
                                 sizeClasses.icon,
-                                inactiveColor ? '' : 'text-slate-200 dark:text-slate-700/80'
+                                inactiveColorHex ? '' : 'text-slate-200 dark:text-slate-700/80'
                             ]"
                             :style="[
-                                inactiveColor ? { color: inactiveColor } : {},
+                                inactiveColorHex ? { color: inactiveColorHex } : {},
                                 { fontVariationSettings: `'FILL' 0, 'wght' 400` }
                             ]"
                         >
@@ -576,7 +717,7 @@ defineExpose({
                         v-if="count > 0"
                         class="text-slate-400 dark:text-slate-500 font-normal"
                     >
-                        ({{ count.toLocaleString('id-ID') }} {{ countLabel }})
+                        ({{ count.toLocaleString(locale === 'en' ? 'en-US' : (locale === 'es' ? 'es-ES' : (locale === 'fr' ? 'fr-FR' : 'id-ID'))) }} {{ resolvedCountLabel }})
                     </span>
                 </slot>
 
@@ -585,12 +726,12 @@ defineExpose({
         </div>
 
         <!-- Helper Hint & Error Messages -->
-        <p v-if="error" class="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1.5 flex items-center gap-1">
+        <span v-if="error" class="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1.5 flex items-center gap-1">
             <span class="material-symbols-outlined text-sm leading-none">error</span>
             <slot name="error">{{ error }}</slot>
-        </p>
-        <p v-else-if="hint || $slots.hint" class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+        </span>
+        <span v-else-if="hint || $slots.hint" class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 block">
             <slot name="hint">{{ hint }}</slot>
-        </p>
+        </span>
     </div>
 </template>

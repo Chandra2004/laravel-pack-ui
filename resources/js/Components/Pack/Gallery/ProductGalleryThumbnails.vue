@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
+import Badge from '../Badge.vue';
 
 const props = defineProps({
     items: {
@@ -30,6 +31,10 @@ const props = defineProps({
         type: String,
         default: 'xl',
     },
+    showBadges: {
+        type: Boolean,
+        default: true,
+    },
     disabled: {
         type: Boolean,
         default: false,
@@ -38,6 +43,24 @@ const props = defineProps({
 
 const emit = defineEmits(['select', 'update:activeIndex']);
 
+const thumbRefs = ref([]);
+const setThumbRef = (el, idx) => {
+    if (el) thumbRefs.value[idx] = el;
+};
+
+// Scroll thumbnail aktif ke viewport secara otomatis
+watch(() => props.activeIndex, (newIdx) => {
+    nextTick(() => {
+        if (thumbRefs.value[newIdx] && typeof thumbRefs.value[newIdx].scrollIntoView === 'function') {
+            thumbRefs.value[newIdx].scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'nearest',
+            });
+        }
+    });
+});
+
 const effectiveAspect = computed(() => {
     if (props.aspectRatio) return props.aspectRatio;
     return props.variant === 'card' ? 'aspect-video' : 'aspect-4/3';
@@ -45,6 +68,18 @@ const effectiveAspect = computed(() => {
 
 const isVertical = computed(() => {
     return ['left', 'right'].includes(props.position);
+});
+
+// Lebar thumbnail disesuaikan agar tidak gepeng atau overlap saat scroll horizontal maupun vertikal
+const itemWidthClass = computed(() => {
+    if (isVertical.value) {
+        return 'w-20 sm:w-24 md:w-full snap-start';
+    }
+    // Posisi horizontal ('bottom' atau 'top'): lebar tetap dengan shrink-0 agar scroll kesamping
+    if (props.variant === 'card') {
+        return 'w-28 sm:w-32 md:w-36 snap-start';
+    }
+    return 'w-18 sm:w-20 md:w-24 snap-start';
 });
 
 // Radius Classes
@@ -94,25 +129,22 @@ const handleSelect = (idx) => {
 <template>
     <div
         :class="[
-            'w-full select-none',
+            'w-full max-w-full select-none',
             isVertical
-                ? 'flex flex-col gap-2.5 overflow-y-auto max-h-115 md:max-h-130 scrollbar-none [&::-webkit-scrollbar]:hidden pr-0.5'
-                : 'grid gap-2 sm:gap-2.5',
-            !isVertical && (
-                variant === 'card'
-                    ? 'grid-cols-2 sm:grid-cols-4'
-                    : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6'
-            )
+                ? 'flex md:flex-col flex-row gap-2 sm:gap-2.5 overflow-x-auto md:overflow-y-auto md:h-full md:max-h-full scrollbar-none md:[&::-webkit-scrollbar]:w-1.5 md:[&::-webkit-scrollbar-track]:bg-transparent md:[&::-webkit-scrollbar-thumb]:bg-slate-300 dark:md:[&::-webkit-scrollbar-thumb]:bg-slate-700 md:[&::-webkit-scrollbar-thumb]:rounded-full hover:md:[&::-webkit-scrollbar-thumb]:bg-slate-400 pb-1 md:pb-0 pr-0 md:pr-1 snap-x snap-mandatory md:snap-y'
+                : 'flex flex-row flex-nowrap items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 pb-1.5 pt-0.5 snap-x snap-mandatory'
         ]"
     >
         <button
             v-for="(item, idx) in items"
             :key="idx"
+            :ref="el => setThumbRef(el, idx)"
             type="button"
             :disabled="disabled"
             @click="handleSelect(idx)"
             :class="[
-                'relative overflow-hidden transition-all duration-200 cursor-pointer group text-left shrink-0',
+                'relative overflow-hidden transition-all duration-200 cursor-pointer group text-left shrink-0 outline-none focus:outline-none ring-0',
+                itemWidthClass,
                 effectiveAspect,
                 currentRadius,
                 // Variant: Card (Caption Label di bawah)
@@ -131,8 +163,8 @@ const handleSelect = (idx) => {
                             : 'border-slate-200/80 dark:border-slate-800/80 opacity-75 hover:opacity-100 hover:border-slate-300 dark:hover:border-slate-700'
                     ]
             ]"
-            :aria-label="`Pilih foto ${idx + 1}: ${item.label || item.alt || 'Foto produk'}`"
-            :title="item.label || item.alt || `Foto ${idx + 1}`"
+            :aria-label="`Pilih media ${idx + 1}: ${item.label || item.alt || 'Foto produk'}`"
+            :title="item.label || item.alt || `Media ${idx + 1}`"
         >
             <!-- Image Thumbnail -->
             <img
@@ -142,10 +174,20 @@ const handleSelect = (idx) => {
                 loading="lazy"
             />
 
+            <!-- Video Overlay Play Indicator if media is video -->
+            <div
+                v-if="item.type === 'video'"
+                class="absolute inset-0 z-2 flex items-center justify-center bg-black/35 group-hover:bg-black/20 transition-colors pointer-events-none"
+            >
+                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-black/70 backdrop-blur-xs text-white flex items-center justify-center shadow-md border border-white/30">
+                    <span class="material-symbols-outlined text-sm sm:text-base leading-none translate-x-0.2">play_arrow</span>
+                </div>
+            </div>
+
             <!-- Card Variant Caption Label Bar (Gaya Natural Showroom Otomotif) -->
             <div
                 v-if="variant === 'card' && item.label"
-                class="absolute inset-x-0 bottom-0 pt-4 pb-1.5 px-1 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-center text-center"
+                class="absolute inset-x-0 bottom-0 pt-4 pb-1.5 px-1 bg-linear-to-t from-black/90 via-black/50 to-transparent flex items-center justify-center text-center z-3"
             >
                 <span
                     :class="[
@@ -159,12 +201,20 @@ const handleSelect = (idx) => {
                 </span>
             </div>
 
-            <!-- Optional Mini Badge Top-Right jika ada -->
+            <!-- Optional Mini Badge Top-Right jika ada dan showBadges bernilai true -->
             <div
-                v-if="item.badge"
-                class="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[9px] font-bold text-white uppercase tracking-wider shadow-xs"
+                v-if="showBadges && item.badge"
+                class="absolute top-1 right-1 pointer-events-none z-3"
             >
-                {{ item.badge }}
+                <Badge
+                    variant="solid"
+                    color="neutral"
+                    size="xs"
+                    rounded="md"
+                    class="bg-black/70! backdrop-blur-xs! text-white! uppercase tracking-wider text-[9px]! px-1.5! py-0.5! shadow-xs border-0!"
+                >
+                    {{ item.badge }}
+                </Badge>
             </div>
         </button>
     </div>

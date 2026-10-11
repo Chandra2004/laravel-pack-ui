@@ -1,23 +1,26 @@
 import { ref, computed, watch } from 'vue';
-import { formatRupiah } from './useNumberFormat';
+import { formatRupiah } from './useNumberFormat.js';
 
 /**
- * Global reactive singleton state for the cart.
- * Shared across all component instances (Header, CartDrawer, ProductCard, Checkout).
+ * Global reactive singleton state for the shopping cart.
+ * Berbagi status tunggal antar seluruh komponen (Header, CartDrawer, ProductCard, Checkout).
  */
 const STORAGE_KEY = 'pack_cart_v1';
 
-// Initial state
+// Initial state singleton
 const items = ref([]);
 const isCartOpen = ref(false);
 const activeVoucher = ref(null);
 const voucherError = ref('');
 const taxRate = ref(0.11); // 11% PPN default Indonesia
 const shippingCost = ref(20000); // Rp 20.000 default
-const freeShippingThreshold = ref(150000); // Rp 150.000 threshold
+const freeShippingThreshold = ref(150000); // Rp 150.000 batas bebas ongkir
 
-// Load state from localStorage on startup (client-side safe)
 let isInitialized = false;
+
+/**
+ * Membaca data keranjang dari localStorage secara aman (aman SSR).
+ */
 const initStorage = () => {
     if (isInitialized || typeof window === 'undefined') return;
     try {
@@ -32,12 +35,14 @@ const initStorage = () => {
             }
         }
     } catch (e) {
-        console.warn('[useCart] Failed to restore cart from localStorage:', e);
+        console.warn('[useCart] Gagal memulihkan keranjang dari localStorage:', e);
     }
     isInitialized = true;
 };
 
-// Save state to localStorage whenever items or activeVoucher change
+/**
+ * Menyimpan mutasi data keranjang ke localStorage.
+ */
 const persistStorage = () => {
     if (typeof window === 'undefined') return;
     try {
@@ -49,18 +54,35 @@ const persistStorage = () => {
             })
         );
     } catch (e) {
-        console.warn('[useCart] Failed to save cart to localStorage:', e);
+        console.warn('[useCart] Gagal menyimpan keranjang ke localStorage:', e);
     }
 };
 
-// Auto-watch changes for persistent storage
+// Inisialisasi pengawasan persistensi & sinkronisasi multi-tab (browser klien)
 if (typeof window !== 'undefined') {
     initStorage();
     watch([items, activeVoucher], persistStorage, { deep: true });
+
+    // Sinkronisasi real-time jika keranjang diubah di tab browser lain
+    window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY && event.newValue) {
+            try {
+                const parsed = JSON.parse(event.newValue);
+                if (Array.isArray(parsed.items)) {
+                    items.value = parsed.items;
+                }
+                if (parsed.activeVoucher !== undefined) {
+                    activeVoucher.value = parsed.activeVoucher;
+                }
+            } catch (err) {
+                console.warn('[useCart] Gagal menyinkronkan data antar-tab:', err);
+            }
+        }
+    });
 }
 
 /**
- * Generate a consistent unique key for an item based on its ID and variation attributes.
+ * Menghasilkan kunci unik item berdasarkan ID dan variasi atributnya.
  */
 const getItemKey = (id, attributes = {}) => {
     const attrKey = Object.keys(attributes || {})
@@ -69,6 +91,45 @@ const getItemKey = (id, attributes = {}) => {
         .join('|');
     return attrKey ? `${id}__${attrKey}` : String(id);
 };
+
+/**
+ * Mencari item dalam keranjang berdasarkan cartKey atau ID produk.
+ */
+const findCartItem = (keyOrId) => {
+    if (keyOrId === null || keyOrId === undefined) return null;
+    const strKey = String(keyOrId);
+    return items.value.find((i) => i.cartKey === strKey || String(i.id) === strKey || i.id === keyOrId);
+};
+
+/**
+ * Preset voucher bawaan untuk kebutuhan simulasi & promosi.
+ */
+export const PRESET_VOUCHERS = [
+    {
+        code: 'DISKON10',
+        type: 'percent',
+        value: 10,
+        minSpend: 50000,
+        maxDiscount: 25000,
+        description: 'Diskon 10% s.d. Rp 25.000 (Min. Belanja Rp 50.000)',
+    },
+    {
+        code: 'HEMAT50K',
+        type: 'fixed',
+        value: 50000,
+        minSpend: 200000,
+        maxDiscount: 50000,
+        description: 'Potongan Langsung Rp 50.000 (Min. Belanja Rp 200.000)',
+    },
+    {
+        code: 'ONGKIRGRATIS',
+        type: 'fixed',
+        value: 20000,
+        minSpend: 75000,
+        maxDiscount: 20000,
+        description: 'Subsidi Ongkir Rp 20.000 (Min. Belanja Rp 75.000)',
+    },
+];
 
 /**
  * Enterprise Composable for Shopping Cart Management
@@ -80,39 +141,41 @@ export function useCart() {
     // COMPUTED TOTALS & CALCULATIONS
     // -------------------------------------------------------------
 
-    /** Total count of all items (sum of quantities) */
+    /** Total kuantitas seluruh item di keranjang */
     const totalItems = computed(() => {
         return items.value.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
     });
 
-    /** Number of unique item variations in cart */
+    /** Jumlah baris variasi produk unik */
     const uniqueItemCount = computed(() => items.value.length);
 
-    /** True if cart has no items */
+    /** True jika keranjang tidak memiliki item sama sekali */
     const isCartEmpty = computed(() => items.value.length === 0);
 
-    /** Subtotal: sum of (item.discountPrice ?? item.price) * quantity */
+    /** Subtotal: akumulasi (item.discountPrice ?? item.price) * quantity */
     const subtotal = computed(() => {
         return items.value.reduce((acc, item) => {
-            const unitPrice = item.discountPrice !== undefined && item.discountPrice !== null
-                ? Number(item.discountPrice)
-                : Number(item.price);
-            return acc + (unitPrice * (Number(item.quantity) || 1));
+            const unitPrice =
+                item.discountPrice !== undefined && item.discountPrice !== null
+                    ? Number(item.discountPrice)
+                    : Number(item.price);
+            return acc + unitPrice * (Number(item.quantity) || 1);
         }, 0);
     });
 
-    /** Total discount saved across products before voucher */
+    /** Subtotal asli berdasarkan harga normal sebelum diskon per produk */
     const originalSubtotal = computed(() => {
         return items.value.reduce((acc, item) => {
-            return acc + (Number(item.price) * (Number(item.quantity) || 1));
+            return acc + Number(item.price) * (Number(item.quantity) || 1);
         }, 0);
     });
 
+    /** Total penghematan dari potongan diskon langsung pada produk */
     const productDiscountSavings = computed(() => {
         return Math.max(0, originalSubtotal.value - subtotal.value);
     });
 
-    /** Voucher discount nominal amount */
+    /** Nominal potongan harga dari voucher diskon aktif */
     const voucherDiscount = computed(() => {
         if (!activeVoucher.value) return 0;
         const v = activeVoucher.value;
@@ -123,59 +186,62 @@ export function useCart() {
         }
 
         let discount = 0;
-        if (v.type === 'percent') {
-            discount = (currentSubtotal * (Number(v.value) || 0)) / 100;
+        if (v.type === 'percent' || v.type === 'percentage') {
+            discount = (currentSubtotal * (Number(v.value ?? v.discount) || 0)) / 100;
             if (v.maxDiscount && discount > v.maxDiscount) {
                 discount = Number(v.maxDiscount);
             }
         } else if (v.type === 'fixed') {
-            discount = Number(v.value) || 0;
+            discount = Number(v.value ?? v.discount) || 0;
         }
 
         return Math.min(discount, currentSubtotal);
     });
 
-    /** Subtotal after voucher deduction */
+    /** Subtotal bersih setelah dipotong diskon voucher */
     const subtotalAfterVoucher = computed(() => {
         return Math.max(0, subtotal.value - voucherDiscount.value);
     });
 
-    /** Free Shipping Calculations */
+    /** Status pembebasan biaya ongkos kirim */
     const isFreeShipping = computed(() => {
         if (freeShippingThreshold.value <= 0) return true;
         return subtotal.value >= freeShippingThreshold.value;
     });
 
+    /** Biaya ongkir efektif yang dikenakan */
     const effectiveShippingCost = computed(() => {
         if (isCartEmpty.value) return 0;
         return isFreeShipping.value ? 0 : Number(shippingCost.value);
     });
 
+    /** Kekurangan belanja untuk mendapatkan gratis ongkir */
     const freeShippingRemaining = computed(() => {
         if (isFreeShipping.value) return 0;
         return Math.max(0, freeShippingThreshold.value - subtotal.value);
     });
 
+    /** Persentase progres menuju batas gratis ongkir (0 - 100) */
     const freeShippingProgress = computed(() => {
         if (freeShippingThreshold.value <= 0) return 100;
         const prog = (subtotal.value / freeShippingThreshold.value) * 100;
         return Math.min(100, Math.round(prog));
     });
 
-    /** Tax calculation (PPN) */
+    /** Estimasi nominal PPN */
     const taxAmount = computed(() => {
         if (taxRate.value <= 0) return 0;
         return Math.round(subtotalAfterVoucher.value * taxRate.value);
     });
 
-    /** Grand Total */
+    /** Total akhir pembayaran (Grand Total) */
     const grandTotal = computed(() => {
         if (isCartEmpty.value) return 0;
         return subtotalAfterVoucher.value + taxAmount.value + effectiveShippingCost.value;
     });
 
     // -------------------------------------------------------------
-    // FORMATTED VALUES (Convenience Helpers)
+    // FORMATTED VALUES & COMPATIBILITY ALIASES
     // -------------------------------------------------------------
     const formattedSubtotal = computed(() => formatRupiah(subtotal.value));
     const formattedVoucherDiscount = computed(() => formatRupiah(voucherDiscount.value));
@@ -187,15 +253,42 @@ export function useCart() {
     const formattedGrandTotal = computed(() => formatRupiah(grandTotal.value));
     const formattedSavings = computed(() => formatRupiah(productDiscountSavings.value + voucherDiscount.value));
 
+    // Aliases untuk konsistensi penamaan lintas template/dokumentasi
+    const subtotalFormatted = formattedSubtotal;
+    const discountAmountFormatted = formattedVoucherDiscount;
+    const discountAmount = voucherDiscount;
+    const taxAmountFormatted = formattedTax;
+    const grandTotalFormatted = formattedGrandTotal;
+    const shippingCostFormatted = formattedShipping;
+    const savingsFormatted = formattedSavings;
+
+    // -------------------------------------------------------------
+    // ITEM HELPERS
+    // -------------------------------------------------------------
+
+    /**
+     * Menghitung subtotal untuk satu baris item tertentu di keranjang.
+     */
+    const getItemSubtotal = (item) => {
+        if (!item) return 0;
+        const unitPrice =
+            item.discountPrice !== undefined && item.discountPrice !== null
+                ? Number(item.discountPrice)
+                : Number(item.price);
+        return unitPrice * (Number(item.quantity) || 1);
+    };
+
+    const getItemSubtotalFormatted = (item) => formatRupiah(getItemSubtotal(item));
+
     // -------------------------------------------------------------
     // ACTIONS / MUTATIONS
     // -------------------------------------------------------------
 
     /**
-     * Add an item to cart or increment quantity if already exists.
-     * @param {Object} itemData - Item attributes { id, sku, name, price, discountPrice, maxStock, image, attributes, notes }
-     * @param {number} [qty=1]
-     * @returns {boolean} True if successfully added
+     * Menambahkan item ke keranjang atau menambah kuantitas jika sudah ada.
+     * @param {Object} itemData - Data item produk
+     * @param {number} [qty=1] - Jumlah yang ditambahkan
+     * @returns {boolean} True jika berhasil
      */
     const addItem = (itemData, qty = 1) => {
         if (!itemData || itemData.id === undefined) return false;
@@ -212,7 +305,7 @@ export function useCart() {
 
             if (newQty > maxStock) {
                 existingItem.quantity = maxStock;
-                return false; // Reached stock limit
+                return false; // Mencapai batas stok
             }
             existingItem.quantity = newQty;
         } else {
@@ -237,25 +330,30 @@ export function useCart() {
     };
 
     /**
-     * Remove an item from the cart completely.
-     * @param {string} cartKey - Key identifier of item in cart
+     * Menghapus item dari keranjang berdasarkan cartKey atau ID produk.
+     * @param {string|number} keyOrId
      */
-    const removeItem = (cartKey) => {
-        items.value = items.value.filter((i) => i.cartKey !== cartKey);
+    const removeItem = (keyOrId) => {
+        const item = findCartItem(keyOrId);
+        if (item) {
+            items.value = items.value.filter((i) => i.cartKey !== item.cartKey);
+        } else {
+            items.value = items.value.filter((i) => i.cartKey !== String(keyOrId) && i.id !== keyOrId);
+        }
     };
 
     /**
-     * Update quantity of an item directly.
-     * @param {string} cartKey
+     * Memperbarui kuantitas item secara langsung.
+     * @param {string|number} keyOrId
      * @param {number} newQty
      */
-    const updateQuantity = (cartKey, newQty) => {
-        const item = items.value.find((i) => i.cartKey === cartKey);
+    const updateQuantity = (keyOrId, newQty) => {
+        const item = findCartItem(keyOrId);
         if (!item) return;
 
         const qty = Number(newQty);
         if (qty <= 0) {
-            removeItem(cartKey);
+            removeItem(item.cartKey);
             return;
         }
 
@@ -263,9 +361,9 @@ export function useCart() {
         item.quantity = Math.min(qty, max);
     };
 
-    /** Increment quantity by 1 */
-    const incrementQuantity = (cartKey) => {
-        const item = items.value.find((i) => i.cartKey === cartKey);
+    /** Menambah kuantitas item sebanyak 1 */
+    const incrementQuantity = (keyOrId) => {
+        const item = findCartItem(keyOrId);
         if (item) {
             const max = item.maxStock !== undefined ? Number(item.maxStock) : Infinity;
             if (item.quantity < max) {
@@ -274,27 +372,27 @@ export function useCart() {
         }
     };
 
-    /** Decrement quantity by 1 (removes item if quantity reaches 0) */
-    const decrementQuantity = (cartKey) => {
-        const item = items.value.find((i) => i.cartKey === cartKey);
+    /** Mengurangi kuantitas item sebanyak 1 (otomatis dihapus jika kuantitas mencapai 0) */
+    const decrementQuantity = (keyOrId) => {
+        const item = findCartItem(keyOrId);
         if (item) {
             if (item.quantity > 1) {
                 item.quantity -= 1;
             } else {
-                removeItem(cartKey);
+                removeItem(item.cartKey);
             }
         }
     };
 
-    /** Update custom buyer notes on an item */
-    const updateItemNotes = (cartKey, notes) => {
-        const item = items.value.find((i) => i.cartKey === cartKey);
+    /** Memperbarui catatan pembeli pada item tertentu */
+    const updateItemNotes = (keyOrId, notes) => {
+        const item = findCartItem(keyOrId);
         if (item) {
             item.notes = String(notes || '');
         }
     };
 
-    /** Clear all items from the cart */
+    /** Mengosongkan seluruh isi keranjang dan mereset voucher */
     const clearCart = () => {
         items.value = [];
         activeVoucher.value = null;
@@ -305,58 +403,30 @@ export function useCart() {
     // VOUCHER / PROMO ENGINE
     // -------------------------------------------------------------
 
-    /** Preset demo vouchers */
-    const PRESET_VOUCHERS = [
-        {
-            code: 'DISKON10',
-            type: 'percent',
-            value: 10,
-            minSpend: 50000,
-            maxDiscount: 25000,
-            description: 'Diskon 10% s.d. Rp 25.000 (Min. Belanja Rp 50.000)',
-        },
-        {
-            code: 'HEMAT50K',
-            type: 'fixed',
-            value: 50000,
-            minSpend: 200000,
-            maxDiscount: 50000,
-            description: 'Potongan Langsung Rp 50.000 (Min. Belanja Rp 200.000)',
-        },
-        {
-            code: 'ONGKIRGRATIS',
-            type: 'fixed',
-            value: 20000,
-            minSpend: 75000,
-            maxDiscount: 20000,
-            description: 'Subsidi Ongkir Rp 20.000 (Min. Belanja Rp 75.000)',
-        },
-    ];
-
     /**
-     * Apply a voucher code.
+     * Memasang kode kupon voucher ke keranjang belanja.
      * @param {string} code
-     * @param {Array} [customVouchers] - Optional custom list of vouchers
-     * @returns {boolean}
+     * @param {Array} [customVouchers] - Kumpulan voucher opsional
+     * @returns {boolean} True jika berhasil diterapkan
      */
     const applyVoucher = (code, customVouchers = null) => {
         voucherError.value = '';
-        if (!code || !code.trim()) {
+        if (!code || !String(code).trim()) {
             voucherError.value = 'Silakan masukkan kode voucher.';
             return false;
         }
 
-        const normalizedCode = code.trim().toUpperCase();
+        const normalizedCode = String(code).trim().toUpperCase();
         const pool = customVouchers || PRESET_VOUCHERS;
         const found = pool.find((v) => v.code.toUpperCase() === normalizedCode);
 
         if (!found) {
-            voucherError.value = `Kode voucher "${normalizedCode}" tidak ditemukan atau sudah kadaluwarsa.`;
+            voucherError.value = `Kode voucher "${normalizedCode}" tidak valid atau telah kedaluwarsa.`;
             return false;
         }
 
         if (found.minSpend && subtotal.value < found.minSpend) {
-            voucherError.value = `Minimal belanja untuk voucher ini adalah ${formatRupiah(found.minSpend)}.`;
+            voucherError.value = `Minimal transaksi untuk voucher ini adalah ${formatRupiah(found.minSpend)}.`;
             return false;
         }
 
@@ -364,7 +434,7 @@ export function useCart() {
         return true;
     };
 
-    /** Remove the active voucher */
+    /** Menghapus voucher aktif */
     const removeVoucher = () => {
         activeVoucher.value = null;
         voucherError.value = '';
@@ -418,6 +488,7 @@ export function useCart() {
         originalSubtotal,
         productDiscountSavings,
         voucherDiscount,
+        discountAmount,
         subtotalAfterVoucher,
         isFreeShipping,
         effectiveShippingCost,
@@ -433,6 +504,18 @@ export function useCart() {
         formattedTax,
         formattedGrandTotal,
         formattedSavings,
+
+        // Compatibility Aliases
+        subtotalFormatted,
+        discountAmountFormatted,
+        taxAmountFormatted,
+        grandTotalFormatted,
+        shippingCostFormatted,
+        savingsFormatted,
+
+        // Item Calculations
+        getItemSubtotal,
+        getItemSubtotalFormatted,
 
         // Actions
         addItem,

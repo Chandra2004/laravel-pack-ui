@@ -65,6 +65,26 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    description: {
+        type: String,
+        default: '',
+    },
+    showCounter: {
+        type: Boolean,
+        default: false,
+    },
+    showStepper: {
+        type: Boolean,
+        default: false,
+    },
+    showTooltip: {
+        type: Boolean,
+        default: true,
+    },
+    showTicks: {
+        type: Boolean,
+        default: false,
+    },
     icon: {
         type: String,
         default: '',
@@ -78,10 +98,6 @@ const props = defineProps({
         default: '',
     },
     suffix: {
-        type: String,
-        default: '',
-    },
-    autocomplete: {
         type: String,
         default: '',
     },
@@ -129,6 +145,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    searchable: {
+        type: Boolean,
+        default: null,
+    },
     accept: {
         type: String,
         default: '',
@@ -136,7 +156,16 @@ const props = defineProps({
     size: {
         type: String,
         default: 'md',
-        validator: (val) => ['sm', 'md', 'lg'].includes(val),
+        validator: (val) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(val),
+    },
+    rounded: {
+        type: String,
+        default: 'xl',
+        validator: (val) => ['default', 'none', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'full'].includes(val),
+    },
+    radius: {
+        type: String,
+        default: 'xl',
     },
     showPasswordToggle: {
         type: Boolean,
@@ -190,6 +219,22 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    simulateUpload: {
+        type: Boolean,
+        default: false,
+    },
+    minimal: {
+        type: Boolean,
+        default: false,
+    },
+    hideInfo: {
+        type: Boolean,
+        default: false,
+    },
+    existingFiles: {
+        type: [Array, Object, String],
+        default: null,
+    },
     liveValidation: {
         type: Boolean,
         default: true,
@@ -204,8 +249,20 @@ const props = defineProps({
     },
     // OTP Props
     length: {
-        type: Number,
+        type: [Number, String],
         default: 6,
+    },
+    charType: {
+        type: String,
+        default: 'numeric',
+    },
+    pattern: {
+        type: [String, RegExp, Object],
+        default: null,
+    },
+    uppercase: {
+        type: Boolean,
+        default: false,
     },
     integerOnly: {
         type: Boolean,
@@ -220,16 +277,20 @@ const props = defineProps({
         default: '',
     },
     separatorAfter: {
-        type: Number,
+        type: [Number, String],
         default: null,
     },
     countdown: {
-        type: Number,
+        type: [Number, String],
         default: 0,
     },
     resendText: {
         type: String,
         default: 'Kirim Ulang Kode OTP',
+    },
+    autoFocus: {
+        type: Boolean,
+        default: false,
     },
     // Mask Props
     mask: {
@@ -293,10 +354,7 @@ const props = defineProps({
         type: String,
         default: '',
     },
-    radius: {
-        type: String,
-        default: 'xl',
-    },
+
     // Repeater / Multiple Form Props
     fields: {
         type: Array,
@@ -390,10 +448,7 @@ const props = defineProps({
         type: Function,
         default: null,
     },
-    pattern: {
-        type: [String, RegExp],
-        default: null,
-    },
+
     patternMessage: {
         type: String,
         default: 'Format input tidak sesuai ketentuan',
@@ -401,6 +456,132 @@ const props = defineProps({
     onWatch: {
         type: Function,
         default: null,
+    },
+    // Location Picker Specific Props
+    displayMode: {
+        type: String,
+        default: 'modal',
+    },
+    color: {
+        type: String,
+        default: 'primary',
+    },
+    showCoordinates: {
+        type: Boolean,
+        default: null,
+    },
+    showCoordinatesBadge: {
+        type: Boolean,
+        default: true,
+    },
+    autocomplete: {
+        type: [Boolean, String],
+        default: true,
+    },
+    defaultCenter: {
+        type: Array,
+        default: undefined,
+    },
+    defaultZoom: {
+        type: Number,
+        default: undefined,
+    },
+    tileLayer: {
+        type: String,
+        default: undefined,
+    },
+
+    telDelimiter: {
+        type: String,
+        default: '-',
+    },
+    telChunkSize: {
+        type: [Number, String, Array],
+        default: 4,
+    },
+    telPattern: {
+        type: String,
+        default: '',
+    },
+    searchSuggestions: {
+        type: Boolean,
+        default: true,
+    },
+    urlProtocol: {
+        type: String,
+        default: 'https://',
+    },
+    urlErrorText: {
+        type: String,
+        default: 'Format URL tidak valid (contoh: https://domain.com)',
+    },
+    emailErrorText: {
+        type: String,
+        default: 'Format email tidak valid (contoh: nama@domain.com)',
+    },
+    // Switch Toggle Style ('ios', 'icon', 'labeled', 'cyber', 'inset')
+    toggleStyle: {
+        type: String,
+        default: 'ios',
+    },
+    toggleVariant: {
+        type: String,
+        default: '',
+    },
+    // Range Slider Style ('glow', 'thick', 'stepper', 'minimal')
+    sliderStyle: {
+        type: String,
+        default: 'glow',
+    },
+    rangeVariant: {
+        type: String,
+        default: '',
+    },
+    // Color Picker & Trigger Style
+    colorTriggerStyle: {
+        type: String,
+        default: 'button',
+    },
+    colorPickerStyle: {
+        type: String,
+        default: 'palette',
+    },
+    // Date & Time Picker Style ('calendar', 'presets')
+    datePickerStyle: {
+        type: String,
+        default: 'calendar',
+    },
+    // Select Dropdown Style ('modern', 'cards', 'compact')
+    selectDropdownStyle: {
+        type: String,
+        default: 'modern',
+    },
+    // Search Suggestions Style ('dropdown', 'spotlight')
+    searchStyle: {
+        type: String,
+        default: 'dropdown',
+    },
+    // Mask Extras
+    maskUppercase: {
+        type: Boolean,
+        default: false,
+    },
+    showMaskHint: {
+        type: Boolean,
+        default: false,
+    },
+    // Popover Placement & Offset ('bottom', 'top', 'left', 'right')
+    popoverPlacement: {
+        type: String,
+        default: 'bottom',
+    },
+    placement: {
+        type: String,
+        default: '',
+    },
+    popoverOffset: {
+        type: Number,
+        default: 8,
     },
 });
 
@@ -424,11 +605,19 @@ defineEmits([
     'item-remove',
     'item-duplicate',
     'item-move',
+    'delete-existing',
 ]);
 
 // SSR Hydration-safe Unique ID generator (Vue 3.5+)
 const generatedId = useId();
 const inputId = computed(() => props.id || props.name || generatedId);
+
+const effectivePopoverPlacement = computed(() => {
+    return props.placement || props.popoverPlacement || 'bottom';
+});
+
+const effectiveRadius = computed(() => props.radius || props.rounded || 'xl');
+const effectiveSubtext = computed(() => props.subtext || props.description || '');
 
 // Character Counter
 const charCount = computed(() => {
@@ -441,10 +630,14 @@ const charCount = computed(() => {
 // Label Size typography
 const labelSizeClass = computed(() => {
     switch (props.size) {
+        case 'xs':
+            return 'text-[11px]';
         case 'sm':
             return 'text-xs';
         case 'lg':
             return 'text-sm font-bold';
+        case 'xl':
+            return 'text-base font-bold';
         case 'md':
         default:
             return 'text-xs font-semibold';
@@ -494,14 +687,27 @@ const inputRef = computed(() => {
     return controlRef.value?.inputRef || controlRef.value?.textareaRef || controlRef.value?.$el?.querySelector?.('input, textarea, select') || null;
 });
 
+const triggerPicker = () => {
+    controlRef.value?.triggerPicker?.();
+};
+
+const removeFile = (idx) => {
+    controlRef.value?.removeFile?.(idx);
+};
+
 defineExpose({
     focus,
     blur,
     clear,
     validate,
+    triggerPicker,
+    removeFile,
     inputId,
     controlRef,
     inputRef,
+    get inputFileRef() { return controlRef.value?.inputFileRef || controlRef.value; },
+    get fileInputRef() { return controlRef.value?.fileInputRef; },
+    get filePreviews() { return controlRef.value?.filePreviews || []; },
     value: computed(() => model.value),
 });
 </script>
@@ -524,11 +730,12 @@ defineExpose({
 
             <!-- Char counter -->
             <span
-                v-if="maxlength"
+                v-if="maxlength || showCounter"
                 class="text-[11px] font-mono tracking-tight"
-                :class="charCount >= Number(maxlength) ? 'text-rose-500 font-bold' : 'text-slate-400 dark:text-slate-500'"
+                :class="maxlength && charCount >= Number(maxlength) ? 'text-rose-500 font-bold' : 'text-slate-400 dark:text-slate-500'"
             >
-                {{ charCount }}/{{ maxlength }}
+                <template v-if="maxlength">{{ charCount }}/{{ maxlength }}</template>
+                <template v-else>{{ charCount }} karakter</template>
             </span>
         </div>
 
@@ -579,7 +786,10 @@ defineExpose({
             v-model="model"
             :name="name"
             :label="label"
-            :subtext="subtext"
+            :subtext="effectiveSubtext"
+            :variant="variant || toggleVariant || toggleStyle"
+            :color="color"
+            :size="size"
             :required="required"
             :disabled="disabled"
             :error="error"
@@ -606,6 +816,8 @@ defineExpose({
             :readonly="readonly"
             :maxlength="maxlength"
             :size="size"
+            :rounded="effectiveRadius"
+            :color="color"
             :error="error"
             @input="$emit('input', $event)"
             @change="$emit('change', $event)"
@@ -623,13 +835,19 @@ defineExpose({
             :placeholder="placeholder"
             :options="options"
             :multiple="multiple"
+            :searchable="searchable"
             :clearable="clearable"
             :chip-display="chipDisplay"
+            :dropdown-style="selectDropdownStyle"
+            :placement="effectivePopoverPlacement"
+            :popover-offset="popoverOffset"
             :required="required"
             :disabled="disabled"
             :readonly="readonly"
             :icon="icon"
             :size="size"
+            :rounded="effectiveRadius"
+            :color="color"
             :loading="loading"
             :error="error"
             @change="$emit('change', $event)"
@@ -637,7 +855,12 @@ defineExpose({
             @focus="$emit('focus', $event)"
             @clear="$emit('clear')"
         >
-            <slot />
+            <template #popover="slotProps"><slot name="popover" v-bind="slotProps" /></template>
+            <template #option="slotProps"><slot name="option" v-bind="slotProps" /></template>
+            <template #selected="slotProps"><slot name="selected" v-bind="slotProps" /></template>
+            <template #header="slotProps"><slot name="header" v-bind="slotProps" /></template>
+            <template #footer="slotProps"><slot name="footer" v-bind="slotProps" /></template>
+            <template #empty="slotProps"><slot name="empty" v-bind="slotProps" /></template>
         </InputSelect>
 
         <!-- OTP / PIN Input -->
@@ -647,6 +870,9 @@ defineExpose({
             :id="inputId"
             v-model="model"
             :length="length"
+            :char-type="charType"
+            :pattern="pattern"
+            :uppercase="uppercase"
             :integer-only="integerOnly"
             :masked="masked"
             :separator="separator"
@@ -654,9 +880,12 @@ defineExpose({
             :countdown="countdown"
             :resend-text="resendText"
             :size="size"
+            :rounded="effectiveRadius"
+            :color="color"
             :disabled="disabled"
             :readonly="readonly"
             :error="error"
+            :auto-focus="autoFocus"
             @change="$emit('change', $event)"
             @complete="$emit('complete', $event)"
             @resend="$emit('resend')"
@@ -674,6 +903,8 @@ defineExpose({
             :placeholder="placeholder"
             :slot-char="slotChar"
             :emit-raw="emitRaw"
+            :uppercase="maskUppercase"
+            :show-mask-hint="showMaskHint"
             :required="required"
             :disabled="disabled"
             :readonly="readonly"
@@ -682,6 +913,8 @@ defineExpose({
             :prefix="prefix"
             :suffix="suffix"
             :size="size"
+            :rounded="effectiveRadius"
+            :color="color"
             :clearable="clearable"
             :error="error"
             @change="$emit('change', $event)"
@@ -697,11 +930,20 @@ defineExpose({
             :id="inputId"
             v-model="model"
             :name="name"
+            :trigger-style="colorTriggerStyle"
+            :picker-style="colorPickerStyle"
+            :placement="effectivePopoverPlacement"
+            :popover-offset="popoverOffset"
+            :size="size"
             :disabled="disabled"
             :readonly="readonly"
             :error="error"
             @change="$emit('change', $event)"
-        />
+        >
+            <template #popover="slotProps"><slot name="popover" v-bind="slotProps" /></template>
+            <template #popover-header="slotProps"><slot name="popover-header" v-bind="slotProps" /></template>
+            <template #popover-footer="slotProps"><slot name="popover-footer" v-bind="slotProps" /></template>
+        </InputColor>
 
         <!-- Range Slider -->
         <InputRange
@@ -713,6 +955,10 @@ defineExpose({
             :min="min"
             :max="max"
             :step="step"
+            :variant="variant || rangeVariant || sliderStyle"
+            :color="color"
+            :show-tooltip="showTooltip"
+            :show-ticks="showTicks"
             :range-label="rangeLabel"
             :range-formatter="rangeFormatter"
             :disabled="disabled"
@@ -732,6 +978,9 @@ defineExpose({
             :accept="accept"
             :multiple="multiple"
             :variant="variant || layout"
+            :size="size"
+            :rounded="effectiveRadius"
+            :color-theme="color"
             :required="required"
             :disabled="disabled"
             :error="error"
@@ -739,9 +988,17 @@ defineExpose({
             :max-files="maxFiles"
             :uploading="uploading"
             :progress="progress"
+            :simulate-upload="simulateUpload"
+            :minimal="minimal"
+            :hide-info="hideInfo"
+            :existing-files="existingFiles"
             @change="$emit('change', $event)"
             @error="$emit('error', $event)"
             @cancel-upload="$emit('cancel-upload')"
+            @delete-existing="$emit('delete-existing', $event)"
+            @upload-start="$emit('upload-start', $event)"
+            @upload-progress="$emit('upload-progress', $event)"
+            @upload-complete="$emit('upload-complete', $event)"
         />
 
         <!-- Location Picker (Leaflet + OpenStreetMap & GPS) -->
@@ -752,10 +1009,21 @@ defineExpose({
             v-model="model"
             :name="name"
             :placeholder="placeholder"
+            :size="size"
+            :rounded="effectiveRadius"
             :required="required"
             :disabled="disabled"
             :readonly="readonly"
             :error="error"
+            :color="color"
+            :display-mode="displayMode"
+            :show-coordinates="showCoordinates !== null ? showCoordinates : showCoordinatesBadge"
+            :show-coordinates-badge="showCoordinates !== null ? showCoordinates : showCoordinatesBadge"
+            :autocomplete="typeof autocomplete === 'boolean' ? autocomplete : (autocomplete !== 'off')"
+            :default-center="defaultCenter"
+            :default-zoom="defaultZoom"
+            :tile-layer="tileLayer"
+            :embedded="true"
             @change="$emit('change', $event)"
         />
 
@@ -775,7 +1043,7 @@ defineExpose({
             :tag-style="tagStyle"
             :tag-icon="tagIcon"
             :icon="icon"
-            :radius="radius"
+            :radius="effectiveRadius"
             :paste-separators="pasteSeparators"
             :add-on-blur="addOnBlur"
             :remove-on-backspace="removeOnBackspace"
@@ -803,6 +1071,9 @@ defineExpose({
             :id="inputId"
             v-model="model"
             :type="type"
+            :picker-style="datePickerStyle"
+            :placement="effectivePopoverPlacement"
+            :popover-offset="popoverOffset"
             :name="name"
             :placeholder="placeholder"
             :required="required"
@@ -810,6 +1081,7 @@ defineExpose({
             :readonly="readonly"
             :icon="icon"
             :size="size"
+            :rounded="effectiveRadius"
             :min="min"
             :max="max"
             :error="error"
@@ -817,7 +1089,10 @@ defineExpose({
             @blur="$emit('blur', $event)"
             @focus="$emit('focus', $event)"
             @clear="$emit('clear')"
-        />
+        >
+            <template #popover="slotProps"><slot name="popover" v-bind="slotProps" /></template>
+            <template #popover-footer="slotProps"><slot name="popover-footer" v-bind="slotProps" /></template>
+        </InputDatePicker>
 
         <!-- Dynamic Form Repeater (Multiple Input Form) -->
         <InputRepeater
@@ -880,10 +1155,21 @@ defineExpose({
             :max="max"
             :step="step"
             :size="size"
+            :rounded="effectiveRadius"
+            :color="color"
+            :show-stepper="showStepper"
             :icon="icon"
             :icon-right="iconRight"
             :prefix="prefix"
             :suffix="suffix"
+            :tel-delimiter="telDelimiter"
+            :tel-chunk-size="telChunkSize"
+            :tel-pattern="telPattern"
+            :search-suggestions="searchSuggestions"
+            :search-style="searchStyle"
+            :url-protocol="urlProtocol"
+            :url-error-text="urlErrorText"
+            :email-error-text="emailErrorText"
             :show-password-toggle="showPasswordToggle"
             :show-password-strength="showPasswordStrength"
             :password-rules="passwordRules"
@@ -903,13 +1189,17 @@ defineExpose({
             @focus="$emit('focus', $event)"
             @clear="$emit('clear')"
             @validate="$emit('validate', $event)"
-        />
+        >
+            <template #item="slotProps"><slot name="item" v-bind="slotProps" /></template>
+            <template #header="slotProps"><slot name="header" v-bind="slotProps" /></template>
+            <template #empty="slotProps"><slot name="empty" v-bind="slotProps" /></template>
+        </InputText>
 
         <!-- 3. FIELD FOOTER (Hint & Error Messages) -->
         <!-- Hint Text -->
-        <p v-if="hint && !error" class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+        <div v-if="hint && !error" class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
             <slot name="hint">{{ hint }}</slot>
-        </p>
+        </div>
 
         <!-- Error Message with Google Icon -->
         <div

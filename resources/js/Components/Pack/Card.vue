@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, useId, watch, onMounted, onBeforeUnmount } from 'vue';
+import Rating from './Rating.vue';
+import ButtonSubmit from './ButtonSubmit.vue';
 
 const props = defineProps({
     // Core Props (Backward Compatible)
@@ -595,20 +597,20 @@ const variantClasses = computed(() => {
     const theme = currentTheme.value;
     switch (props.variant) {
         case 'bordered':
-            return `bg-white dark:bg-slate-900 border ${theme.border}`;
+            return `bg-white dark:bg-slate-900 border-2 ${theme.border} shadow-none hover:border-slate-400 dark:hover:border-slate-600 transition-colors`;
         case 'elevated':
-            return `bg-white dark:bg-slate-900 border ${theme.border} shadow-xl shadow-slate-200/50 dark:shadow-slate-950/60`;
+            return `bg-white dark:bg-slate-900 border ${theme.border} shadow-lg shadow-slate-200/60 dark:shadow-slate-950/80 hover:shadow-xl transition-shadow`;
         case 'flat':
-            return 'bg-slate-100/70 dark:bg-slate-800/60 border border-transparent';
+            return 'bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors';
         case 'glass':
-            return 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/60 dark:border-slate-800/60 shadow-lg';
+            return 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-xl shadow-slate-900/5 dark:shadow-black/30';
         case 'gradient':
-            return `bg-gradient-to-br from-white via-slate-50 to-slate-100/70 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border ${theme.border} shadow-sm`;
+            return `bg-linear-to-br from-white via-slate-50 to-slate-100/70 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border ${theme.border} shadow-sm`;
         case 'accent':
-            return `bg-slate-50/70 dark:bg-slate-900/70 border ${theme.border}`;
+            return `bg-white dark:bg-slate-900 border ${theme.border} border-l-4 border-l-blue-600 dark:border-l-blue-500 shadow-xs`;
         case 'default':
         default:
-            return `bg-white dark:bg-slate-900 border ${theme.border} shadow-xs`;
+            return `bg-white dark:bg-slate-900 border ${theme.border} shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors`;
     }
 });
 
@@ -836,7 +838,7 @@ const stockPercentage = computed(() => {
                 </slot>
 
                 <!-- Soft Vignette Gradient on Hover -->
-                <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/15 opacity-0 group-hover/product:opacity-100 transition-opacity duration-300" />
+                <div class="pointer-events-none absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-black/15 opacity-0 group-hover/product:opacity-100 transition-opacity duration-300" />
 
                 <!-- Floating Badges (Top-Left) -->
                 <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 items-center">
@@ -918,20 +920,20 @@ const stockPercentage = computed(() => {
                         </span>
                         <span v-else class="text-[11px] text-transparent select-none">.</span>
 
-                        <!-- Rating Micro-Badge -->
-                        <div
-                            v-if="rating > 0"
-                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-bold text-[11px] border border-amber-200/60 dark:border-amber-900/40 shrink-0"
-                        >
-                            <span
-                                class="material-symbols-outlined text-[13px] leading-none fill-current"
-                                style="font-variation-settings: 'FILL' 1;"
-                            >
-                                star
-                            </span>
-                            <span>{{ Number(rating).toFixed(1) }}</span>
-                            <span v-if="reviewCount" class="text-[10px] text-slate-400 dark:text-slate-500 font-normal">({{ reviewCount }})</span>
-                        </div>
+                        <!-- Rating Micro-Badge using Rating Component -->
+                        <slot name="rating">
+                            <Rating
+                                v-if="rating > 0"
+                                :model-value="Number(rating)"
+                                :readonly="true"
+                                :show-value="true"
+                                value-format="single"
+                                :count="Number(reviewCount) || 0"
+                                size="xs"
+                                color-theme="amber"
+                                :responsive="true"
+                            />
+                        </slot>
                     </div>
 
                     <!-- Title -->
@@ -983,7 +985,7 @@ const stockPercentage = computed(() => {
                         <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                             <div
                                 class="h-full rounded-full transition-all duration-500"
-                                :class="stock <= 5 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-emerald-500 to-teal-400'"
+                                :class="stock <= 5 ? 'bg-linear-to-r from-rose-500 to-amber-500' : 'bg-linear-to-r from-emerald-500 to-teal-400'"
                                 :style="{ width: `${stockPercentage}%` }"
                             />
                         </div>
@@ -1004,17 +1006,17 @@ const stockPercentage = computed(() => {
                         </div>
 
                         <slot name="actions">
-                            <button
+                            <ButtonSubmit
                                 v-if="actionText"
                                 type="button"
+                                variant="primary"
+                                size="sm"
+                                :loading="actionLoading"
+                                :icon="actionIcon"
                                 @click.stop="emit('add-to-cart')"
-                                :disabled="actionLoading"
-                                class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-50 transition-all duration-200 cursor-pointer shrink-0 shadow-sm shadow-blue-600/25 hover:shadow-blue-600/40"
                             >
-                                <span v-if="actionLoading" class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
-                                <span v-else-if="actionIcon" class="material-symbols-outlined text-sm leading-none">{{ actionIcon }}</span>
-                                <span>{{ actionText }}</span>
-                            </button>
+                                {{ actionText }}
+                            </ButtonSubmit>
                         </slot>
                     </div>
                 </div>
@@ -1180,7 +1182,7 @@ const stockPercentage = computed(() => {
         </div>
 
         <!-- ================= DEFAULT CONTAINER CARD MODE (type === 'default') ================= -->
-        <div v-else class="relative z-1 flex flex-col h-full">
+        <div v-else class="relative flex flex-col h-full" :class="{ 'z-1': spotlight }">
             <!-- HEADER -->
             <div
                 v-if="hasHeader || $slots.header || $slots['header-actions']"
@@ -1189,7 +1191,7 @@ const stockPercentage = computed(() => {
                     (!collapsible || !isCollapsed) ? 'border-b border-slate-100 dark:border-slate-800/80' : ''
                 ]"
             >
-                <div class="flex items-center gap-2.5 min-w-0">
+                <div class="flex items-center gap-2.5 min-w-0 flex-1">
                     <slot name="header">
                         <!-- Icon with Variant styling -->
                         <div
@@ -1207,7 +1209,7 @@ const stockPercentage = computed(() => {
                         </div>
 
                         <!-- Title & Subtitle -->
-                        <div v-if="title" class="min-w-0">
+                        <div v-if="title" class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
                                 <h3 class="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">
                                     <slot name="title">{{ title }}</slot>
@@ -1220,7 +1222,7 @@ const stockPercentage = computed(() => {
                                     {{ badge }}
                                 </span>
                             </div>
-                            <p v-if="subtitle" class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5 truncate">
+                            <p v-if="subtitle" class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5 line-clamp-2 sm:line-clamp-1 wrap-break-word">
                                 <slot name="subtitle">{{ subtitle }}</slot>
                             </p>
                         </div>

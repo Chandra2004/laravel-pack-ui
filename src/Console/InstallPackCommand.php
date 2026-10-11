@@ -15,14 +15,15 @@ class InstallPackCommand extends Command
      */
     protected $signature = 'pack:install
                             {--force : Timpa berkas komponen dan konfigurasi yang sudah ada}
-                            {--all : Otomatis pasang seluruh dependensi prasyarat tanpa konfirmasi}';
+                            {--all : Otomatis pasang seluruh dependensi prasyarat tanpa konfirmasi}
+                            {--tag= : Tag publikasi spesifik (pack-ui, pack-ui-components, pack-ui-composables, pack-ui-layouts)}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Pasang komponen Pack UI, composables, serta deteksi dan pasang Vue 3, Inertia.js, Ziggy Router, Tailwind CSS v4 & Material Symbols';
+    protected $description = 'Pasang komponen Pack UI, composables, serta deteksi dan pasang Vue 3, Inertia.js, Ziggy Router, Tailwind CSS v4, Material Symbols, Tiptap & Leaflet Map';
 
     /**
      * Execute the console command.
@@ -30,13 +31,14 @@ class InstallPackCommand extends Command
     public function handle(): int
     {
         $this->newLine();
-        $this->info('╔════════════════════════════════════════════════════════════╗');
-        $this->info('║             🚀 Laravel Pack UI - Smart Installer           ║');
-        $this->info('╚════════════════════════════════════════════════════════════╝');
+        $this->info('+------------------------------------------------------------+');
+        $this->info('|             Laravel Pack UI - Smart Installer              |');
+        $this->info('+------------------------------------------------------------+');
         $this->newLine();
 
         $force = $this->option('force');
         $autoAll = $this->option('all');
+        $tag = $this->option('tag') ?: 'pack-ui';
 
         // 1. Audit Environment Prasyarat
         $status = $this->auditEnvironment();
@@ -52,6 +54,7 @@ class InstallPackCommand extends Command
                           !$status['tailwind'] ||
                           !$status['material_symbols'] ||
                           !$status['tiptap'] ||
+                          !($status['leaflet'] ?? false) ||
                           !$status['blade_configured'] ||
                           !$status['app_js_configured'] ||
                           !$status['css_configured'] ||
@@ -102,18 +105,18 @@ class InstallPackCommand extends Command
                     $this->configureHandleInertiaRequests();
                 }
             } else {
-                $this->warn('⚠️ Pemasangan dependensi dilewati. Pastikan Anda memasangnya secara manual.');
+                $this->warn('  [LEWATI] Pemasangan dependensi dilewati. Pastikan Anda memasangnya secara manual.');
             }
         } else {
-            $this->info('✨ Seluruh dependensi prasyarat (Vue 3, Inertia.js, Ziggy, Tailwind v4, Material Symbols) sudah lengkap!');
+            $this->info('  [OK] Seluruh dependensi prasyarat (Vue 3, Inertia.js, Ziggy, Tailwind v4, Material Symbols) sudah lengkap.');
         }
 
         // 3. Publish Komponen Pack UI & Composables
         $this->newLine();
-        $this->info('📦 Memasang Komponen Pack UI & Composables ke resources/js...');
+        $this->info('  [PUBLISH] Memasang Komponen Pack UI & Composables ke resources/js...');
 
         $this->call('vendor:publish', [
-            '--tag' => 'pack-ui',
+            '--tag' => $tag,
             '--force' => $force,
         ]);
 
@@ -127,15 +130,15 @@ class InstallPackCommand extends Command
             if ($autoAll || $this->confirm('Jalankan "npm install" sekarang untuk memasang/memastikan seluruh paket Node.js terpasang?', true)) {
                 $this->runNpmInstall();
             } else {
-                $this->warn('ℹ️ Silakan jalankan di terminal: npm install && npm run build');
+                $this->warn('  [INFO] Silakan jalankan di terminal: npm install && npm run build');
             }
         }
 
         $this->newLine();
-        $this->info('🎉 Instalasi selesai! Pack UI siap digunakan.');
-        $this->line('  📁 Komponen UI : <comment>resources/js/Components/Pack</comment>');
-        $this->line('  📁 Composables : <comment>resources/js/Composables/Pack</comment>');
-        $this->line('  📁 Layouts     : <comment>resources/js/Layouts/Pack</comment>');
+        $this->info('  [SELESAI] Instalasi selesai. Pack UI siap digunakan.');
+        $this->line('  - Komponen UI : <comment>resources/js/Components/Pack</comment>');
+        $this->line('  - Composables : <comment>resources/js/Composables/Pack</comment>');
+        $this->line('  - Layouts     : <comment>resources/js/Layouts/Pack</comment>');
         $this->newLine();
         $this->comment('Contoh Pemakaian di Halaman Vue:');
         $this->line('  <info>import InputField from "@/Components/Pack/InputField.vue";</info>');
@@ -152,7 +155,7 @@ class InstallPackCommand extends Command
      */
     protected function auditEnvironment(): array
     {
-        $this->line('🔍 Memeriksa environment project Anda...');
+        $this->line('  [AUDIT] Memeriksa environment project Anda...');
 
         $composerJson = $this->getComposerJson();
         $packageJson = $this->getPackageJson();
@@ -198,24 +201,24 @@ class InstallPackCommand extends Command
         if ($isPluginVueIncompatible) {
             $vueStatusLabel = '<comment>Perlu Upgrade Plugin Vue (^6.0 untuk Vite 7)</comment>';
         } elseif ($status['vue']) {
-            $vueStatusLabel = '<info>Terpasang ✓</info>';
+            $vueStatusLabel = '<info>Terpasang [OK]</info>';
         }
 
         $rows = [
-            ['Inertia.js (Laravel Backend)', $status['inertia_php'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Tighten Ziggy (Laravel Backend)', $status['ziggy_php'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
+            ['Inertia.js (Laravel Backend)', $status['inertia_php'] ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
+            ['Tighten Ziggy (Laravel Backend)', $status['ziggy_php'] ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
             ['Vue 3 & Vite Plugin', $vueStatusLabel],
-            ['Inertia.js (Vue 3 Client)', $status['inertia_vue'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Ziggy JS Client (route() helper)', $status['ziggy_js'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Tailwind CSS v4 Engine', $status['tailwind'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Google Material Symbols Font', $status['material_symbols'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Tiptap Rich Text Editor Engine', $status['tiptap'] ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Leaflet OpenStreetMap Map Engine', ($status['leaflet'] ?? false) ? '<info>Terpasang ✓</info>' : '<comment>Belum Ada</comment>'],
-            ['Root Layout (app.blade.php)', $status['blade_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang @routes</comment>'],
-            ['Vue Entrypoint (app.js)', $status['app_js_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang ZiggyVue</comment>'],
-            ['Styling Import (app.css)', $status['css_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Dikonfigurasi</comment>'],
-            ['Vite Config (vite.config.js)', $status['vite_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang Plugin Vue</comment>'],
-            ['Inertia Flash Props (HandleInertiaRequests)', $status['inertia_flash_configured'] ? '<info>Terkonfigurasi ✓</info>' : '<comment>Belum Ada / Kurang Session Flash</comment>'],
+            ['Inertia.js (Vue 3 Client)', $status['inertia_vue'] ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
+            ['Ziggy JS Client (route() helper)', $status['ziggy_js'] ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
+            ['Tailwind CSS v4 Engine', $status['tailwind'] ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
+            ['Google Material Symbols Font', $status['material_symbols'] ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
+            ['Tiptap Rich Text Editor Engine', $status['tiptap'] ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
+            ['Leaflet OpenStreetMap Map Engine', ($status['leaflet'] ?? false) ? '<info>Terpasang [OK]</info>' : '<comment>Belum Ada</comment>'],
+            ['Root Layout (app.blade.php)', $status['blade_configured'] ? '<info>Terkonfigurasi [OK]</info>' : '<comment>Belum Ada / Kurang @routes</comment>'],
+            ['Vue Entrypoint (app.js)', $status['app_js_configured'] ? '<info>Terkonfigurasi [OK]</info>' : '<comment>Belum Ada / Kurang ZiggyVue</comment>'],
+            ['Styling Import (app.css)', $status['css_configured'] ? '<info>Terkonfigurasi [OK]</info>' : '<comment>Belum Dikonfigurasi</comment>'],
+            ['Vite Config (vite.config.js)', $status['vite_configured'] ? '<info>Terkonfigurasi [OK]</info>' : '<comment>Belum Ada / Kurang Plugin Vue</comment>'],
+            ['Inertia Flash Props (HandleInertiaRequests)', $status['inertia_flash_configured'] ? '<info>Terkonfigurasi [OK]</info>' : '<comment>Belum Ada / Kurang Session Flash</comment>'],
         ];
 
         $this->table(['Dependensi / Fitur', 'Status'], $rows);
@@ -230,7 +233,7 @@ class InstallPackCommand extends Command
     protected function installComposerPackages(array $packages): void
     {
         $packageList = implode(' ', $packages);
-        $this->line("⏳ Memasang paket Composer: <info>{$packageList}</info>...");
+        $this->line("  [COMPOSER] Memasang paket: <info>{$packageList}</info>...");
 
         $composerPath = $this->findComposerBinary();
         $process = new Process(array_merge([$composerPath, 'require', '--no-interaction'], $packages));
@@ -240,9 +243,9 @@ class InstallPackCommand extends Command
         });
 
         if ($process->isSuccessful()) {
-            $this->info("  ✓ Paket Composer ({$packageList}) berhasil dipasang.");
+            $this->info("  - Paket Composer ({$packageList}) berhasil dipasang.");
         } else {
-            $this->warn("  ⚠️ Gagal menjalankan composer require secara otomatis. Silakan jalankan manual: composer require {$packageList}");
+            $this->warn("  [PERINGATAN] Gagal menjalankan composer require secara otomatis. Silakan jalankan manual: composer require {$packageList}");
         }
     }
 
@@ -251,7 +254,7 @@ class InstallPackCommand extends Command
      */
     protected function configureNodeDependencies(array $status): bool
     {
-        $this->line('📝 Memperbarui dependensi di <info>package.json</info>...');
+        $this->line('  [NODE] Memperbarui dependensi di <info>package.json</info>...');
 
         $packageJsonPath = base_path('package.json');
         if (!File::exists($packageJsonPath)) {
@@ -565,6 +568,9 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+        chunkSizeWarningLimit: 3000,
+    },
     resolve: {
         alias: {
             'ziggy-js': path.resolve('vendor/tightenco/ziggy'),
@@ -574,7 +580,7 @@ export default defineConfig({
 });
 JS;
             File::put($vitePath, $template . PHP_EOL);
-            $this->info('  ✓ vite.config.js berhasil dibuat dengan dukungan Vue, Tailwind v4, dan Ziggy.');
+            $this->info('  ✓ vite.config.js berhasil dibuat dengan dukungan Vue, Tailwind v4, Ziggy, dan optimasi build.');
             return;
         }
 
@@ -651,7 +657,18 @@ JS;
             }
         }
 
-        // 3. Periksa alias @ dan ziggy-js
+        // 3. Pastikan konfigurasi build chunkSizeWarningLimit ada untuk menghindari warning 500kB
+        if (!str_contains($content, 'chunkSizeWarningLimit')) {
+            if (str_contains($content, 'build: {')) {
+                $content = str_replace('build: {', "build: {\n        chunkSizeWarningLimit: 3000,", $content);
+                $modified = true;
+            } elseif (str_contains($content, 'resolve: {')) {
+                $content = str_replace('resolve: {', "build: {\n        chunkSizeWarningLimit: 3000,\n    },\n    resolve: {", $content);
+                $modified = true;
+            }
+        }
+
+        // 4. Periksa alias @ dan ziggy-js
         $hasZiggyAlias = str_contains($content, "'ziggy-js'") || str_contains($content, '"ziggy-js"');
         $hasAtAlias = str_contains($content, "'@'") || str_contains($content, '"@"');
 
@@ -717,6 +734,10 @@ JS;
 
     protected function findComposerBinary(): string
     {
+        if (File::exists(base_path('composer.phar'))) {
+            return PHP_BINARY . ' ' . base_path('composer.phar');
+        }
+
         return 'composer';
     }
 
@@ -778,7 +799,7 @@ JS;
      */
     protected function configureHandleInertiaRequests(): void
     {
-        $this->line('📝 Memeriksa dan mengonfigurasi <info>HandleInertiaRequests.php</info>...');
+        $this->line('  [INERTIA] Memeriksa dan mengonfigurasi <info>HandleInertiaRequests.php</info>...');
 
         $middlewarePath = $this->getInertiaMiddlewarePath();
         $flashSnippet = "            'flash' => [\n" .
@@ -833,7 +854,7 @@ JS;
                 "}\n";
 
             File::put($middlewarePath, $template);
-            $this->info('  ✓ Berkas HandleInertiaRequests.php berhasil dibuat dengan sharing flash session.');
+            $this->info('  - Berkas HandleInertiaRequests.php berhasil dibuat dengan sharing flash session.');
 
             $this->registerInertiaMiddlewareInBootstrap();
             return;
@@ -842,7 +863,7 @@ JS;
         $content = File::get($middlewarePath);
 
         if (str_contains($content, "'flash'") && str_contains($content, "'success'")) {
-            $this->info('  ✓ HandleInertiaRequests.php sudah memiliki konfigurasi flash session.');
+            $this->info('  - HandleInertiaRequests.php sudah memiliki konfigurasi flash session.');
             return;
         }
 
@@ -861,7 +882,7 @@ JS;
                 $content
             );
             $modified = true;
-        } elseif (preg_match('/(public\s+function\s+share\s*\([^)]*\)\s*:\s*array\s*\{[^}]*return\s*\[)/s', $content, $matches)) {
+        } elseif (preg_match('/(public\s+function\s+share\s*\([^)]*\)\s*(?::\s*array\s*)?\{[^}]*return\s*\[)/s', $content, $matches)) {
             $content = str_replace(
                 $matches[1],
                 $matches[1] . "\n" . $flashSnippet,
@@ -872,9 +893,9 @@ JS;
 
         if ($modified) {
             File::put($middlewarePath, $content);
-            $this->info('  ✓ Session flash props berhasil disinkronkan ke HandleInertiaRequests.php.');
+            $this->info('  - Session flash props berhasil disinkronkan ke HandleInertiaRequests.php.');
         } else {
-            $this->warn('  ⚠️ Tidak dapat menemukan titik injeksi otomatis pada method share() di HandleInertiaRequests.php.');
+            $this->warn('  [PERINGATAN] Tidak dapat menemukan titik injeksi otomatis pada method share() di HandleInertiaRequests.php.');
             $this->line('     Silakan tambahkan array flash secara manual ke dalam return share():');
             $this->comment("     'flash' => ['success' => fn() => \$request->session()->get('success'), ...]");
         }
@@ -891,7 +912,7 @@ JS;
         $content = File::get($bootstrapApp);
         if (str_contains($content, 'HandleInertiaRequests::class')) return;
 
-        if (str_contains($content, '->withMiddleware(function (Middleware $middleware)')) {
+        if (preg_match('/->withMiddleware\s*\(\s*function\s*\([^)]*Middleware\s*\$middleware[^)]*\)/', $content)) {
             $useStatement = "use App\\Http\\Middleware\\HandleInertiaRequests;\n";
             if (!str_contains($content, 'use App\Http\Middleware\HandleInertiaRequests;')) {
                 $content = preg_replace('/(<\?php\s+)/', "$1\n" . $useStatement, $content, 1);
@@ -899,14 +920,14 @@ JS;
 
             $appendMiddleware = "\n        \$middleware->web(append: [\n            HandleInertiaRequests::class,\n        ]);\n";
             $content = preg_replace(
-                '/(->withMiddleware\(function\s*\(Middleware\s*\$middleware\)\s*(?::\s*void\s*)?\{\s*)/',
+                '/(->withMiddleware\s*\(\s*function\s*\([^)]*Middleware\s*\$middleware[^)]*\)\s*(?::\s*void\s*)?\s*\{\s*)/',
                 "$1" . $appendMiddleware,
                 $content,
                 1
             );
 
             File::put($bootstrapApp, $content);
-            $this->info('  ✓ Middleware HandleInertiaRequests berhasil didaftarkan di bootstrap/app.php.');
+            $this->info('  - Middleware HandleInertiaRequests berhasil didaftarkan di bootstrap/app.php.');
         }
     }
 }

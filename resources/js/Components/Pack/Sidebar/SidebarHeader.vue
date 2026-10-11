@@ -1,5 +1,6 @@
 <script setup>
 import { inject, computed } from 'vue';
+import ButtonSubmit from '../ButtonSubmit.vue';
 
 const props = defineProps({
     brandName: {
@@ -23,6 +24,8 @@ const props = defineProps({
 const context = inject('packSidebarContext', null);
 
 const isCollapsed = computed(() => context?.isCollapsed?.value ?? false);
+const isRail = computed(() => context?.variant?.value === 'rail');
+const isEffectivelyCollapsed = computed(() => isCollapsed.value || isRail.value);
 const colorTheme = computed(() => context?.colorTheme?.value ?? {});
 
 const toggleCollapse = () => {
@@ -35,10 +38,10 @@ const toggleCollapse = () => {
 <template>
     <div
         class="flex items-center shrink-0 h-16 border-b border-slate-200/60 dark:border-slate-800/60 select-none transition-all duration-200"
-        :class="isCollapsed ? 'justify-center px-0' : 'justify-between px-4'"
+        :class="isEffectivelyCollapsed ? 'justify-center px-0' : 'justify-between px-4'"
     >
         <!-- A. Mode Diperluas (Expanded) -->
-        <div v-if="!isCollapsed" class="flex items-center gap-3 min-w-0 flex-1">
+        <div v-if="!isEffectivelyCollapsed" class="flex items-center gap-3 min-w-0 flex-1">
             <slot>
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div
@@ -59,26 +62,26 @@ const toggleCollapse = () => {
             </slot>
         </div>
 
-        <!-- In-Header Toggle Button -->
-        <div v-if="!isCollapsed" class="flex items-center gap-1 shrink-0">
+        <!-- In-Header Toggle Button (Flowbite Formal Hamburger) -->
+        <div v-if="!isEffectivelyCollapsed" class="flex items-center gap-1 shrink-0">
             <slot name="actions" />
             <button
                 v-if="showToggle"
                 type="button"
                 @click="toggleCollapse"
-                class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:bg-slate-200/80 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
+                class="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 title="Ciutkan Menu (Ctrl+B)"
                 aria-label="Ciutkan Menu"
             >
-                <span class="material-symbols-outlined text-base leading-none select-none">
-                    menu_open
-                </span>
+                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+                </svg>
             </button>
         </div>
 
         <!-- B. Mode Diciutkan (Collapsed) -->
         <div
-            v-if="isCollapsed"
+            v-if="isEffectivelyCollapsed"
             class="w-full flex items-center justify-center cursor-pointer group"
             @click="toggleCollapse"
             title="Klik untuk memperluas menu (Ctrl+B)"

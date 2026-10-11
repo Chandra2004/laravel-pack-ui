@@ -3,6 +3,7 @@ import { ref, computed, watch, inject, provide } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useClickOutside } from '@/Composables/Pack/useClickOutside';
 import SidebarFlyoutProvider from './Sidebar/SidebarFlyoutProvider.vue';
+import Badge from './Badge.vue';
 
 const props = defineProps({
     /**
@@ -123,10 +124,15 @@ const effectiveDepth = computed(() => {
 provide('packSidebarItemDepth', computed(() => effectiveDepth.value + 1));
 
 // Resolusi Properti Reaktif (Prop Eksplisit -> Konfigurasi Item -> Injeksi Context -> Default)
+const resolvedVariant = computed(() => {
+    return context?.variant?.value ?? 'default';
+});
+
 const resolvedCollapsed = computed(() => {
     if (props.isCollapsed !== null) return props.isCollapsed;
     // Sub-item (depth > 0) atau item yang berada di dalam popover flyout tidak boleh collapsed
     if (isInFlyout || effectiveDepth.value > 0) return false;
+    if (resolvedVariant.value === 'rail') return true;
     return context?.isCollapsed?.value ?? false;
 });
 
@@ -326,45 +332,94 @@ const sizeClass = computed(() => {
     }
 });
 
-// Indentasi padding kedalaman bertingkat
+// Indentasi padding kedalaman bertingkat (menyesuaikan container pohon hirarki)
 const depthPaddingClass = computed(() => {
     if (isInFlyout) {
         if (effectiveDepth.value === 0) return 'px-2.5';
-        if (effectiveDepth.value === 1) return 'pl-7 pr-2.5';
-        if (effectiveDepth.value === 2) return 'pl-9 pr-2.5';
-        return 'pl-11 pr-2.5';
+        if (effectiveDepth.value === 1) return 'pl-3 pr-2';
+        if (effectiveDepth.value === 2) return 'pl-5 pr-2';
+        return 'pl-7 pr-2';
     }
     if (effectiveDepth.value === 0) return 'px-3';
-    if (effectiveDepth.value === 1) return 'pl-9 pr-3';
-    if (effectiveDepth.value === 2) return 'pl-12 pr-3';
-    return 'pl-14 pr-3';
+    if (effectiveDepth.value === 1) return 'px-2.5';
+    if (effectiveDepth.value === 2) return 'px-2.5';
+    return 'px-2';
 });
 
-// Kelas aktif berdasarkan gaya pewarnaan item
+// Kelas status tidak aktif berdasarkan varian
+const inactiveItemClasses = computed(() => {
+    const v = resolvedVariant.value;
+    if (v === 'rail') {
+        return 'text-slate-400 hover:text-white hover:bg-slate-800/80';
+    }
+    if (v === 'gradient') {
+        return 'text-slate-300 hover:text-white hover:bg-white/10';
+    }
+    if (v === 'glass') {
+        return 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/30 dark:hover:bg-white/10 backdrop-blur-xs';
+    }
+    return 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200';
+});
+
+// Kelas aktif berdasarkan gaya pewarnaan item dan varian
 const activeItemClasses = computed(() => {
     const t = resolvedColorTheme.value;
+    const v = resolvedVariant.value;
+
+    if (v === 'glass') {
+        if (resolvedItemStyle.value === 'solid') {
+            return 'text-white bg-slate-900/80 dark:bg-white/20 backdrop-blur-md border border-white/20 font-semibold shadow-xs';
+        }
+        return `${t.soft} bg-white/40 dark:bg-white/10 backdrop-blur-md border border-white/30 dark:border-white/15 font-semibold shadow-xs`;
+    }
+
+    if (v === 'gradient') {
+        if (resolvedItemStyle.value === 'solid') {
+            return t.solid;
+        }
+        return `${t.soft} bg-white/15 dark:bg-white/10 text-white font-semibold border border-white/15 backdrop-blur-xs`;
+    }
+
+    if (v === 'rail') {
+        if (resolvedItemStyle.value === 'solid') {
+            return t.solid;
+        }
+        return `${t.soft} ring-1 ring-current/25 shadow-xs`;
+    }
+
     if (resolvedItemStyle.value === 'solid') {
         return t.solid;
     }
     if (resolvedItemStyle.value === 'outline') {
         return t.outline;
     }
+    if (resolvedItemStyle.value === 'pill') {
+        return `${t.soft} rounded-full`;
+    }
     return t.soft;
 });
 
-// Badge variant styling
-const badgeClass = computed(() => {
-    switch (resolvedItem.value.badgeVariant) {
-        case 'success':
-            return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40';
-        case 'warning':
-            return 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40';
-        case 'danger':
-            return 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/40';
-        case 'primary':
-        default:
-            return resolvedColorTheme.value.badge || 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/40';
+// Badge variant styling mapping to Pack Badge Component
+const resolvedBadgeColor = computed(() => {
+    const bv = resolvedItem.value.badgeVariant;
+    if (['success', 'emerald'].includes(bv)) return 'emerald';
+    if (['warning', 'amber'].includes(bv)) return 'amber';
+    if (['danger', 'rose', 'red'].includes(bv)) return 'rose';
+    if (['indigo', 'purple', 'primary', 'blue', 'neutral', 'slate'].includes(bv)) return bv;
+    if (resolvedColorTheme.value?.name && ['indigo', 'emerald', 'purple', 'amber', 'rose', 'cyan', 'blue', 'primary'].includes(resolvedColorTheme.value.name)) {
+        return resolvedColorTheme.value.name;
     }
+    return 'primary';
+});
+
+const resolvedBadgeVariant = computed(() => {
+    const bv = resolvedItem.value.badgeVariant;
+    if (['solid', 'outline'].includes(bv)) return bv;
+    return 'soft';
+});
+
+const resolvedBadgeSize = computed(() => {
+    return resolvedSize.value === 'lg' ? 'sm' : 'xs';
 });
 
 const isInternalLink = computed(() => {
@@ -378,22 +433,41 @@ const isInternalLink = computed(() => {
     <!-- 1. SEPARATOR -->
     <div
         v-if="resolvedItem.separator"
-        class="my-2 border-t border-slate-200/70 dark:border-slate-800/80 mx-2"
+        :class="[
+            'my-2 mx-2 border-t',
+            resolvedVariant === 'gradient'
+                ? 'border-indigo-500/20'
+                : resolvedVariant === 'rail'
+                ? 'border-slate-800'
+                : resolvedVariant === 'glass'
+                ? 'border-white/20 dark:border-white/10'
+                : 'border-slate-200/70 dark:border-slate-800/80',
+        ]"
         role="separator"
     />
 
     <!-- 2. SECTION HEADING -->
     <div
         v-else-if="resolvedItem.heading"
-        class="pt-4 pb-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none"
-        :class="resolvedCollapsed && !resolvedMobile ? 'text-center px-1' : 'px-3'"
+        class="pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider select-none"
+        :class="[
+            resolvedCollapsed && !resolvedMobile ? 'text-center px-1' : 'px-3',
+            resolvedVariant === 'gradient'
+                ? 'text-indigo-300/70'
+                : resolvedVariant === 'rail'
+                ? 'text-slate-500'
+                : resolvedVariant === 'glass'
+                ? 'text-slate-500 dark:text-slate-400'
+                : 'text-slate-400 dark:text-slate-500',
+        ]"
     >
         <template v-if="!resolvedCollapsed || resolvedMobile">
             {{ resolvedItem.heading }}
         </template>
         <span
             v-else
-            class="block w-4 h-0.5 bg-slate-300 dark:bg-slate-700 mx-auto rounded-full"
+            class="block w-4 h-0.5 mx-auto rounded-full"
+            :class="resolvedVariant === 'gradient' ? 'bg-indigo-500/40' : (resolvedVariant === 'rail' ? 'bg-slate-700' : 'bg-slate-300 dark:bg-slate-700')"
             :title="resolvedItem.heading"
         />
     </div>
@@ -419,7 +493,7 @@ const isInternalLink = computed(() => {
                 depthPaddingClass,
                 isSelfActive || isChildActive
                     ? activeItemClasses
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200',
+                    : inactiveItemClasses,
                 resolvedCollapsed && !resolvedMobile ? `justify-center px-0 mx-auto ${sizeClass.collapsed}` : '',
             ]"
         >
@@ -438,7 +512,7 @@ const isInternalLink = computed(() => {
                     sizeClass.icon,
                     (isSelfActive || isChildActive)
                         ? (resolvedItemStyle === 'solid' ? resolvedColorTheme.iconSolid : resolvedColorTheme.iconActive)
-                        : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300',
+                        : (resolvedVariant === 'rail' ? 'text-slate-400 group-hover:text-white' : (resolvedVariant === 'gradient' ? 'text-slate-400 group-hover:text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300')),
                 ]"
             >
                 {{ resolvedItem.icon }}
@@ -455,22 +529,34 @@ const isInternalLink = computed(() => {
                     {{ resolvedItem.label }}
                 </span>
 
-                <!-- Badge -->
-                <span
+                <!-- Badge Component -->
+                <Badge
                     v-if="resolvedItem.badge"
-                    class="font-semibold rounded-full shrink-0 shadow-2xs"
-                    :class="[badgeClass, sizeClass.badge]"
+                    :variant="resolvedBadgeVariant"
+                    :color="resolvedBadgeColor"
+                    :size="resolvedBadgeSize"
+                    rounded="full"
+                    class="shrink-0"
                 >
                     {{ resolvedItem.badge }}
-                </span>
+                </Badge>
 
-                <!-- Chevron Indicator -->
-                <span
-                    class="material-symbols-outlined text-sm text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0"
-                    :class="isOpen ? 'rotate-180' : ''"
+                <!-- Flowbite Formal Submenu Chevron SVG -->
+                <svg
+                    class="w-3 h-3 transition-transform duration-200 shrink-0"
+                    :class="[
+                        isOpen ? 'rotate-180' : '',
+                        isSelfActive || isChildActive
+                            ? (resolvedItemStyle === 'solid' ? 'text-white' : resolvedColorTheme.iconActive)
+                            : (resolvedVariant === 'gradient' ? 'text-slate-400 group-hover:text-white' : 'text-slate-400 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'),
+                    ]"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 10 6"
                 >
-                    expand_more
-                </span>
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                </svg>
             </template>
         </button>
 
@@ -478,23 +564,31 @@ const isInternalLink = computed(() => {
         <Transition
             enter-active-class="transition-all duration-200 ease-out overflow-hidden"
             enter-from-class="max-h-0 opacity-0"
-            enter-to-class="max-h-96 opacity-100"
+            enter-to-class="max-h-[800px] opacity-100"
             leave-active-class="transition-all duration-150 ease-in overflow-hidden"
-            leave-from-class="max-h-96 opacity-100"
+            leave-from-class="max-h-[800px] opacity-100"
             leave-to-class="max-h-0 opacity-0"
         >
             <div
                 v-if="(!resolvedCollapsed || resolvedMobile) && isOpen"
-                class="mt-0.5 space-y-0.5"
+                :class="[
+                    'mt-0.5 space-y-0.5 border-l transition-all',
+                    resolvedVariant === 'gradient'
+                        ? 'border-indigo-500/30'
+                        : resolvedVariant === 'glass'
+                        ? 'border-white/20 dark:border-white/10'
+                        : 'border-slate-200/70 dark:border-slate-800/80',
+                    effectiveDepth === 0 ? 'ml-5 pl-2' : 'ml-4 pl-1.5',
+                ]"
             >
                 <!-- 1. Render deklaratif via slot -->
                 <slot>
-                    <!-- 2. Fallback: Render dari array children -->
+                    <!-- 2. Fallback: Render dari array children (Multi-level bersarang) -->
                     <SidebarItem
                         v-for="(child, idx) in resolvedItem.children"
                         :key="idx"
                         :item="child"
-                        :depth="depth + 1"
+                        :depth="effectiveDepth + 1"
                         @navigate="handleNavigate"
                     />
                 </slot>
@@ -522,9 +616,16 @@ const isInternalLink = computed(() => {
                     <!-- Header Popover -->
                     <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 font-bold text-xs text-slate-800 dark:text-slate-100 flex items-center justify-between gap-2">
                         <span class="truncate">{{ resolvedItem.label }}</span>
-                        <span v-if="resolvedItem.badge" class="font-semibold rounded-full shrink-0" :class="[badgeClass, sizeClass.badge]">
+                        <Badge
+                            v-if="resolvedItem.badge"
+                            :variant="resolvedBadgeVariant"
+                            :color="resolvedBadgeColor"
+                            size="xs"
+                            rounded="full"
+                            class="shrink-0"
+                        >
                             {{ resolvedItem.badge }}
-                        </span>
+                        </Badge>
                     </div>
 
                     <!-- Daftar Sub-menu di Popover dibungkus SidebarFlyoutProvider -->
@@ -561,7 +662,7 @@ const isInternalLink = computed(() => {
                 depthPaddingClass,
                 isSelfActive
                     ? activeItemClasses
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200',
+                    : inactiveItemClasses,
                 resolvedCollapsed && !resolvedMobile ? `justify-center px-0 mx-auto ${sizeClass.collapsed}` : '',
             ]"
         >
@@ -580,7 +681,7 @@ const isInternalLink = computed(() => {
                     sizeClass.icon,
                     isSelfActive
                         ? (resolvedItemStyle === 'solid' ? resolvedColorTheme.iconSolid : resolvedColorTheme.iconActive)
-                        : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300',
+                        : (resolvedVariant === 'rail' ? 'text-slate-400 group-hover:text-white' : (resolvedVariant === 'gradient' ? 'text-slate-400 group-hover:text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300')),
                 ]"
             >
                 {{ resolvedItem.icon }}
@@ -596,19 +697,22 @@ const isInternalLink = computed(() => {
                 {{ resolvedItem.label }}
             </span>
 
-            <!-- Badge -->
-            <span
+            <!-- Badge Component -->
+            <Badge
                 v-if="(!resolvedCollapsed || resolvedMobile) && resolvedItem.badge"
-                class="font-semibold rounded-full shrink-0 shadow-2xs"
-                :class="[badgeClass, sizeClass.badge]"
+                :variant="resolvedBadgeVariant"
+                :color="resolvedBadgeColor"
+                :size="resolvedBadgeSize"
+                rounded="full"
+                class="shrink-0"
             >
                 {{ resolvedItem.badge }}
-            </span>
+            </Badge>
         </Link>
 
         <!-- B. External Link / Anchor -->
         <a
-            v-else-if="resolvedItem.href && !resolvedItem.disabled"
+            v-else-if="resolvedItem.href && resolvedItem.href !== '#' && !resolvedItem.disabled"
             :href="resolvedItem.href"
             :target="resolvedItem.target || '_blank'"
             rel="noopener noreferrer"
@@ -621,7 +725,7 @@ const isInternalLink = computed(() => {
                 depthPaddingClass,
                 isSelfActive
                     ? activeItemClasses
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200',
+                    : inactiveItemClasses,
                 resolvedCollapsed && !resolvedMobile ? `justify-center px-0 mx-auto ${sizeClass.collapsed}` : '',
             ]"
         >
@@ -638,7 +742,7 @@ const isInternalLink = computed(() => {
                     sizeClass.icon,
                     isSelfActive
                         ? (resolvedItemStyle === 'solid' ? resolvedColorTheme.iconSolid : resolvedColorTheme.iconActive)
-                        : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300',
+                        : (resolvedVariant === 'rail' ? 'text-slate-400 group-hover:text-white' : (resolvedVariant === 'gradient' ? 'text-slate-400 group-hover:text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300')),
                 ]"
             >
                 {{ resolvedItem.icon }}
@@ -653,13 +757,16 @@ const isInternalLink = computed(() => {
                 {{ resolvedItem.label }}
             </span>
 
-            <span
+            <Badge
                 v-if="(!resolvedCollapsed || resolvedMobile) && resolvedItem.badge"
-                class="font-semibold rounded-full shrink-0 shadow-2xs"
-                :class="[badgeClass, sizeClass.badge]"
+                :variant="resolvedBadgeVariant"
+                :color="resolvedBadgeColor"
+                :size="resolvedBadgeSize"
+                rounded="full"
+                class="shrink-0"
             >
                 {{ resolvedItem.badge }}
-            </span>
+            </Badge>
         </a>
 
         <!-- C. Button / Click Action -->
@@ -677,7 +784,7 @@ const isInternalLink = computed(() => {
                 depthPaddingClass,
                 isSelfActive
                     ? activeItemClasses
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200',
+                    : inactiveItemClasses,
                 resolvedCollapsed && !resolvedMobile ? `justify-center px-0 mx-auto ${sizeClass.collapsed}` : '',
             ]"
         >
@@ -694,7 +801,7 @@ const isInternalLink = computed(() => {
                     sizeClass.icon,
                     isSelfActive
                         ? (resolvedItemStyle === 'solid' ? resolvedColorTheme.iconSolid : resolvedColorTheme.iconActive)
-                        : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300',
+                        : (resolvedVariant === 'rail' ? 'text-slate-400 group-hover:text-white' : (resolvedVariant === 'gradient' ? 'text-slate-400 group-hover:text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300')),
                 ]"
             >
                 {{ resolvedItem.icon }}
@@ -709,13 +816,16 @@ const isInternalLink = computed(() => {
                 {{ resolvedItem.label }}
             </span>
 
-            <span
+            <Badge
                 v-if="(!resolvedCollapsed || resolvedMobile) && resolvedItem.badge"
-                class="font-semibold rounded-full shrink-0 shadow-2xs"
-                :class="[badgeClass, sizeClass.badge]"
+                :variant="resolvedBadgeVariant"
+                :color="resolvedBadgeColor"
+                :size="resolvedBadgeSize"
+                rounded="full"
+                class="shrink-0"
             >
                 {{ resolvedItem.badge }}
-            </span>
+            </Badge>
         </button>
     </div>
 </template>

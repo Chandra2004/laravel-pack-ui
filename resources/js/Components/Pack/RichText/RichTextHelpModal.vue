@@ -1,5 +1,7 @@
 <script setup>
 import { computed } from 'vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+import Badge from '@/Components/Pack/Badge.vue';
 
 const props = defineProps({
     modelValue: {
@@ -35,69 +37,66 @@ const radiusClasses = computed(() => {
     }
 });
 
+const themeColor = computed(() => props.colorTheme || 'primary');
+
 const themeStyles = computed(() => {
     const map = {
         primary: {
-            btn: 'bg-blue-600 hover:bg-blue-700 text-white',
             badge: 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400',
             code: 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
         },
         indigo: {
-            btn: 'bg-indigo-600 hover:bg-indigo-700 text-white',
             badge: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400',
             code: 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400',
         },
         emerald: {
-            btn: 'bg-emerald-600 hover:bg-emerald-700 text-white',
             badge: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400',
             code: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400',
         },
         purple: {
-            btn: 'bg-purple-600 hover:bg-purple-700 text-white',
             badge: 'bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400',
             code: 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400',
         },
         amber: {
-            btn: 'bg-amber-600 hover:bg-amber-700 text-white',
             badge: 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400',
             code: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
         },
         rose: {
-            btn: 'bg-rose-600 hover:bg-rose-700 text-white',
             badge: 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400',
             code: 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400',
         },
         cyan: {
-            btn: 'bg-cyan-600 hover:bg-cyan-700 text-white',
             badge: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400',
             code: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400',
         },
         dark: {
-            btn: 'bg-slate-900 hover:bg-black dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900',
             badge: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white',
-            code: 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white',
+            code: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200',
         },
     };
     return map[props.colorTheme] || map.primary;
 });
 
-const shortcuts = [
-    { key: 'Ctrl + B', label: 'Teks Tebal (Bold)' },
-    { key: 'Ctrl + I', label: 'Teks Miring (Italic)' },
-    { key: 'Ctrl + U', label: 'Garis Bawah (Underline)' },
-    { key: 'Ctrl + Z', label: 'Batal (Undo)' },
-    { key: 'Ctrl + Y', label: 'Ulangi (Redo)' },
+const keyboardShortcuts = [
+    { label: 'Tebal (Bold)', key: 'Ctrl + B' },
+    { label: 'Miring (Italic)', key: 'Ctrl + I' },
+    { label: 'Garis Bawah (Underline)', key: 'Ctrl + U' },
+    { label: 'Coret (Strikethrough)', key: 'Ctrl + Shift + X' },
+    { label: 'Kode Segaris (Inline Code)', key: 'Ctrl + E' },
+    { label: 'Batal Perubahan (Undo)', key: 'Ctrl + Z' },
+    { label: 'Ulangi Perubahan (Redo)', key: 'Ctrl + Y' },
+    { label: 'Hapus Format', key: 'Ctrl + \\' },
 ];
 
-const markdowns = [
-    { syntax: '# + Spasi', label: 'Heading 1 (Judul Utama)' },
-    { syntax: '## + Spasi', label: 'Heading 2 (Sub-Judul)' },
-    { syntax: '### + Spasi', label: 'Heading 3' },
-    { syntax: '* atau - + Spasi', label: 'Daftar Poin (Bullet List)' },
-    { syntax: '1. + Spasi', label: 'Daftar Nomor (Ordered List)' },
-    { syntax: '> + Spasi', label: 'Kutipan Blok (Blockquote)' },
-    { syntax: '``` + Enter', label: 'Blok Kode (Code Block)' },
-    { syntax: '--- + Enter', label: 'Garis Pemisah (Divider)' },
+const markdownShortcuts = [
+    { label: 'Heading 1', syntax: '# (spasi)' },
+    { label: 'Heading 2', syntax: '## (spasi)' },
+    { label: 'Heading 3', syntax: '### (spasi)' },
+    { label: 'Daftar Berpoin', syntax: '- atau * (spasi)' },
+    { label: 'Daftar Bernomor', syntax: '1. (spasi)' },
+    { label: 'Blok Kutipan', syntax: '> (spasi)' },
+    { label: 'Blok Kode', syntax: '``` (enter)' },
+    { label: 'Garis Pembagi (Divider)', syntax: '--- (enter)' },
 ];
 </script>
 
@@ -137,46 +136,48 @@ const markdowns = [
                                 <p class="text-[11px] text-slate-400">Pintasan keyboard & aturan pengetikan otomatis Tiptap</p>
                             </div>
                         </div>
-                        <button
-                            type="button"
+                        <ButtonSubmit
+                            variant="ghost"
+                            size="xs"
+                            icon="close"
                             @click="close"
-                            class="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
-                        >
-                            <span class="material-symbols-outlined text-lg">close</span>
-                        </button>
+                            title="Tutup Dialog"
+                        />
                     </div>
 
-                    <!-- Keyboard Shortcuts -->
+                    <!-- Keyboard Shortcuts Table -->
                     <div class="space-y-2">
-                        <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                            Pintasan Keyboard
-                        </span>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Pintasan Keyboard</span>
+                            <Badge variant="soft" color="indigo" size="xs">Tombol Cepat</Badge>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
                             <div
-                                v-for="item in shortcuts"
-                                :key="item.key"
+                                v-for="item in keyboardShortcuts"
+                                :key="item.label"
                                 :class="[
-                                    'p-2 bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs',
+                                    'px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs',
                                     radiusClasses.item
                                 ]"
                             >
                                 <span class="text-slate-600 dark:text-slate-300">{{ item.label }}</span>
-                                <kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-slate-700 dark:text-slate-300 shadow-2xs font-semibold">
+                                <kbd class="px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[10px] text-slate-500 shadow-2xs">
                                     {{ item.key }}
                                 </kbd>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Markdown Syntax Auto-format -->
-                    <div class="space-y-2">
-                        <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                            Ketik Otomatis (Markdown Engine)
-                        </span>
-                        <div class="space-y-1.5">
+                    <!-- Markdown Shortcuts Table -->
+                    <div class="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Aturan Ketik Markdown</span>
+                            <Badge variant="soft" color="emerald" size="xs">Otomatis</Badge>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
                             <div
-                                v-for="item in markdowns"
-                                :key="item.syntax"
+                                v-for="item in markdownShortcuts"
+                                :key="item.label"
                                 :class="[
                                     'px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs',
                                     radiusClasses.item
@@ -192,17 +193,14 @@ const markdowns = [
 
                     <!-- Footer -->
                     <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                        <button
-                            type="button"
+                        <ButtonSubmit
+                            variant="primary"
+                            :color="themeColor"
+                            size="sm"
                             @click="close"
-                            :class="[
-                                'px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer',
-                                themeStyles.btn,
-                                radiusClasses.btn
-                            ]"
                         >
-                            Tutup
-                        </button>
+                            Selesai Membaca
+                        </ButtonSubmit>
                     </div>
                 </div>
             </div>

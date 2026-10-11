@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source "../../../../resources/js/**/*.{vue,js}";
+@source "../../../resources/js/**/*.{vue,js}";
+@source "../../resources/js/**/*.{vue,js}";
+@source "../resources/js/**/*.{vue,js}";
+@source "../../**/*.md";
+@source "./components/**/*.{vue,js}";
+
+/* Styling penopang untuk Google Material Symbols (Rule 8: wght 350, opsz 20) */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 20;
+}
+
+/* Explicit keyframes & rule untuk animasi putar spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite !important;
+  display: inline-block !important;
+  transform-origin: center center !important;
+}
+
+/* Theme extensions matching sample.html */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+  --spacing-0_75: 0.1875rem;
+  --spacing-4_5: 1.125rem;
+  --radius-xs: 0.1875rem;
+}
+
+/* Base antialiasing & font-smoothing untuk komponen Tabs */
+.lp-tabs {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hairline & utility classes matching sample.html */
+.w-0\.75 {
+  width: 0.1875rem;
+}
+.h-0\.75 {
+  height: 0.1875rem;
+}
+.rounded-xs {
+  border-radius: 0.1875rem;
+}
+.shadow-xs {
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+}
+
+/* Hide native scrollbar on scrollable tablist track */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Explicit border-style solid for Tabs (mencegah reset button/div VitePress menghilangkan border) */
+.lp-tabs [role="tablist"] {
+  border-style: solid;
+}
+.lp-tabs button[role="tab"] {
+  border-style: solid;
+}

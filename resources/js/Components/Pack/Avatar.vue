@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { useClickOutside } from '@/Composables/Pack/useClickOutside';
+import { useClickOutside } from '../../Composables/Pack/useClickOutside';
 
 const props = defineProps({
     // Core Props (Backward Compatible)
@@ -64,10 +64,6 @@ const props = defineProps({
         default: 'default', // 'default', 'gradient', 'glass', 'outline', 'soft'
         validator: (val) => ['default', 'gradient', 'glass', 'outline', 'soft'].includes(val),
     },
-    glow: {
-        type: Boolean,
-        default: false,
-    },
     pulse: {
         type: Boolean,
         default: false, // Animasi radar ping pada status online
@@ -98,6 +94,25 @@ const props = defineProps({
         default: '', // Email / role jabatan
     },
 
+    // 5 Dimensi Desain Paten Proyek
+    design: {
+        type: String,
+        default: 'default', // 'default', 'minimal', 'bordered', 'floating', 'modern'
+        validator: (val) => ['default', 'minimal', 'bordered', 'floating', 'modern'].includes(val),
+    },
+    style: {
+        type: String,
+        default: undefined, // 'solid', 'soft', 'outline', 'pill', 'default', 'gradient', 'glass'
+    },
+    radius: {
+        type: String,
+        default: undefined, // 'full', 'xl', 'lg', 'md', 'sm', 'none', 'squircle', 'pill'
+    },
+    isLog: {
+        type: Boolean,
+        default: false,
+    },
+
     // Fitur Dropdown
     dropdown: {
         type: Boolean,
@@ -120,7 +135,24 @@ const emit = defineEmits([
     'toggle-dropdown',
     'menu-click',
     'change-status',
+    'log',
 ]);
+
+// Telemetri Logging Helper
+const emitLog = (eventName, detail, level = 'info') => {
+    if (!props.isLog) return;
+    const payload = {
+        component: 'Avatar',
+        event: eventName,
+        detail,
+        level,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour12: false }),
+    };
+    if (typeof console !== 'undefined' && console[level]) {
+        console[level](`[Pack UI][Avatar] @${eventName} -> ${detail}`);
+    }
+    emit('log', payload);
+};
 
 const avatarContainerRef = ref(null);
 const imgFailed = ref(false);
@@ -165,56 +197,78 @@ const initials = computed(() => {
 const themePresets = {
     default: {
         gradient: 'from-slate-700 to-slate-900 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(100,116,139,0.35)]',
         soft: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
     },
     primary: {
         gradient: 'from-blue-600 to-indigo-600 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(37,99,235,0.45)]',
         soft: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
     },
     indigo: {
         gradient: 'from-indigo-600 to-purple-600 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(79,70,229,0.45)]',
         soft: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300',
     },
     emerald: {
         gradient: 'from-emerald-500 to-teal-600 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(5,150,105,0.45)]',
         soft: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
     },
     purple: {
         gradient: 'from-purple-600 to-pink-600 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(147,51,234,0.45)]',
         soft: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300',
     },
     amber: {
         gradient: 'from-amber-500 to-orange-600 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(217,119,6,0.45)]',
         soft: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
     },
     rose: {
         gradient: 'from-rose-500 to-red-600 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(225,29,72,0.45)]',
         soft: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
     },
     cyan: {
         gradient: 'from-cyan-500 to-blue-600 text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(6,182,212,0.45)]',
         soft: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300',
     },
     dark: {
         gradient: 'from-zinc-800 to-black text-white',
-        glow: 'shadow-[0_4px_16px_-2px_rgba(0,0,0,0.5)]',
         soft: 'bg-slate-800 text-slate-200 dark:bg-zinc-800 dark:text-zinc-200',
     },
 };
 
-const currentTheme = computed(() => themePresets[props.colorTheme] || themePresets.default);
+const resolvedRadius = computed(() => props.radius || props.rounded);
+const resolvedVariant = computed(() => {
+    if (props.style) {
+        if (props.style === 'solid') return 'default';
+        return props.style;
+    }
+    return props.variant;
+});
+const resolvedColorTheme = computed(() => {
+    if (props.color && ['primary', 'indigo', 'emerald', 'purple', 'amber', 'rose', 'cyan', 'dark'].includes(props.color)) {
+        return props.color;
+    }
+    return props.colorTheme;
+});
+
+const currentTheme = computed(() => themePresets[resolvedColorTheme.value] || themePresets.default);
+
+const designClass = computed(() => {
+    switch (props.design) {
+        case 'minimal':
+            return 'shadow-none ring-0';
+        case 'bordered':
+            return 'ring-2 ring-slate-300 dark:ring-slate-700 ring-offset-2 ring-offset-white dark:ring-offset-slate-900';
+        case 'floating':
+            return 'shadow-lg ring-1 ring-black/5 dark:ring-white/10 hover:shadow-xl transition-shadow';
+        case 'modern':
+            return 'ring-2 ring-primary-500/40 ring-offset-1 ring-offset-white dark:ring-offset-slate-900 shadow-sm';
+        case 'default':
+        default:
+            return '';
+    }
+});
 
 const hashColor = computed(() => {
-    if (props.color) return props.color;
-    if (props.colorTheme !== 'default') {
+    if (props.color && props.color.startsWith('#')) return props.color;
+    if (resolvedColorTheme.value !== 'default') {
         return `bg-gradient-to-br ${currentTheme.value.gradient}`;
     }
     if (!props.name) return 'bg-slate-600 text-white';
@@ -238,92 +292,113 @@ const hashColor = computed(() => {
 
 const isCustomColor = computed(() => props.color && props.color.startsWith('#'));
 
-// Sizing metrics
+// Sizing metrics (Minimalis, Kompak & Ramping sesuai REQUEST.md)
 const sizeClasses = computed(() => {
     switch (props.size) {
         case 'xs':
             return {
                 container: 'w-6 h-6',
-                storyPad: 'p-0.5',
-                text: 'text-[9px] font-bold',
-                icon: 'text-xs',
-                dot: 'w-2 h-2',
+                text: 'text-[10px] font-semibold',
+                icon: 'text-[13px]',
+                dot: 'w-1.5 h-1.5',
                 border: 'ring-1.5',
-                badge: 'text-[8px] px-1 py-0',
-                verified: 'w-2.5 h-2.5 text-[8px]',
+                badge: 'min-w-3 h-3 px-0.5 text-[8px]',
+                verified: 'w-2.5 h-2.5',
+                verifiedIcon: 'w-3 h-3',
+                nameText: 'text-xs font-semibold',
+                subText: 'text-[10px]',
+                infoGap: 'gap-1.5',
                 dotOffset: getDotOffset('xs'),
             };
         case 'sm':
             return {
                 container: 'w-8 h-8',
-                storyPad: 'p-0.5',
-                text: 'text-xs font-bold',
-                icon: 'text-sm',
-                dot: 'w-2.5 h-2.5',
-                border: 'ring-2',
-                badge: 'text-[9px] px-1.5 py-0.2',
-                verified: 'w-3 h-3 text-[10px]',
+                text: 'text-xs font-semibold',
+                icon: 'text-[16px]',
+                dot: 'w-2 h-2',
+                border: 'ring-1.5',
+                badge: 'min-w-3.5 h-3.5 px-0.5 text-[9px]',
+                verified: 'w-3 h-3',
+                verifiedIcon: 'w-3 h-3',
+                nameText: 'text-xs font-semibold',
+                subText: 'text-[11px]',
+                infoGap: 'gap-2',
                 dotOffset: getDotOffset('sm'),
             };
         case 'lg':
             return {
-                container: 'w-14 h-14',
-                storyPad: 'p-1',
-                text: 'text-lg font-bold',
-                icon: 'text-2xl',
-                dot: 'w-3.5 h-3.5',
-                border: 'ring-2.5',
-                badge: 'text-xs px-2 py-0.5',
-                verified: 'w-4.5 h-4.5 text-xs',
+                container: 'w-12 h-12',
+                text: 'text-sm font-semibold',
+                icon: 'text-[24px]',
+                dot: 'w-2.5 h-2.5',
+                border: 'ring-2',
+                badge: 'min-w-4.5 h-4.5 px-1 text-[10px]',
+                verified: 'w-3.5 h-3.5',
+                verifiedIcon: 'w-3.5 h-3.5',
+                nameText: 'text-sm font-semibold',
+                subText: 'text-xs',
+                infoGap: 'gap-2',
                 dotOffset: getDotOffset('lg'),
             };
         case 'xl':
             return {
-                container: 'w-20 h-20',
-                storyPad: 'p-1',
-                text: 'text-2xl font-bold',
-                icon: 'text-3xl',
-                dot: 'w-4.5 h-4.5',
-                border: 'ring-[3px]',
-                badge: 'text-xs px-2 py-0.5',
-                verified: 'w-5.5 h-5.5 text-sm',
+                container: 'w-16 h-16',
+                text: 'text-base font-semibold',
+                icon: 'text-[30px]',
+                dot: 'w-3 h-3',
+                border: 'ring-2',
+                badge: 'min-w-5 h-5 px-1 text-xs',
+                verified: 'w-4 h-4',
+                verifiedIcon: 'w-4 h-4',
+                nameText: 'text-base font-semibold',
+                subText: 'text-xs',
+                infoGap: 'gap-2.5',
                 dotOffset: getDotOffset('xl'),
             };
         case '2xl':
             return {
-                container: 'w-28 h-28',
-                storyPad: 'p-1.5',
-                text: 'text-3xl font-bold',
-                icon: 'text-4xl',
-                dot: 'w-6 h-6',
-                border: 'ring-4',
-                badge: 'text-sm px-2.5 py-0.5',
-                verified: 'w-7 h-7 text-base',
+                container: 'w-20 h-20',
+                text: 'text-xl font-semibold',
+                icon: 'text-[38px]',
+                dot: 'w-3.5 h-3.5',
+                border: 'ring-2.5',
+                badge: 'min-w-6 h-6 px-1.5 text-xs',
+                verified: 'w-5 h-5',
+                verifiedIcon: 'w-5 h-5',
+                nameText: 'text-lg font-semibold',
+                subText: 'text-sm',
+                infoGap: 'gap-3',
                 dotOffset: getDotOffset('2xl'),
             };
         case '3xl':
             return {
-                container: 'w-36 h-36',
-                storyPad: 'p-2',
-                text: 'text-4xl font-black',
-                icon: 'text-5xl',
-                dot: 'w-7 h-7',
-                border: 'ring-4',
-                badge: 'text-sm px-3 py-1',
-                verified: 'w-8 h-8 text-lg',
+                container: 'w-26 h-26',
+                text: 'text-2xl font-bold',
+                icon: 'text-[48px]',
+                dot: 'w-4 h-4',
+                border: 'ring-3',
+                badge: 'min-w-7 h-7 px-2 text-sm',
+                verified: 'w-6 h-6',
+                verifiedIcon: 'w-6 h-6',
+                nameText: 'text-xl font-bold',
+                subText: 'text-sm',
+                infoGap: 'gap-3.5',
                 dotOffset: getDotOffset('3xl'),
             };
         case 'md':
         default:
             return {
                 container: 'w-10 h-10',
-                storyPad: 'p-0.5',
-                text: 'text-sm font-bold',
-                icon: 'text-lg',
-                dot: 'w-3 h-3',
+                text: 'text-sm font-semibold',
+                icon: 'text-[19px]',
+                dot: 'w-2 h-2',
                 border: 'ring-2',
-                badge: 'text-[10px] px-1.5 py-0.2',
-                verified: 'w-3.5 h-3.5 text-[10px]',
+                badge: 'min-w-4 h-4 px-1 text-[10px]',
+                verified: 'w-3.5 h-3.5',
+                verifiedIcon: 'w-3.5 h-3.5',
+                nameText: 'text-sm font-semibold',
+                subText: 'text-xs',
+                infoGap: 'gap-2',
                 dotOffset: getDotOffset('md'),
             };
     }
@@ -339,35 +414,35 @@ function getDotOffset(sz) {
     if (sz === 'xs' || sz === 'sm') {
         y = isTop ? '-top-0.5' : '-bottom-0.5';
         x = isLeft ? '-left-0.5' : '-right-0.5';
-    } else if (sz === 'xl' || sz === '2xl' || sz === '3xl') {
-        y = isTop ? 'top-0.5' : 'bottom-0.5';
-        x = isLeft ? 'left-0.5' : 'right-0.5';
     }
     return `${y} ${x}`;
 }
 
 const roundedClass = computed(() => {
-    switch (props.rounded) {
+    const r = resolvedRadius.value;
+    switch (r) {
+        case 'sm': return 'rounded-sm';
         case 'md': return 'rounded-md';
         case 'lg': return 'rounded-lg';
         case 'xl': return 'rounded-xl';
         case 'squircle': return 'rounded-2xl';
         case 'none': return 'rounded-none';
         case 'full':
+        case 'pill':
         default: return 'rounded-full';
     }
 });
 
-// Story Ring Classes
+// Story Ring Classes (Ramping tanpa ring ganda)
 const storyClass = computed(() => {
     switch (props.story) {
         case 'gradient':
         case 'unread':
-            return 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 ring-2 ring-white dark:ring-slate-900';
+            return 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600';
         case 'emerald':
-            return 'bg-emerald-500 ring-2 ring-white dark:ring-slate-900';
+            return 'bg-emerald-500';
         case 'live':
-            return 'bg-rose-600 animate-pulse ring-2 ring-white dark:ring-slate-900';
+            return 'bg-rose-600 animate-pulse';
         case 'none':
         default:
             return '';
@@ -387,24 +462,43 @@ const statusColorClass = computed(() => {
 const handleImgError = (e) => {
     imgFailed.value = true;
     emit('error', e);
+    emitLog('error', 'URL foto profil gagal dimuat', 'warn');
 };
 
 const handleAvatarClick = (e) => {
-    if (props.dropdown) {
+    if (e) {
         e.stopPropagation();
+    }
+    if (props.dropdown) {
         isDropdownOpen.value = !isDropdownOpen.value;
         emit('toggle-dropdown', isDropdownOpen.value);
+        emitLog('toggle-dropdown', isDropdownOpen.value ? 'Dropdown dibuka' : 'Dropdown ditutup');
     }
     if (props.clickable || props.dropdown) {
         emit('click', e);
+        emitLog('click', `Avatar ${props.name || 'Anonymous'} diklik`);
     }
 };
 
 const handleMenuItemClick = (item, e) => {
     if (item.disabled) return;
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     if (item.action) item.action(e);
     emit('menu-click', item);
+    emitLog('menu-click', `Menu "${item.label}" dipilih`);
     isDropdownOpen.value = false;
+};
+
+const handleChangeStatus = (statusKey, e) => {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    emit('change-status', statusKey);
+    emitLog('change-status', `Status diubah ke: ${statusKey}`);
 };
 
 // Dropdown Alignment
@@ -422,17 +516,23 @@ const dropdownAlignClass = computed(() => {
     <!-- Outer Relative Wrapper (with Click Outside listener) -->
     <div
         ref="avatarContainerRef"
-        class="relative inline-flex items-center gap-2.5 select-none"
+        class="relative inline-flex items-center select-none"
         :class="[
-            (clickable || dropdown) ? 'cursor-pointer' : '',
+            sizeClasses.infoGap,
+            (clickable || dropdown) ? 'cursor-pointer focus:outline-hidden' : '',
         ]"
+        :role="(clickable || dropdown) ? 'button' : undefined"
+        :tabindex="(clickable || dropdown) ? 0 : undefined"
+        :aria-haspopup="dropdown ? 'menu' : undefined"
+        :aria-expanded="dropdown ? isDropdownOpen : undefined"
+        @keydown.enter="handleAvatarClick"
+        @keydown.space.prevent="handleAvatarClick"
     >
         <!-- Story Ring Container (if story !== 'none') -->
         <div
             class="relative inline-flex items-center justify-center shrink-0 transition-transform duration-200"
             :class="[
-                story !== 'none' ? `${sizeClasses.storyPad} ${storyClass} ${roundedClass}` : '',
-                glow ? currentTheme.glow : '',
+                story !== 'none' ? `p-0.5 ${storyClass} ${roundedClass}` : '',
                 (clickable || dropdown) ? 'hover:scale-105 active:scale-95' : '',
             ]"
             @click="handleAvatarClick"
@@ -443,10 +543,13 @@ const dropdownAlignClass = computed(() => {
                 :class="[
                     sizeClasses.container,
                     roundedClass,
+                    designClass,
                     border ? `${sizeClasses.border} ring-white dark:ring-slate-900 shadow-xs` : '',
-                    story !== 'none' ? 'ring-2 ring-white dark:ring-slate-900' : '',
-                    variant === 'glass' ? 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/60 dark:border-slate-800/60' : '',
-                    showImage ? 'bg-slate-100 dark:bg-slate-800' : (isCustomColor ? '' : (showInitials ? hashColor : 'bg-slate-200 dark:bg-slate-700')),
+                    story !== 'none' ? 'border-[1.5px] border-white dark:border-slate-900' : '',
+                    resolvedVariant === 'glass' ? 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/60 dark:border-slate-800/60' : '',
+                    resolvedVariant === 'outline' ? 'border-2 border-primary-500 bg-transparent text-primary-600 dark:text-primary-400' : '',
+                    resolvedVariant === 'soft' && !showImage ? currentTheme.soft : '',
+                    showImage ? 'bg-slate-100 dark:bg-slate-800' : (isCustomColor ? '' : (showInitials ? (resolvedVariant === 'soft' ? currentTheme.soft : hashColor) : 'bg-slate-200 dark:bg-slate-700')),
                 ]"
                 :style="isCustomColor ? { backgroundColor: color } : {}"
             >
@@ -462,7 +565,7 @@ const dropdownAlignClass = computed(() => {
                 <!-- 2. Auto Initials from Name -->
                 <span
                     v-else-if="showInitials"
-                    class="leading-none select-none tracking-tight font-black"
+                    class="leading-none select-none tracking-normal font-semibold flex items-center justify-center"
                     :class="sizeClasses.text"
                 >
                     {{ initials }}
@@ -471,7 +574,7 @@ const dropdownAlignClass = computed(() => {
                 <!-- 3. Icon Fallback -->
                 <span
                     v-else
-                    class="material-symbols-outlined text-slate-500 dark:text-slate-400 leading-none select-none"
+                    class="material-symbols-outlined text-slate-400 dark:text-slate-500 leading-none select-none flex items-center justify-center shrink-0"
                     :class="sizeClasses.icon"
                     aria-hidden="true"
                 >
@@ -485,7 +588,7 @@ const dropdownAlignClass = computed(() => {
             <!-- 4. Presence Status Dot (Unmasked, perfectly circular outside overflow-hidden) -->
             <span
                 v-if="status"
-                class="absolute block rounded-full ring-2 ring-white dark:ring-slate-900 z-10 shadow-xs pointer-events-none"
+                class="absolute block rounded-full ring-1.5 ring-white dark:ring-slate-900 z-10 shadow-xs pointer-events-none"
                 :class="[
                     sizeClasses.dot,
                     statusColorClass,
@@ -500,23 +603,25 @@ const dropdownAlignClass = computed(() => {
                 />
             </span>
 
-            <!-- 5. Verified Official Badge -->
+            <!-- 5. Verified Official Badge (only when not showInfo to prevent duplication) -->
             <span
-                v-if="verified"
-                class="absolute -bottom-0.5 -right-0.5 z-10 flex items-center justify-center rounded-full bg-blue-500 text-white ring-2 ring-white dark:ring-slate-900 shadow-xs pointer-events-none"
+                v-if="verified && !showInfo"
+                class="absolute -bottom-0.5 -right-0.5 z-10 flex items-center justify-center rounded-full bg-blue-500 text-white ring-1.5 ring-white dark:ring-slate-900 shadow-xs pointer-events-none"
                 :class="sizeClasses.verified"
                 title="Verified Official"
             >
-                <span class="material-symbols-outlined text-[inherit] leading-none">check</span>
+                <svg class="w-3/5 h-3/5" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="2.5 6 4.5 8.5 9.5 3.5"></polyline>
+                </svg>
             </span>
 
             <!-- 6. Counter / Text Badge (e.g. '3', 'VIP') -->
             <span
                 v-if="badge"
-                class="absolute -top-1 -right-1 z-10 font-bold font-mono rounded-full text-white shadow-xs pointer-events-none"
+                class="absolute -top-1 -right-1 z-10 inline-flex items-center justify-center font-bold tracking-tight rounded-full ring-1.5 ring-white dark:ring-slate-900 shadow-xs pointer-events-none text-white select-none"
                 :class="[
                     sizeClasses.badge,
-                    badgeColor || 'bg-rose-500 ring-1.5 ring-white dark:ring-slate-900'
+                    badgeColor || 'bg-rose-500'
                 ]"
             >
                 {{ badge }}
@@ -525,7 +630,7 @@ const dropdownAlignClass = computed(() => {
             <!-- 7. LIVE Badge on Story -->
             <span
                 v-if="story === 'live'"
-                class="absolute -bottom-1.5 inset-x-0 mx-auto w-fit z-10 px-1 py-0.2 rounded-sm bg-rose-600 text-white font-black text-[8px] tracking-wider uppercase shadow-xs pointer-events-none"
+                class="absolute -bottom-1 inset-x-0 mx-auto w-fit z-10 px-1 py-0.2 rounded-xs bg-rose-600 text-white font-bold text-[7px] tracking-wider uppercase shadow-xs pointer-events-none leading-none"
             >
                 LIVE
             </span>
@@ -534,26 +639,38 @@ const dropdownAlignClass = computed(() => {
         <!-- USER INFO TEXT (showInfo === true) -->
         <div
             v-if="showInfo"
-            class="min-w-0 text-left cursor-pointer"
+            class="min-w-0 flex flex-col justify-center text-left m-0 p-0 leading-tight"
+            :class="(clickable || dropdown) ? 'cursor-pointer' : ''"
             @click="handleAvatarClick"
         >
-            <div class="flex items-center gap-1.5">
-                <span class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+            <div class="flex items-center gap-1 leading-none m-0 p-0">
+                <span class="text-slate-900 dark:text-white truncate font-semibold m-0 p-0" :class="sizeClasses.nameText">
                     {{ name || 'Pengguna' }}
                 </span>
-                <span v-if="verified" class="material-symbols-outlined text-blue-500 text-xs shrink-0">
-                    verified
-                </span>
+                <svg
+                    v-if="verified"
+                    class="text-blue-500 shrink-0 inline-block drop-shadow-2xs"
+                    :class="sizeClasses.verifiedIcon"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-label="Terverifikasi"
+                >
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
             </div>
-            <p v-if="subtext" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+            <div
+                v-if="subtext"
+                class="text-slate-400 dark:text-slate-500 truncate leading-none mt-1 m-0 p-0"
+                :class="sizeClasses.subText"
+            >
                 {{ subtext }}
-            </p>
+            </div>
         </div>
 
         <!-- DROPDOWN ARROW INDICATOR (if dropdown === true) -->
         <span
             v-if="dropdown"
-            class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-base transition-transform duration-200 cursor-pointer"
+            class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[16px] transition-transform duration-200 cursor-pointer -ml-0.5 leading-none shrink-0"
             :class="isDropdownOpen ? 'rotate-180 text-blue-600 dark:text-blue-400' : ''"
             @click="handleAvatarClick"
             aria-hidden="true"
@@ -572,74 +689,80 @@ const dropdownAlignClass = computed(() => {
         >
             <div
                 v-if="dropdown && isDropdownOpen"
-                class="absolute top-full mt-2 w-64 z-50 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/80 overflow-hidden select-none text-xs"
+                class="absolute top-full mt-1 w-52 z-50 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-900/10 dark:shadow-black/50 overflow-hidden select-none text-xs m-0 p-0"
                 :class="dropdownAlignClass"
             >
                 <!-- Custom Dropdown Slot -->
                 <slot name="dropdown" :close="() => isDropdownOpen = false">
                     <!-- Default Profile Card Header -->
-                    <div class="p-4 bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 ring-2 ring-white dark:ring-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-white">
+                    <div class="p-2 bg-slate-50/75 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 m-0">
+                        <div class="flex items-center gap-2 m-0 p-0">
+                            <div class="w-7 h-7 rounded-full overflow-hidden shrink-0 ring-1 ring-slate-200 dark:ring-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-semibold text-[11px] text-slate-800 dark:text-white leading-none">
                                 <img v-if="showImage" :src="src" :alt="alt || name" class="w-full h-full object-cover" />
                                 <span v-else-if="name">{{ initials }}</span>
-                                <span v-else class="material-symbols-outlined text-base">person</span>
+                                <span v-else class="material-symbols-outlined text-[15px] select-none leading-none shrink-0 flex items-center justify-center">person</span>
                             </div>
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-1">
-                                    <h4 class="font-bold text-slate-900 dark:text-white text-xs truncate">{{ name || 'Pengguna Speed' }}</h4>
-                                    <span v-if="verified" class="material-symbols-outlined text-blue-500 text-xs">verified</span>
+                            <div class="min-w-0 flex-1 leading-none m-0 p-0">
+                                <div class="flex items-center gap-1 leading-none m-0 p-0">
+                                    <div class="font-semibold text-slate-900 dark:text-white text-xs truncate m-0 p-0 leading-none">{{ name || 'Pengguna' }}</div>
+                                    <svg v-if="verified" class="w-3 h-3 text-blue-500 shrink-0 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
                                 </div>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ subtext || 'user@example.com' }}</p>
+                                <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-1 m-0 p-0 leading-none">{{ subtext || 'user@example.com' }}</div>
                             </div>
                         </div>
 
                         <!-- Status Quick Switcher -->
-                        <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
-                            <span class="text-slate-400">Status Akun:</span>
-                            <div class="flex items-center gap-1.5">
+                        <div class="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between m-0">
+                            <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 leading-none m-0 p-0">Status:</span>
+                            <div class="inline-flex items-center gap-1 p-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 m-0">
                                 <button
-                                    v-for="s in ['online', 'away', 'busy', 'offline']"
-                                    :key="s"
-                                    type="button"
-                                    @click="emit('change-status', s)"
-                                    class="w-2.5 h-2.5 rounded-full transition-transform hover:scale-125 cursor-pointer"
-                                    :class="[
-                                        s === 'online' ? 'bg-emerald-500' : (s === 'away' ? 'bg-amber-400' : (s === 'busy' ? 'bg-rose-500' : 'bg-slate-400')),
-                                        status === s ? 'ring-2 ring-blue-500 ring-offset-1' : 'opacity-70 hover:opacity-100'
+                                    v-for="s in [
+                                        { key: 'online', color: 'bg-emerald-500', label: 'Online' },
+                                        { key: 'away', color: 'bg-amber-400', label: 'Away' },
+                                        { key: 'busy', color: 'bg-rose-500', label: 'Busy' },
+                                        { key: 'offline', color: 'bg-slate-400', label: 'Offline' },
                                     ]"
-                                    :title="`Ubah ke ${s}`"
-                                />
+                                    :key="s.key"
+                                    type="button"
+                                    @click.prevent.stop="handleChangeStatus(s.key, $event)"
+                                    class="relative flex items-center justify-center w-3.5 h-3.5 rounded-full transition-all cursor-pointer m-0 p-0"
+                                    :class="status === s.key ? 'bg-white dark:bg-slate-700 shadow-2xs ring-1 ring-slate-200 dark:ring-slate-600 scale-110' : 'opacity-60 hover:opacity-100'"
+                                    :title="s.label"
+                                >
+                                    <span class="w-1.5 h-1.5 rounded-full" :class="s.color" />
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Custom or Prop-driven Menu Items -->
-                    <div class="p-1.5 space-y-0.5">
+                    <!-- Menu Items -->
+                    <div class="p-1 space-y-0.5 m-0">
                         <slot name="menu" :close="() => isDropdownOpen = false">
                             <template v-if="menuItems && menuItems.length > 0">
                                 <template v-for="(item, idx) in menuItems" :key="idx">
-                                    <div v-if="item.divider" class="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                                    <div v-if="item.divider" class="h-px bg-slate-100 dark:bg-slate-800 my-0.5 mx-1" />
                                     <button
                                         v-else
                                         type="button"
-                                        @click="handleMenuItemClick(item, $event)"
+                                        @click.prevent.stop="handleMenuItemClick(item, $event)"
                                         :disabled="item.disabled"
-                                        class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors cursor-pointer"
+                                        class="w-full flex items-center justify-between px-2 py-1 rounded-md text-left transition-colors cursor-pointer group m-0"
                                         :class="[
                                             item.danger
-                                                ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
-                                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
+                                                 ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                                                 : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white',
                                             item.disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                                         ]"
                                     >
-                                        <div class="flex items-center gap-2.5 min-w-0">
-                                            <span v-if="item.icon" class="material-symbols-outlined text-base shrink-0">
+                                        <div class="flex items-center gap-1.5 min-w-0 leading-none">
+                                            <span v-if="item.icon" class="material-symbols-outlined text-[15px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors shrink-0 leading-none">
                                                 {{ item.icon }}
                                             </span>
-                                            <span class="truncate">{{ item.label }}</span>
+                                            <span class="truncate font-normal leading-none">{{ item.label }}</span>
                                         </div>
-                                        <span v-if="item.badge" class="px-1.5 py-0.2 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                        <span v-if="item.badge" class="px-1.5 py-0.2 rounded-xs text-[9px] font-semibold bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 leading-none">
                                             {{ item.badge }}
                                         </span>
                                     </button>
@@ -650,36 +773,36 @@ const dropdownAlignClass = computed(() => {
                             <template v-else>
                                 <button
                                     type="button"
-                                    @click="isDropdownOpen = false"
-                                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                                    @click.prevent.stop="isDropdownOpen = false"
+                                    class="w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer group m-0 leading-none text-xs"
                                 >
-                                    <span class="material-symbols-outlined text-base">person</span>
-                                    <span>Profil Saya</span>
+                                    <span class="material-symbols-outlined text-[15px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors shrink-0 leading-none">person</span>
+                                    <span class="font-normal leading-none">Profil Saya</span>
                                 </button>
                                 <button
                                     type="button"
-                                    @click="isDropdownOpen = false"
-                                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                                    @click.prevent.stop="isDropdownOpen = false"
+                                    class="w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer group m-0 leading-none text-xs"
                                 >
-                                    <span class="material-symbols-outlined text-base">settings</span>
-                                    <span>Pengaturan Akun</span>
+                                    <span class="material-symbols-outlined text-[15px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors shrink-0 leading-none">settings</span>
+                                    <span class="font-normal leading-none">Pengaturan Akun</span>
                                 </button>
                                 <button
                                     type="button"
-                                    @click="isDropdownOpen = false"
-                                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                                    @click.prevent.stop="isDropdownOpen = false"
+                                    class="w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer group m-0 leading-none text-xs"
                                 >
-                                    <span class="material-symbols-outlined text-base">receipt_long</span>
-                                    <span>Billing & Transaksi</span>
+                                    <span class="material-symbols-outlined text-[15px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors shrink-0 leading-none">receipt_long</span>
+                                    <span class="font-normal leading-none">Billing & Transaksi</span>
                                 </button>
-                                <div class="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                                <div class="h-px bg-slate-100 dark:bg-slate-800 my-0.5 mx-1" />
                                 <button
                                     type="button"
-                                    @click="isDropdownOpen = false"
-                                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer font-semibold"
+                                    @click.prevent.stop="isDropdownOpen = false"
+                                    class="w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer group m-0 leading-none text-xs font-normal"
                                 >
-                                    <span class="material-symbols-outlined text-base">logout</span>
-                                    <span>Keluar (Log Out)</span>
+                                    <span class="material-symbols-outlined text-[15px] text-rose-500 group-hover:translate-x-0.5 transition-transform shrink-0 leading-none">logout</span>
+                                    <span class="leading-none">Keluar</span>
                                 </button>
                             </template>
                         </slot>

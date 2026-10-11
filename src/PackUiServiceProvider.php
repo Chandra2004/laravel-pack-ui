@@ -26,26 +26,28 @@ class PackUiServiceProvider extends ServiceProvider
                 InstallPackCommand::class,
             ]);
 
-            // Mendaftarkan Tag Publish untuk Komponen, Composables, dan Layouts
+            $componentsPath = __DIR__ . '/../resources/js/Components/Pack';
+            $composablesPath = __DIR__ . '/../resources/js/Composables/Pack';
+            $layoutsPath = __DIR__ . '/../resources/js/Layouts/Pack';
+
+            // Tag gabungan untuk seluruh aset Pack UI
             $this->publishes([
-                __DIR__ . '/../resources/js/Components/Pack' => resource_path('js/Components/Pack'),
-                __DIR__ . '/../resources/js/Composables/Pack' => resource_path('js/Composables/Pack'),
-                __DIR__ . '/../resources/js/Layouts/Pack' => resource_path('js/Layouts/Pack'),
+                $componentsPath => resource_path('js/Components/Pack'),
+                $composablesPath => resource_path('js/Composables/Pack'),
+                $layoutsPath => resource_path('js/Layouts/Pack'),
             ], 'pack-ui');
 
-            // Tag terpisah jika pengguna hanya ingin publish komponen
+            // Tag terpisah untuk publikasi parsial
             $this->publishes([
-                __DIR__ . '/../resources/js/Components/Pack' => resource_path('js/Components/Pack'),
+                $componentsPath => resource_path('js/Components/Pack'),
             ], 'pack-ui-components');
 
-            // Tag terpisah jika pengguna hanya ingin publish composable
             $this->publishes([
-                __DIR__ . '/../resources/js/Composables/Pack' => resource_path('js/Composables/Pack'),
+                $composablesPath => resource_path('js/Composables/Pack'),
             ], 'pack-ui-composables');
 
-            // Tag terpisah jika pengguna hanya ingin publish layout
             $this->publishes([
-                __DIR__ . '/../resources/js/Layouts/Pack' => resource_path('js/Layouts/Pack'),
+                $layoutsPath => resource_path('js/Layouts/Pack'),
             ], 'pack-ui-layouts');
         }
     }

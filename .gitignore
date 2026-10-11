@@ -3,4 +3,6 @@ vendor/
 composer.lock
 .DS_Store
 Thumbs.db
+**/.vitepress/dist/
+**/.vitepress/cache/
 

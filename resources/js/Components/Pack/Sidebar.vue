@@ -15,7 +15,7 @@ export { useSidebar } from '@/Composables/Pack/useSidebar';
  * Mendukung mode Config-Driven (:items="[...]"), mode Deklaratif (<slot />), dan Compound Components.
  */
 import SidebarComponent from './SidebarComponent.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const sidebarRef = ref(null);
 
@@ -23,6 +23,10 @@ defineExpose({
     toggleCollapse: () => sidebarRef.value?.toggleCollapse(),
     openMobile: () => sidebarRef.value?.openMobile(),
     closeMobile: () => sidebarRef.value?.closeMobile(),
+    isCollapsed: computed(() => sidebarRef.value?.isCollapsed),
+    isMobileOpen: computed(() => sidebarRef.value?.isMobileOpen),
+    isMobile: computed(() => sidebarRef.value?.isMobile),
+    isTablet: computed(() => sidebarRef.value?.isTablet),
 });
 </script>
 

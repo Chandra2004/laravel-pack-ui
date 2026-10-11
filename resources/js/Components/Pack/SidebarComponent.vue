@@ -7,6 +7,7 @@ import SidebarHeader from './Sidebar/SidebarHeader.vue';
 import SidebarNav from './Sidebar/SidebarNav.vue';
 import SidebarFooter from './Sidebar/SidebarFooter.vue';
 import SidebarToggle from './Sidebar/SidebarToggle.vue';
+import ButtonSubmit from './ButtonSubmit.vue';
 
 const props = defineProps({
     /**
@@ -71,11 +72,15 @@ const props = defineProps({
      * - 'default': Latar slate lembut dengan garis border samping
      * - 'bordered': Latar putih/gelap bersih dengan border pembatas tegas
      * - 'floating': Pulau kartu modern melayang dengan margin dan bayangan lembut
+     * - 'rail': Dok ramping ringkas berbasis ikon untuk efisiensi ruang
+     * - 'glass': Efek kaca buram (frosted glass) dengan backdrop-blur
+     * - 'flat': Latar transparan tanpa border pembatas untuk integrasi mulus
+     * - 'gradient': Gradasi warna lembut dari atas ke bawah
      */
     variant: {
         type: String,
         default: 'default',
-        validator: (val) => ['default', 'bordered', 'floating'].includes(val),
+        validator: (val) => ['default', 'bordered', 'floating', 'rail', 'glass', 'flat', 'gradient'].includes(val),
     },
     /**
      * 1. WARNA: Palet aksen warna semantik untuk item aktif dan indikator
@@ -99,11 +104,12 @@ const props = defineProps({
      * - 'soft': Latar pastel lembut dengan teks kontras semantik (default)
      * - 'solid': Latar warna pekat dengan teks putih
      * - 'outline': Border beraksen warna tegas dengan latar transparan
+     * - 'pill': Kapsul membulat penuh dengan indikator titik
      */
     itemStyle: {
         type: String,
         default: 'soft',
-        validator: (val) => ['soft', 'solid', 'outline'].includes(val),
+        validator: (val) => ['soft', 'solid', 'outline', 'pill'].includes(val),
     },
     /**
      * 2. BENTUK: Kelengkungan sudut item menu
@@ -122,11 +128,20 @@ const props = defineProps({
         validator: (val) => ['sm', 'md', 'lg'].includes(val),
     },
     /**
-     * Tampilkan area logo header
+     * Pemisahan Header: Tampilkan area header di dalam sidebar.
+     * Default: false (Sidebar fokus navigasi murni, terpisah dari top header aplikasi).
+     * Berikan true jika ingin menyertakan header brand di dalam sidebar.
+     */
+    showHeader: {
+        type: Boolean,
+        default: false,
+    },
+    /**
+     * Kompatibilitas mundur untuk showHeader
      */
     showLogo: {
         type: Boolean,
-        default: true,
+        default: null,
     },
     /**
      * Nama Brand di header default
@@ -157,6 +172,20 @@ const props = defineProps({
         default: 768,
     },
     /**
+     * 5. RESPONSIF: Batas lebar layar tablet (pixel)
+     */
+    tabletBreakpoint: {
+        type: Number,
+        default: 1024,
+    },
+    /**
+     * 5. RESPONSIF: Otomatis ciutkan menjadi mode ringkas pada layar tablet
+     */
+    autoCollapseTablet: {
+        type: Boolean,
+        default: false,
+    },
+    /**
      * Status drawer mobile (v-model:mobileOpen)
      */
     mobileOpen: {
@@ -169,6 +198,27 @@ const props = defineProps({
     activeRoute: {
         type: String,
         default: '',
+    },
+    /**
+     * Teleport mobile drawer ke body (set false untuk simulator terisolasi)
+     */
+    teleport: {
+        type: Boolean,
+        default: true,
+    },
+    /**
+     * Paksa mode mobile (berguna untuk isolated preview/simulator frame)
+     */
+    forceMobile: {
+        type: Boolean,
+        default: null,
+    },
+    /**
+     * Paksa mode tablet (berguna untuk isolated preview/simulator frame)
+     */
+    forceTablet: {
+        type: Boolean,
+        default: null,
     },
 });
 
@@ -183,8 +233,16 @@ const sidebarState = useSidebar({
 
 const isCollapsed = ref(props.collapsed !== null ? props.collapsed : sidebarState.isCollapsed.value);
 const isMobileOpen = ref(props.mobileOpen !== null ? props.mobileOpen : sidebarState.isMobileOpen.value);
-const isMobile = ref(false);
+const isMobile = ref(props.forceMobile !== null ? props.forceMobile : false);
+const isTablet = ref(props.forceTablet !== null ? props.forceTablet : false);
 const mobileDrawerRef = ref(null);
+
+// Evaluasi apakah header di dalam sidebar aktif (decoupled by default)
+const showHeaderComputed = computed(() => {
+    if (props.showHeader) return true;
+    if (props.showLogo !== null) return props.showLogo;
+    return false;
+});
 
 // Sinkronisasi props.collapsed dari parent
 watch(() => props.collapsed, (val) => {
@@ -259,25 +317,54 @@ const handleNavigate = (item) => {
     }
 };
 
-const checkMobile = () => {
+const checkViewport = () => {
+    if (props.forceMobile !== null) {
+        isMobile.value = props.forceMobile;
+        isTablet.value = props.forceTablet ?? false;
+        return;
+    }
     if (typeof window === 'undefined') return;
+    const width = window.innerWidth;
     const wasMobile = isMobile.value;
-    isMobile.value = window.innerWidth < props.mobileBreakpoint;
+    isMobile.value = width < props.mobileBreakpoint;
+    isTablet.value = width >= props.mobileBreakpoint && width < props.tabletBreakpoint;
+
     if (wasMobile && !isMobile.value && isMobileOpen.value) {
         closeMobile();
     }
+
+    if (props.autoCollapseTablet && isTablet.value && !isCollapsed.value) {
+        isCollapsed.value = true;
+        sidebarState.setCollapsed(true);
+    }
 };
 
+watch(() => props.forceMobile, (val) => {
+    if (val !== null) {
+        isMobile.value = val;
+    } else {
+        checkViewport();
+    }
+});
+
+watch(() => props.forceTablet, (val) => {
+    if (val !== null) {
+        isTablet.value = val;
+    } else {
+        checkViewport();
+    }
+});
+
 onMounted(() => {
-    checkMobile();
+    checkViewport();
     if (typeof window !== 'undefined') {
-        window.addEventListener('resize', checkMobile);
+        window.addEventListener('resize', checkViewport);
     }
 });
 
 onUnmounted(() => {
     if (typeof window !== 'undefined') {
-        window.removeEventListener('resize', checkMobile);
+        window.removeEventListener('resize', checkViewport);
     }
     // Pastikan mobile drawer selalu tertutup saat komponen unmount
     closeMobile();
@@ -304,13 +391,21 @@ const collapsedWidthClass = computed(() => {
     }
 });
 
-// Varian gaya visual
+// Varian gaya visual (diperkaya untuk mendukung banyak variasi tampilan)
 const variantClasses = computed(() => {
     switch (props.variant) {
         case 'bordered':
-            return 'bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800';
+            return 'bg-white dark:bg-slate-900 border-r-2 border-slate-200 dark:border-slate-800';
         case 'floating':
-            return 'bg-white dark:bg-slate-900 m-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl';
+            return 'bg-white/95 dark:bg-slate-900/95 m-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-900/5 backdrop-blur-md';
+        case 'rail':
+            return 'bg-slate-900 text-slate-100 dark:bg-slate-950 border-r border-slate-800/90 shadow-xl';
+        case 'glass':
+            return 'bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl backdrop-saturate-150 border-r border-white/40 dark:border-white/10 shadow-xl shadow-slate-900/5 text-slate-800 dark:text-slate-100';
+        case 'flat':
+            return 'bg-transparent border-r-0';
+        case 'gradient':
+            return 'bg-gradient-to-b from-slate-950 via-[#0b132b] to-[#1c1a40] text-slate-100 border-r border-indigo-500/20 shadow-2xl relative overflow-hidden';
         case 'default':
         default:
             return 'bg-slate-50/90 dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800/80';
@@ -443,9 +538,12 @@ provide('packSidebarContext', {
     itemStyle: computed(() => props.itemStyle),
     radiusClass,
     size: computed(() => props.size),
+    variant: computed(() => props.variant),
+    showHeader: showHeaderComputed,
     isCollapsed,
     isMobileOpen,
     isMobile,
+    isTablet,
     activeRoute: computed(() => props.activeRoute),
     items: computed(() => props.items),
     toggleCollapse,
@@ -463,6 +561,8 @@ defineExpose({
     closeMobile,
     isCollapsed,
     isMobileOpen,
+    isMobile,
+    isTablet,
 });
 </script>
 
@@ -474,34 +574,44 @@ defineExpose({
         v-if="!isMobile"
         :class="[
             'relative flex flex-col h-full select-none transition-[width] duration-300 ease-in-out shrink-0',
-            isCollapsed ? collapsedWidthClass : widthClass,
+            (isCollapsed || variant === 'rail') ? collapsedWidthClass : widthClass,
             variantClasses,
             variant === 'floating' ? 'h-[calc(100%-24px)]' : '',
         ]"
     >
-        <!-- Floating Border Toggle Button (Linear / Notion Style) -->
+        <!-- Top Radial Glow for Gradient Variant -->
+        <div
+            v-if="variant === 'gradient'"
+            class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent z-0"
+            aria-hidden="true"
+        />
+
+        <!-- Floating Border Toggle Button (Flowbite Crisp Chevron Style) -->
         <SidebarToggle
-            v-if="collapsible && floatingToggle"
+            v-if="collapsible && floatingToggle && variant !== 'rail'"
             variant="floating"
         />
 
-        <!-- HEADER / LOGO (Desktop) -->
-        <SidebarHeader
-            v-if="showLogo"
-            :brand-name="brandName"
-            :brand-sub="brandSub"
-            :show-toggle="collapsible && !floatingToggle"
-        >
-            <template #default>
-                <slot name="logo" />
-            </template>
-            <template #collapsed>
-                <slot name="logo-collapsed" />
-            </template>
-            <template #actions>
-                <slot name="header-extra" />
-            </template>
-        </SidebarHeader>
+        <!-- HEADER / LOGO (Desktop - Bersifat Opsional, Terpisah dari Navigasi Inti) -->
+        <template v-if="showHeaderComputed">
+            <slot name="header" :is-collapsed="isCollapsed">
+                <SidebarHeader
+                    :brand-name="brandName"
+                    :brand-sub="brandSub"
+                    :show-toggle="collapsible && !floatingToggle"
+                >
+                    <template #default>
+                        <slot name="logo" />
+                    </template>
+                    <template #collapsed>
+                        <slot name="logo-collapsed" />
+                    </template>
+                    <template #actions>
+                        <slot name="header-extra" />
+                    </template>
+                </SidebarHeader>
+            </slot>
+        </template>
 
         <!-- TOP SLOT (Pencarian / Workspace Switcher) -->
         <div v-if="$slots.top" :class="isCollapsed ? 'px-1 py-2' : 'px-3 py-2'">
@@ -533,9 +643,9 @@ defineExpose({
     </aside>
 
     <!-- ========================================================================= -->
-    <!-- 2. MOBILE DRAWER (Teleported ke Body)                                      -->
+    <!-- 2. MOBILE DRAWER (Teleported ke Body atau Terisolasi Lokal)               -->
     <!-- ========================================================================= -->
-    <Teleport to="body">
+    <Teleport to="body" :disabled="!teleport">
         <div v-if="isMobile || isMobileOpen">
             <!-- Backdrop Overlay dengan Blur Lembut -->
             <Transition
@@ -548,7 +658,10 @@ defineExpose({
             >
                 <div
                     v-if="isMobileOpen"
-                    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs select-none"
+                    :class="[
+                        'bg-slate-900/60 backdrop-blur-xs select-none',
+                        teleport ? 'fixed inset-0 z-50' : 'absolute inset-0 z-40',
+                    ]"
                     @click="closeMobile"
                     aria-hidden="true"
                 />
@@ -569,34 +682,49 @@ defineExpose({
                     role="dialog"
                     aria-modal="true"
                     aria-label="Menu Navigasi Mobile"
-                    class="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-white dark:bg-slate-900 shadow-2xl border-r border-slate-200/80 dark:border-slate-800 flex flex-col overflow-hidden select-none"
+                    :class="[
+                        'bg-white dark:bg-slate-900 shadow-2xl border-r border-slate-200/80 dark:border-slate-800 flex flex-col overflow-hidden select-none',
+                        teleport ? 'fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw]' : 'absolute inset-y-0 left-0 z-40 w-72 max-w-full',
+                    ]"
                 >
-                    <!-- Mobile Drawer Header -->
+                    <!-- Mobile Drawer Header (Terpisah & Opsional) -->
                     <div class="flex items-center justify-between px-4 h-16 border-b border-slate-200/70 dark:border-slate-800 shrink-0">
-                        <slot name="logo">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div
-                                    class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs"
-                                    :class="colorTheme.logoBg"
-                                >
-                                    P
-                                </div>
-                                <span class="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-                                    {{ brandName || 'Dashboard' }}
-                                </span>
-                            </div>
+                        <slot name="mobile-header">
+                            <slot name="header" :is-collapsed="false">
+                                <template v-if="showHeaderComputed">
+                                    <slot name="logo">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div
+                                                class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-xs"
+                                                :class="colorTheme.logoBg"
+                                            >
+                                                P
+                                            </div>
+                                            <span class="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
+                                                {{ brandName || 'Dashboard' }}
+                                            </span>
+                                        </div>
+                                    </slot>
+                                </template>
+                                <template v-else>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                        Navigasi
+                                    </span>
+                                </template>
+                            </slot>
                         </slot>
 
-                        <!-- Sleek Circular Close Button -->
+                        <!-- Sleek Flowbite-Style Close Button -->
                         <button
                             type="button"
                             @click="closeMobile"
-                            class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer select-none"
+                            class="inline-flex items-center justify-center p-1.5 text-slate-500 rounded-lg hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
                             aria-label="Tutup menu"
                         >
-                            <span class="material-symbols-outlined text-lg leading-none">
-                                close
-                            </span>
+                            <span class="sr-only">Tutup menu</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                         </button>
                     </div>
 

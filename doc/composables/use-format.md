@@ -1,235 +1,501 @@
-# 🇮🇩 Composable `useFormat` (Formatting Standar Indonesia & Finansial)
+---
+title: "useFormat"
+description: "Aggregator composable lengkap untuk pemformatan mata uang Rupiah, tanggal lokal Indonesia, manipulasi string, sensor privasi data, dan inisial avatar."
+---
 
-[← Kembali ke Dokumentasi Utama](../../README.md)
+# useFormat (`useFormat.js`)
 
-`useFormat` adalah koleksi helper dan composable pemformat data terstandarisasi untuk ekosistem aplikasi di Indonesia. Mencakup konversi mata uang Rupiah (`IDR`), tanggal dan waktu berbahasa Indonesia, waktu relatif manusiawi, nomor telepon seluler (+62), ukuran berkas (*file size*), serta penyensoran (*masking*) data sensitif transaksi perbankan.
+## 01. Overview
 
-Dapat digunakan baik sebagai hook composable `useFormat()` di template Vue maupun di-import sebagai fungsi mandiri (*pure functions*).
+`useFormat` adalah *aggregator composable* yang menggabungkan seluruh pustaka pemformatan data terstandarisasi untuk ekosistem Indonesia ke dalam satu pintu masuk praktis. Modul ini menyatukan pemformatan tanggal dan durasi (`useDateFormat.js`), angka finansial Rupiah (`useNumberFormat.js`), manipulasi teks dan URL slug (`useStringFormat.js`), sensor privasi data (`useMask.js`), serta ekstraksi inisial avatar (`useInitials.js`).
+
+### 1.1 Apa Entitas Ini
+
+- **Tipe Artefak**: Aggregator Composable Function & Module Re-exporter (Vue 3 Composition API).
+- **Lokasi Berkas Sumber**: [useFormat.js](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Composables/Pack/useFormat.js).
+- **Ekspor Kunci**: `useFormat`, re-ekspor seluruh fungsi utilitas dari 5 sub-modul format.
+- **Target Ekosistem**: Seluruh komponen UI, template halaman Inertia, kartu metrik ringkasan, dan tabel data yang membutuhkan pemformatan data siap saji.
+
+### 1.2 Fungsi Utama
+
+- Menyediakan titik impor tunggal (*single import point*) untuk 20+ fungsi pemformatan tanpa perlu mengingat lokasi berkas masing-masing utilitas secara terpisah.
+- Menggabungkan pemformatan mata uang Rupiah (`formatRupiah`), angka desimal Indonesia (`formatNumber`), dan penyingkat angka ringkas (`formatCompactNumber`).
+- Mengintegrasikan pemformatan tanggal berstandar Indonesia (`formatDate`), waktu lampau dinamis (`formatRelativeTime`), dan format durasi waktu (`formatDuration`).
+- Menyediakan pengubahan gaya penamaan string (`slugify`, `titleCase`, `camelCase`, `snakeCase`, `kebabCase`) serta pembersihan HTML (`stripHtml`).
+- Menyediakan fungsi sensor data sensitif perbankan dan kependudukan (`maskSensitive`) serta standardisasi nomor HP (`formatPhone`).
+- Menghasilkan inisial nama cerdas (`formatInitials`) dan palet warna avatar Tailwind yang konsisten (`formatAvatarColor`).
+
+### 1.3 Kapan Digunakan
+
+- Di dalam komponen Vue yang membutuhkan pemformatan lintas tipe data sekaligus (misal kartu pesanan yang menampilkan harga Rupiah, tanggal transaksi, nama pengguna, dan status tersensor).
+- Saat pengembang menginginkan sintaks impor yang cepat dan bersih tanpa daftar impor panjang dari berbagai file terpisah.
+- Sebagai dependensi formatting global untuk disuntikkan ke helper template atau filter kustom Vue.
+
+### 1.4 Karakteristik Penting
+
+- **Dua Model Konsumsi**: Mendukung pemanggilan via composable hook `const { ... } = useFormat()` maupun melalui impor bernama langsung (`import { formatRupiah, formatDate } from '@/Composables/Pack/useFormat'`).
+- **Nol Dependensi Berat**: Seluruh logika dibangun menggunakan fitur bawaan JavaScript modern dan `Intl` API native browser, menjaga ukuran bundel tetap ringan.
+- **Konsistensi Lokal Indonesia**: Seluruh sub-modul dirancang khusus mengikuti konvensi Bahasa Indonesia (pemisah ribuan titik, pemisah desimal koma, singkatan juta `jt`, dan nama hari/bulan resmi).
 
 ---
 
-## 🚀 Import & Penggunaan
+## 02. Preview
 
-### 1. Di dalam Komponen Vue via Composable Hook
+> [!TIP]
+> Pengujian fungsional dan showcase composable ini dapat diuji secara native pada portal pratinjau aplikasi:
+>
+> <a href="http://localhost:8000/preview" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Portal Komponen &rarr;</a>
+
+---
+
+## 03. Usage
+
+### Pohon Hubungan Aggregator
+
+```text
+useFormat (Aggregator Gateway)
+├── 1. Finansial & Angka (via useNumberFormat.js)
+│   ├── formatRupiah(val, options)        → "Rp 1.500.000"
+│   ├── formatNumber(val, decimals)       → "1.500.000,50"
+│   ├── formatCompactNumber(val)          → "1,5 jt"
+│   ├── formatPercent(val, decimals)      → "15,4%"
+│   ├── formatOrdinal(num)                → "ke-3"
+│   └── formatBytes(bytes)                → "15,2 MB"
+│
+├── 2. Tanggal & Waktu (via useDateFormat.js)
+│   ├── formatDate(date, pattern)         → "26 September 2026"
+│   ├── formatRelativeTime(date)          → "3 jam yang lalu"
+│   ├── formatDuration(seconds, options)  → "1 jam 2 menit"
+│   └── parseDate(input)                  → Date Object
+│
+├── 3. Teks & String (via useStringFormat.js)
+│   ├── slugify(text, separator)          → "koleksi-laravel-pack"
+│   ├── truncate(text, length, options)   → "Potongan kalimat..."
+│   ├── titleCase(text)                   → "Judul Dokumen"
+│   ├── camelCase(text)                   → "userProfileId"
+│   ├── snakeCase(text)                   → "user_profile_id"
+│   ├── kebabCase(text)                   → "user-profile-id"
+│   └── stripHtml(html)                   → "Teks Bersih"
+│
+├── 4. Sensor & Privasi (via useMask.js)
+│   ├── maskSensitive(val, type)          → "**** **** **** 9010"
+│   └── formatPhone(phone)                → "+62 812-3456-7890"
+│
+└── 5. Inisial & Avatar (via useInitials.js)
+    ├── formatInitials(name, max)         → "CTA"
+    └── formatAvatarColor(name)           → "bg-blue-600 text-white"
+```
+
+### Matriks Keputusan: `useFormat` vs Sub-Modul Terpisah
+
+| Kasus Penggunaan | Gunakan `useFormat` | Gunakan Sub-Modul Langsung |
+| :--- | :--- | :--- |
+| Komponen membutuhkan 3+ jenis format berbeda (angka, tanggal, teks) | Sangat Disarankan | Kurang Efisien (butuh banyak file import) |
+| Komponen reaktif yang membutuhkan watcher `useDateFormat(dateRef)` | Gunakan named import `useDateFormat` | Sangat Disarankan |
+| Halaman ringan yang hanya butuh 1 fungsi kecil (misal hanya `formatRupiah`) | Opsi valid via re-ekspor | Sangat Disarankan untuk optimasi tree-shaking mikro |
+
+---
+
+## 04. Anatomy
+
+### Hubungan Arsitektur Modul
+
+```text
+resources/js/Composables/Pack/
+│
+├── useDateFormat.js     ──────┐
+├── useNumberFormat.js   ──────┤
+├── useStringFormat.js   ──────┼──> useFormat.js (Aggregator Hub) ──> Vue Component
+├── useMask.js           ──────┤
+└── useInitials.js       ──────┘
+```
+
+### Diagram Alur Data Aggregator (Mermaid)
+
+```mermaid
+graph TD
+    A[Komponen Vue / Template] -->|Panggil useFormat| B[useFormat.js Aggregator]
+    B -->|Delegasi Finansial| C[useNumberFormat.js]
+    B -->|Delegasi Tanggal| D[useDateFormat.js]
+    B -->|Delegasi String| E[useStringFormat.js]
+    B -->|Delegasi Sensor| F[useMask.js]
+    B -->|Delegasi Avatar| G[useInitials.js]
+    C -->|Return String| A
+    D -->|Return String| A
+    E -->|Return String| A
+    F -->|Return String| A
+    G -->|Return String / Class| A
+```
+
+---
+
+## 05. Variants
+
+Kategori fungsi yang diekspos melalui `useFormat` dikelompokkan ke dalam 5 domain fungsional:
+
+| Domain | Fungsi Utama | Karakteristik Standar |
+| :--- | :--- | :--- |
+| **Finansial** | `formatRupiah`, `formatCompactNumber`, `formatPercent` | Prefix `Rp`, spasi tunggal, pemisah ribuan titik (`.`), pemisah desimal koma (`,`). |
+| **Kronologi** | `formatDate`, `formatRelativeTime`, `formatDuration` | Nama bulan & hari Indonesia resmi, token kustom, kalkulasi selisih waktu dinamis. |
+| **String** | `slugify`, `truncate`, `titleCase`, `stripHtml` | Pemotongan berbasis word boundary, sanitasi script/style, pembersih Unicode beraksen. |
+| **Privasi** | `maskSensitive`, `formatPhone` | Sensor kartu kredit/debit, email, NIK KTP, dan format standar nomor telepon Indonesia `+62`. |
+| **Identitas** | `formatInitials`, `formatAvatarColor` | Ekstraksi 1-3 huruf inisial, deterministik hashing warna avatar Tailwind. |
+
+---
+
+## 06. Sizes
+
+Tidak relevan untuk composable murni tanpa elemen tata letak fisik.
+
+---
+
+## 07. States
+
+### Penanganan Fallback Nilai Kosong / Error Input
+
+Seluruh fungsi yang diekspos oleh `useFormat` memiliki mekanisme fallback bawaan:
+
+| Tipe Nilai Input | Perilaku Default | Contoh Hasil |
+| :--- | :--- | :--- |
+| `null` atau `undefined` | Mengembalikan string kosong atau tanda hubung | `formatDate(null)` → `"-"`<br>`slugify(null)` → `""` |
+| `NaN` pada fungsi angka | Mengembalikan fallback default | `formatRupiah('invalid')` → `"Rp 0"` |
+| String HTML rusak pada `stripHtml` | Sanitasi aman tanpa throw exception | `stripHtml('<p>Teks')` → `"Teks"` |
+
+---
+
+## 08. Props / Parameters / Attributes
+
+### Parameter Kunci Fungsi Finansial & Angka
+
+| Fungsi | Parameter | Tipe Data | Default | Keterangan |
+| :--- | :--- | :--- | :--- | :--- |
+| `formatRupiah` | `(value, options)` | `Number, Object` | `{ withSymbol: true }` | Opsi `{ withSymbol: false, decimals: 2 }` |
+| `formatNumber` | `(value, decimals)` | `Number, Number` | `0` | Menentukan jumlah angka di belakang koma desimal |
+| `formatCompactNumber` | `(value)` | `Number` | - | Menyingkat angka besar (contoh: `1.500.000` → `"1,5 jt"`) |
+
+### Parameter Kunci Fungsi Tanggal
+
+| Fungsi | Parameter | Tipe Data | Default | Keterangan |
+| :--- | :--- | :--- | :--- | :--- |
+| `formatDate` | `(date, pattern)` | `String\|Date, String` | `'DD MMMM YYYY HH:mm'` | Pola token (contoh: `'DD/MM/YYYY'`) |
+| `formatRelativeTime` | `(date)` | `String\|Date` | - | Selisih waktu dinamis terhadap `Date.now()` |
+| `formatDuration` | `(seconds, options)` | `Number, Object` | `{ format: 'digital' }` | Pilihan mode: `'digital'`, `'human'`, `'short'` |
+
+### Parameter Kunci Fungsi String & Privasi
+
+| Fungsi | Parameter | Tipe Data | Default | Keterangan |
+| :--- | :--- | :--- | :--- | :--- |
+| `slugify` | `(text, separator)` | `String, String` | `'-'` | Pembuat URL slug ramah SEO |
+| `truncate` | `(text, length, opts)` | `String, Number, Object` | `100, { suffix: '...' }` | Pemotongan cerdas di batas spasi kata |
+| `maskSensitive` | `(value, type)` | `String, String` | `'card'` | Tipe: `'card'`, `'email'`, `'phone'`, `'nik'` |
+
+---
+
+## 09. Slots / Content
+
+Tidak relevan untuk composable murni tanpa komponen visual langsung.
+
+---
+
+## 10. Events / Interactions / Returns
+
+### Return Object dari `useFormat()`
+
+| Properti / Method | Tipe Data | Reaktif | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `formatRupiah` | `Function(val, opts)` | Tidak | Format mata uang Rupiah IDR. |
+| `formatNumber` | `Function(val, decimals)` | Tidak | Format angka desimal pemisah titik. |
+| `formatCompactNumber` | `Function(val)` | Tidak | Format angka ringkas ribuan/jutaan. |
+| `formatPercent` | `Function(val, decimals)` | Tidak | Format persentase. |
+| `formatBytes` | `Function(bytes)` | Tidak | Format ukuran kapasitas berkas. |
+| `formatDate` | `Function(date, pattern)` | Tidak | Format tanggal lokal Indonesia. |
+| `formatRelativeTime` | `Function(date)` | Tidak | Format waktu lampau / mendatang. |
+| `formatDuration` | `Function(sec, opts)` | Tidak | Format durasi detik ke teks. |
+| `parseDate` | `Function(input)` | Tidak | Parser normalisasi tanggal ke objek Date. |
+| `slugify` | `Function(text, sep)` | Tidak | Generator slug URL. |
+| `truncate` | `Function(text, len, opts)`| Tidak | Pemotong panjang teks batas kata. |
+| `titleCase` | `Function(text)` | Tidak | Kapitalisasi awal tiap kata. |
+| `camelCase` | `Function(text)` | Tidak | Konversi ke camelCase. |
+| `snakeCase` | `Function(text)` | Tidak | Konversi ke snake_case. |
+| `kebabCase` | `Function(text)` | Tidak | Konversi ke kebab-case. |
+| `stripHtml` | `Function(html)` | Tidak | Menghapus tag markup HTML. |
+| `maskSensitive` | `Function(val, type)` | Tidak | Sensor data privasi pengguna. |
+| `formatPhone` | `Function(phone)` | Tidak | Standardisasi nomor telepon seluler. |
+| `formatInitials` | `Function(name, max)` | Tidak | Ekstraksi inisial nama pengguna. |
+| `formatAvatarColor` | `Function(name)` | Tidak | Hashing warna avatar latar belakang. |
+
+---
+
+## 11. Code Example
+
+### 1. Penggunaan Dasar (Basic Example)
+
+Menampilkan harga dan tanggal pada kartu produk ringkas:
+
 ```vue
 <script setup>
 import { useFormat } from '@/Composables/Pack/useFormat';
 
+const props = defineProps({
+    product: Object,
+});
+
+const { formatRupiah, formatDate } = useFormat();
+</script>
+
+<template>
+    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+        <h3 class="font-bold text-base">{{ product.name }}</h3>
+        <p class="text-emerald-600 font-semibold">{{ formatRupiah(product.price) }}</p>
+        <p class="text-xs text-gray-500">Terdaftar pada: {{ formatDate(product.created_at, 'DD MMMM YYYY') }}</p>
+    </div>
+</template>
+```
+
+### 2. Penggunaan Menengah (Variant / Intermediate Example)
+
+Menampilkan baris transaksi perbankan dengan sensor nomor rekening/kartu, waktu relatif, dan badge inisial avatar:
+
+```vue
+<script setup>
+import { useFormat } from '@/Composables/Pack/useFormat';
+
+const props = defineProps({
+    transaction: Object,
+});
+
 const {
     formatRupiah,
-    formatDate,
     formatRelativeTime,
-    formatPhone,
-    formatBytes,
     maskSensitive,
-    formatPercent,
+    formatInitials,
+    formatAvatarColor,
 } = useFormat();
 </script>
 
 <template>
-  <div>
-    <p>Nominal: {{ formatRupiah(1500000) }}</p>
-    <!-- Hasil: Rp 1.500.000 -->
+    <div class="flex items-center justify-between p-3.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+        <div class="flex items-center gap-3">
+            <!-- Avatar Inisial Dinamis -->
+            <div
+                :class="formatAvatarColor(transaction.customer_name)"
+                class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white"
+            >
+                {{ formatInitials(transaction.customer_name, 2) }}
+            </div>
 
-    <p>Waktu: {{ formatDate('2026-09-13T14:30:00Z', 'DD MMMM YYYY HH:mm') }}</p>
-    <!-- Hasil: 13 September 2026 21:30 -->
-  </div>
+            <div>
+                <p class="font-semibold text-sm text-gray-900 dark:text-white">{{ transaction.customer_name }}</p>
+                <p class="text-xs font-mono text-gray-400">
+                    Kartu: {{ maskSensitive(transaction.card_number, 'card') }}
+                </p>
+            </div>
+        </div>
+
+        <div class="text-right">
+            <p class="font-bold text-sm text-gray-900 dark:text-white">
+                {{ formatRupiah(transaction.total) }}
+            </p>
+            <p class="text-xs text-gray-400">
+                {{ formatRelativeTime(transaction.timestamp) }}
+            </p>
+        </div>
+    </div>
 </template>
 ```
 
-### 2. Import Langsung Sebagai Utilitas Mandiri (Script / Service)
-```javascript
-import { formatRupiah, formatDate, maskSensitive } from '@/Composables/Pack/useFormat';
+### 3. Penggunaan Lanjutan (Advanced / Enterprise Example)
 
-const maskedCard = maskSensitive('4000123456789010', 'card');
-// Output: '**** **** **** 9010'
+ViewModel ringkasan halaman pesanan e-commerce terintegrasi:
+
+```vue
+<script setup>
+import { computed } from 'vue';
+import { useFormat } from '@/Composables/Pack/useFormat';
+
+const props = defineProps({
+    order: Object,
+});
+
+const {
+    formatRupiah,
+    formatDate,
+    formatPhone,
+    formatCompactNumber,
+    slugify,
+    truncate,
+} = useFormat();
+
+const shareableUrl = computed(() => {
+    return `/pesanan/${props.order.id}/${slugify(props.order.title)}`;
+});
+
+const shortDescription = computed(() => {
+    return truncate(props.order.notes || 'Tidak ada catatan pesanan.', 60);
+});
+</script>
+
+<template>
+    <div class="p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 space-y-4">
+        <div class="flex justify-between items-start">
+            <div>
+                <span class="text-xs text-gray-400 font-mono">Pesanan #{{ order.id }}</span>
+                <h2 class="text-lg font-bold">{{ order.title }}</h2>
+                <p class="text-xs text-gray-500 mt-1">{{ shortDescription }}</p>
+            </div>
+            <div class="text-right">
+                <span class="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                    {{ formatRupiah(order.amount) }}
+                </span>
+                <p class="text-[11px] text-gray-400">
+                    Volume: {{ formatCompactNumber(order.total_items) }} unit
+                </p>
+            </div>
+        </div>
+
+        <div class="pt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-4 text-xs">
+            <div>
+                <span class="text-gray-400 block">Waktu Checkout:</span>
+                <span class="font-medium text-gray-800 dark:text-gray-200">
+                    {{ formatDate(order.created_at, 'DDDD, DD MMMM YYYY [pukul] HH:mm') }}
+                </span>
+            </div>
+            <div>
+                <span class="text-gray-400 block">Nomor WhatsApp Pembeli:</span>
+                <span class="font-medium font-mono text-gray-800 dark:text-gray-200">
+                    {{ formatPhone(order.customer_phone) }}
+                </span>
+            </div>
+        </div>
+    </div>
+</template>
 ```
 
 ---
 
-## 📋 Daftar API & Method
+## 12. Result / Behavior
 
-| Fungsi | Parameter | Default | Contoh Output |
-| :--- | :--- | :--- | :--- |
-| `formatRupiah()` | `(amount, withPrefix = true, decimalPlaces = 0)` | `withPrefix: true` | `formatRupiah(2450000)` $\to$ **`Rp 2.450.000`** |
-| `formatNumber()` | `(value, decimalPlaces = 0)` | `decimalPlaces: 0` | `formatNumber(1250000)` $\to$ **`1.250.000`** |
-| `formatDate()` | `(dateInput, pattern = 'DD MMMM YYYY HH:mm')` | `'DD MMMM YYYY HH:mm'` | `formatDate(new Date())` $\to$ **`13 September 2026 14:30`** |
-| `formatRelativeTime()` | `(dateInput)` | — | `formatRelativeTime(time)` $\to$ **`5 menit yang lalu`** / **`baru saja`** |
-| `formatPhone()` | `(number, formatType = 'international')` | `'international'` | `formatPhone('081234567890')` $\to$ **`+62 812-3456-7890`** |
-| `formatBytes()` | `(bytes, decimals = 2)` | `decimals: 2` | `formatBytes(14942208)` $\to$ **`14.25 MB`** |
-| `maskSensitive()` | `(text, type = 'card')` | `'card'` | `maskSensitive('user@domain.com', 'email')` $\to$ **`u****r@domain.com`** |
-| `formatPercent()` | `(value, decimals = 2, isFraction = false)` | `isFraction: false` | `formatPercent(12.5)` $\to$ **`12.50%`** |
-| `formatInitials()` | `(name, length = 2, options = {})` | `length: 2` | `formatInitials('Chandra Tri Antomo')` $\to$ **`CA`** / **`CTA`** |
-| `formatAvatarColor()` | `(seed, options = {})` | `{}` | `formatAvatarColor('Chandra')` $\to$ **`{ hex, bgClass, ... }`** |
-| `slugify()` | `(text, separator = '-')` | `'-'` | `slugify('Judul Berita & Promo!')` $\to$ **`judul-berita-promo`** |
-| `truncate()` | `(text, length = 100, options = {})` | `length: 100` | `truncate(text, 50, { wordBoundary: true })` $\to$ **`Teks rapi...`** |
-| `formatCompactNumber()` | `(number, options = {})` | `decimals: 1` | `formatCompactNumber(2500000)` $\to$ **`2,5 jt`** / **`2.5M`** |
-| `formatDuration()` | `(seconds, options = {})` | `format: 'digital'` | `formatDuration(3725)` $\to$ **`01:02:05`** / **`1 jam 2 menit`** |
-| `titleCase()` | `(text)` | — | `titleCase('laporan transaksi harian')` $\to$ **`Laporan Transaksi Harian`** |
-| `camelCase()` | `(text)` | — | `camelCase('user-profile-id')` $\to$ **`userProfileId`** |
-| `snakeCase()` | `(text)` | — | `snakeCase('userProfileId')` $\to$ **`user_profile_id`** |
-| `kebabCase()` | `(text)` | — | `kebabCase('userProfileId')` $\to$ **`user-profile-id`** |
-| `stripHtml()` | `(html)` | — | `stripHtml('<p>Halo <b>Dunia</b></p>')` $\to$ **`Halo Dunia`** |
-| `formatOrdinal()` | `(number, locale = 'id')` | `'id'` | `formatOrdinal(3)` $\to$ **`ke-3`** (ID) / **`3rd`** (EN) |
+### Alur Kerja Eksekusi
+
+1. Pengembang mengimpor `useFormat` ke dalam modul atau komponen Vue.
+2. Composable mengembalikan objek berisi fungsi referensi murni (*pure functions*) yang langsung siap dieksekusi di skrip maupun di template HTML.
+3. Setiap fungsi mengevaluasi tipe data input, melakukan sanitasi nilai, dan menghasilkan representasi string terstandarisasi.
+4. Karena fungsi-fungsi yang dikembalikan adalah fungsi murni (*pure functions*), eksekusinya bersifat idempoten dan tidak mengubah state eksternal aplikasi.
 
 ---
 
-## 💡 Detail Fitur & Spesifikasi
+## 13. Customization
 
-### 1. Pemformatan Mata Uang Rupiah (`formatRupiah`)
-Mendukung nilai angka, string numerik, serta kontrol awalan dan desimal:
-```javascript
-formatRupiah(2450000);                      // "Rp 2.450.000"
-formatRupiah(2450000, false);               // "2.450.000"
-formatRupiah(2450000.5, true, 2);           // "Rp 2.450.000,50"
-formatRupiah(null);                         // "Rp 0"
-```
+### Konfigurasi Lokal Khusus
 
-### 2. Tanggal & Waktu Bahasa Indonesia (`formatDate`)
-Mendukung ragam pola (*pattern token*):
-* `YYYY` (Tahun 4 digit), `YY` (Tahun 2 digit)
-* `MMMM` (Nama bulan: Januari..Desember), `MMM` (Nama bulan singkat: Jan..Des), `MM` (01..12), `M` (1..12)
-* `DDDD` (Nama hari: Minggu..Sabtu), `DDD` (Nama hari singkat: Min..Sab), `DD` (01..31), `D` (1..31)
-* `HH` (Jam 24 format 00..23), `H` (0..23), `mm` (Menit 00..59), `ss` (Detik 00..59)
+Jika membutuhkan penyesuaian di luar standar Indonesia, fungsi-fungsi pendukung menerima opsi parameter tambahan:
 
 ```javascript
-formatDate('2026-09-13T07:30:00Z', 'DDDD, DD MMMM YYYY');
-// "Minggu, 13 September 2026"
+import { formatDuration, formatRupiah } from '@/Composables/Pack/useFormat';
 
-formatDate(Date.now(), 'DD/MM/YYYY HH:mm');
-// "13/09/2026 14:30"
+// Durasi dalam Bahasa Inggris
+formatDuration(3600, { locale: 'en', format: 'human' }); // "1 hr"
+
+// Rupiah tanpa simbol untuk ekspor akuntansi murni
+formatRupiah(1500000, { withSymbol: false }); // "1.500.000"
 ```
 
-### 3. Waktu Relatif Dinamis (`formatRelativeTime`)
-Sangat ideal untuk feed aktivitas, audit log, atau notifikasi transaksi:
-```javascript
-formatRelativeTime(Date.now() - 5000);          // "baru saja"
-formatRelativeTime(Date.now() - 1000 * 60 * 12); // "12 menit yang lalu"
-formatRelativeTime(Date.now() - 1000 * 3600 * 3); // "3 jam yang lalu"
-formatRelativeTime(Date.now() - 1000 * 86400 * 2); // "2 hari yang lalu"
-formatRelativeTime(Date.now() + 1000 * 60 * 30); // "30 menit lagi"
+---
+
+## 14. Accessibility (a11y)
+
+- **Angka Finansial untuk Screen Reader**: Nilai singkat dari `formatCompactNumber` (`"1,5 jt"`) baik untuk visual mobile, tetapi pertimbangkan menyertakan atribut `aria-label` dengan angka lengkap (`aria-label="1 juta 500 ribu rupiah"`) untuk kenyamanan pengguna pembaca layar.
+- **Sensor Data Sensitif**: Saat menampilkan data tersensor via `maskSensitive`, pastikan pembaca layar mengumumkan status tersebut dengan jelas, misalnya: `<span aria-label="Nomor kartu berakhiran 9010">{{ maskSensitive(cardNumber, 'card') }}</span>`.
+
+---
+
+## 15. Responsive Behavior
+
+Tidak relevan untuk composable logika data tanpa markup antarmuka.
+
+---
+
+## 16. Do / Don't
+
+### Rekomendasi (Do)
+
+- Gunakan `useFormat()` di komponen yang membutuhkan lebih dari satu domain format (misal gabungan tanggal, Rupiah, dan sensor nomor telepon).
+- Manfaatkan `slugify` saat membuat tautan SEO-friendly dari judul artikel atau produk di frontend.
+- Gunakan `maskSensitive` di seluruh tampilan data publik yang mengandung nomor kartu atau NIK KTP untuk mematuhi regulasi perlindungan data pribadi (UU PDP).
+
+### Larangan (Don't)
+
+- Jangan melakukan manipulasi string manual seperti `split` atau `replace` manual untuk nominal Rupiah; selalu gunakan `formatRupiah`.
+- Jangan menggunakan `useFormat` jika Anda membutuhkan ref reaktif dua arah yang otomatis mengamati mutasi objek; untuk kebutuhan tersebut gunakan composable khusus seperti `useDateFormat(dateRef)`.
+- Jangan meneruskan nilai hasil `formatRupiah` ke backend sebagai nilai komputasi matematis; selalu simpan dan kirim nilai integer murni (*cents* atau nominal asli) ke API.
+
+---
+
+## 17. Examples / Recipes
+
+### Resep: Format Ringkasan Metrik Kartu Admin Panel
+
+```vue
+<script setup>
+import { useFormat } from '@/Composables/Pack/useFormat';
+
+const props = defineProps({
+    stats: Object,
+});
+
+const { formatRupiah, formatCompactNumber, formatPercent, formatDate } = useFormat();
+</script>
+
+<template>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Pendapatan Total -->
+        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <span class="text-xs text-gray-500 uppercase font-semibold">Omzet Bulan Ini</span>
+            <div class="text-xl font-bold text-emerald-600 mt-1">{{ formatRupiah(stats.totalRevenue) }}</div>
+            <span class="text-xs text-gray-400">Ringkas: {{ formatCompactNumber(stats.totalRevenue) }}</span>
+        </div>
+
+        <!-- Pertumbuhan Penjualan -->
+        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <span class="text-xs text-gray-500 uppercase font-semibold">Pertumbuhan</span>
+            <div class="text-xl font-bold text-blue-600 mt-1">{{ formatPercent(stats.growthRate) }}</div>
+            <span class="text-xs text-gray-400">Dibandingkan bulan lalu</span>
+        </div>
+
+        <!-- Pembaruan Terakhir -->
+        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <span class="text-xs text-gray-500 uppercase font-semibold">Sinkronisasi Terakhir</span>
+            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-1">
+                {{ formatDate(stats.lastSyncedAt, 'DD MMM YYYY HH:mm') }}
+            </div>
+            <span class="text-xs text-emerald-600 font-medium">Status Realtime</span>
+        </div>
+    </div>
+</template>
 ```
 
-### 4. Normalisasi Nomor Telepon Indonesia (`formatPhone`)
-Mendeteksi format awalan lokal `08...`, kode negara `628...`, atau `+628...`:
-```javascript
-formatPhone('081234567890');                // "+62 812-3456-7890" (international)
-formatPhone('6281234567890', 'national');    // "0812-3456-7890"
-formatPhone('081234567890', 'e164');        // "+6281234567890"
+---
+
+## 18. Related Items
+
+```text
+useFormat
+├── Sub-Modul Terkait
+│   ├── useDateFormat.js       → Format tanggal & durasi waktu
+│   ├── useNumberFormat.js     → Format Rupiah, desimal, persentase, & bytes
+│   ├── useStringFormat.js     → Slugify, truncate, & konversi kasus teks
+│   ├── useMask.js             → Sensor nomor kartu, NIK, & format telepon
+│   └── useInitials.js         → Ekstraksi inisial & generator warna avatar
+│
+└── Komponen Konsumen
+    ├── TableComponent.vue     → Menampilkan kolom tanggal & mata uang
+    ├── Avatar.vue             → Komponen visual avatar pengguna
+    └── Card.vue               → Kartu ringkasan metrik dashboard
 ```
 
-### 5. Sensor Data Sensitif (`maskSensitive`)
-Melindungi privasi data pengguna dan kepatuhan PCI-DSS:
-```javascript
-// Kartu Kredit / Debit (Menyisakan 4 digit terakhir)
-maskSensitive('4000123456789010', 'card');  // "**** **** **** 9010"
+---
 
-// Alamat Email (Karakter pertama & terakhir username)
-maskSensitive('budi.santoso@gmail.com', 'email'); // "b****o@gmail.com"
+## 19. Notes / Limitations
 
-// Nomor HP (4 digit awal & 4 digit akhir)
-maskSensitive('081234567890', 'phone');     // "0812 **** 7890"
-
-// NIK / KTP (4 digit awal & 4 digit akhir)
-maskSensitive('3201012345670001', 'nik');   // "3201 ******** 0001"
-```
-
-### 6. Pembuatan Inisial Nama Pintar (`formatInitials`)
-Mengekstrak inisial nama secara cerdas dari nama lengkap, email, atau teks perusahaan:
-```javascript
-// Default: first_last strategy (2 karakter)
-formatInitials('Chandra Tri Antomo');        // "CA"
-formatInitials('Chandra Tri Antomo', 3);     // "CTA"
-formatInitials('Budi');                      // "BU" (fallback 2 huruf pertama jika 1 kata)
-
-// Otomatis mengenali & memotong alamat email
-formatInitials('dewi.lestari@speedpay.id');  // "DL"
-
-// Pembersihan gelar profesional & kehormatan
-formatInitials('Dr. Sarah Smith, Sp.A');     // "SS"
-formatInitials('PT Maju Bersama');           // "MB"
-
-// Pilihan strategi:
-// 'first_last' (default): huruf pertama dari kata awal & kata akhir
-// 'first_consecutive': kata-kata berurutan dari depan
-// 'first_only': hanya 1 huruf kata pertama
-formatInitials('Chandra Tri Antomo', 2, { strategy: 'first_consecutive' }); // "CT"
-```
-
-### 7. Warna Avatar Deterministik (`formatAvatarColor`)
-Menghasilkan warna solid, gradien Tailwind, dan warna teks kontras yang selalu konsisten untuk satu nama/ID menggunakan algoritma DJB2 hash:
-```javascript
-const color = formatAvatarColor('Chandra Tri Antomo');
-// {
-//   hex: '#0284c7',
-//   bgClass: 'bg-sky-600',
-//   gradientClass: 'bg-gradient-to-tr from-sky-600 to-indigo-600',
-//   textColor: '#ffffff',
-//   ringClass: 'ring-sky-200 dark:ring-sky-900',
-//   name: 'sky'
-// }
-```
-
-### 8. Pembuat Slug URL SEO (`slugify`)
-Mengubah teks sembarang menjadi slug URL ramah SEO, membersihkan simbol khusus dan karakter aksen:
-```javascript
-slugify('Panduan Integrasi Payment Gateway & Webhook v1.7!');
-// "panduan-integrasi-payment-gateway-webhook-v17"
-
-slugify('Kategori Produk Elektronik', '_');
-// "kategori_produk_elektronik"
-```
-
-### 9. Pemotongan Teks Pintar (`truncate`)
-Memotong teks panjang dengan opsi mempertahankan batas kata (*word boundary*) agar kata tidak terpotong di tengah:
-```javascript
-const text = 'Laravel Pack UI menyediakan kumpulan komponen enterprise Vue 3 Tailwind.';
-
-// Default
-truncate(text, 25);
-// "Laravel Pack UI menyediak..."
-
-// Word boundary aktif (memotong di spasi terdekat)
-truncate(text, 25, { wordBoundary: true });
-// "Laravel Pack UI..."
-
-// Kustom suffix
-truncate(text, 20, { suffix: ' [Baca Selengkapnya]' });
-```
-
-### 10. Format Angka Ringkas (`formatCompactNumber`)
-Mengonversi angka besar ke format singkatan yang ramah dashboard (`K`, `M`, `B` untuk EN; `rb`, `jt`, `M` untuk ID):
-```javascript
-formatCompactNumber(2500000);              // "2,5 jt" (locale 'id')
-formatCompactNumber(1250000000);           // "1,25 Miliar"
-formatCompactNumber(2500000, { locale: 'en' }); // "2.5M"
-formatCompactNumber(15400, { decimals: 0 });    // "15 rb"
-```
-
-### 11. Format Durasi Waktu (`formatDuration`)
-Mengubah durasi detik menjadi tampilan digital jam menit detik atau teks manusiawi:
-```javascript
-// Digital (hh:mm:ss atau mm:ss)
-formatDuration(3725);                         // "01:02:05"
-formatDuration(125);                          // "02:05"
-
-// Human (Bahasa Indonesia / Inggris)
-formatDuration(3725, { format: 'human' });    // "1 jam 2 menit"
-formatDuration(3725, { format: 'human', locale: 'en' }); // "1 hr 2 mins"
-
-// Short (Format ringkas)
-formatDuration(3725, { format: 'short' });    // "1j 2m"
-```
-
-### 12. Utilitas Teks & Case Converters
-Transformasi format penamaan string dan sanitasi HTML:
-```javascript
-titleCase('laporan transaksi harian');        // "Laporan Transaksi Harian"
-camelCase('user_profile_id');                 // "userProfileId"
-snakeCase('userProfileId');                   // "user_profile_id"
-kebabCase('userProfileId');                   // "user-profile-id"
-stripHtml('<p>Teks <strong>tebal</strong></p>'); // "Teks tebal"
-formatOrdinal(1);                             // "ke-1" (ID)
-formatOrdinal(3, 'en');                       // "3rd" (EN)
-```
-
+- **Aggregator Re-Export Overhead**: Mengimpor `useFormat` menyertakan 5 modul helper. Pada aplikasi dengan target ukuran bundle ultra-ketat, pengembang disarankan mengimpor fungsi spesifik langsung dari sub-modul terkait (misal `import { formatRupiah } from '@/Composables/Pack/useNumberFormat'`).
+- **Tidak Memiliki State Reaktif Sendiri**: `useFormat()` mengembalikan kumpulan fungsi murni tanpa state internal. Jika Anda membutuhkan computed ref yang bereaksi terhadap perubahan data form, gunakan composable khusus seperti `useStringFormat(myRef)`.

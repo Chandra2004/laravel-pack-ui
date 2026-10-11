@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+import InputField from '@/Components/Pack/InputField.vue';
 
 const props = defineProps({
     modelValue: {
@@ -45,90 +47,80 @@ const radiusClasses = computed(() => {
     }
 });
 
+const themeColor = computed(() => props.colorTheme || 'primary');
+
 const colorStyles = computed(() => {
     const map = {
         primary: {
-            btn: 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20',
             activeTab: 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400',
             iconBadge: 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400',
-            focusRing: 'focus:border-blue-500 focus:ring-blue-500/20',
             dropBorder: 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20',
         },
         indigo: {
-            btn: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20',
             activeTab: 'text-indigo-600 dark:text-indigo-400 border-indigo-600 dark:border-indigo-400',
             iconBadge: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400',
-            focusRing: 'focus:border-indigo-500 focus:ring-indigo-500/20',
             dropBorder: 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20',
         },
         emerald: {
-            btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20',
             activeTab: 'text-emerald-600 dark:text-emerald-400 border-emerald-600 dark:border-emerald-400',
             iconBadge: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400',
-            focusRing: 'focus:border-emerald-500 focus:ring-emerald-500/20',
             dropBorder: 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20',
         },
         purple: {
-            btn: 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20',
             activeTab: 'text-purple-600 dark:text-purple-400 border-purple-600 dark:border-purple-400',
             iconBadge: 'bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400',
-            focusRing: 'focus:border-purple-500 focus:ring-purple-500/20',
             dropBorder: 'border-purple-500 bg-purple-50/50 dark:bg-purple-950/20',
         },
         amber: {
-            btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/20',
             activeTab: 'text-amber-600 dark:text-amber-400 border-amber-600 dark:border-amber-400',
             iconBadge: 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400',
-            focusRing: 'focus:border-amber-500 focus:ring-amber-500/20',
             dropBorder: 'border-amber-500 bg-amber-50/50 dark:bg-amber-950/20',
         },
         rose: {
-            btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-500/20',
             activeTab: 'text-rose-600 dark:text-rose-400 border-rose-600 dark:border-rose-400',
             iconBadge: 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400',
-            focusRing: 'focus:border-rose-500 focus:ring-rose-500/20',
             dropBorder: 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20',
         },
         cyan: {
-            btn: 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-cyan-500/20',
             activeTab: 'text-cyan-600 dark:text-cyan-400 border-cyan-600 dark:border-cyan-400',
             iconBadge: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400',
-            focusRing: 'focus:border-cyan-500 focus:ring-cyan-500/20',
             dropBorder: 'border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/20',
         },
         dark: {
-            btn: 'bg-slate-900 hover:bg-black dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900',
             activeTab: 'text-slate-900 dark:text-white border-slate-900 dark:border-white',
             iconBadge: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white',
-            focusRing: 'focus:border-slate-700 dark:focus:border-slate-300 focus:ring-slate-500/20',
-            dropBorder: 'border-slate-700 bg-slate-100 dark:border-slate-400 dark:bg-slate-800/40',
+            dropBorder: 'border-slate-500 bg-slate-100/50 dark:bg-slate-800/30',
         },
     };
     return map[props.colorTheme] || map.primary;
 });
 
+watch(() => props.modelValue, (isOpen) => {
+    if (isOpen) {
+        resetForm();
+    }
+});
+
+const resetForm = () => {
+    imageUrl.value = '';
+    imageAlt.value = '';
+    selectedFile.value = null;
+    filePreviewUrl.value = '';
+    isDragging.value = false;
+    isUploading.value = false;
+    uploadError.value = '';
+};
+
+const close = () => {
+    emit('update:modelValue', false);
+};
+
 const formatFileSize = (bytes) => {
-    if (!bytes) return '0 B';
+    if (!bytes || bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
-watch(() => props.modelValue, (isOpen) => {
-    if (isOpen) {
-        imageUrl.value = '';
-        imageAlt.value = '';
-        selectedFile.value = null;
-        filePreviewUrl.value = '';
-        uploadError.value = '';
-        isUploading.value = false;
-        activeTab.value = 'upload';
-    }
-});
-
-const close = () => {
-    emit('update:modelValue', false);
 };
 
 const handleSelectFileClick = () => {
@@ -140,19 +132,18 @@ const processFile = (file) => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-        uploadError.value = 'Format file tidak didukung. Harap pilih berkas gambar (JPG, PNG, WebP, GIF, SVG).';
+        uploadError.value = 'Hanya format berkas gambar (PNG, JPG, WebP, GIF, SVG) yang diperbolehkan.';
         return;
     }
 
-    // Maksimal 10MB
     if (file.size > 10 * 1024 * 1024) {
-        uploadError.value = 'Ukuran berkas melebihi batas maksimal 10MB.';
+        uploadError.value = 'Ukuran berkas melebihi batas maksimum 10MB.';
         return;
     }
 
     selectedFile.value = file;
     if (!imageAlt.value) {
-        imageAlt.value = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+        imageAlt.value = file.name.replace(/\.[^/.]+$/, '');
     }
 
     const reader = new FileReader();
@@ -180,7 +171,6 @@ const onDropFile = (e) => {
 const clearSelectedFile = () => {
     selectedFile.value = null;
     filePreviewUrl.value = '';
-    uploadError.value = '';
     if (fileInputRef.value) {
         fileInputRef.value.value = '';
     }
@@ -191,7 +181,7 @@ const handleApply = async () => {
 
     if (activeTab.value === 'upload') {
         if (!selectedFile.value) {
-            uploadError.value = 'Silakan pilih berkas gambar terlebih dahulu.';
+            uploadError.value = 'Silakan pilih gambar terlebih dahulu.';
             return;
         }
 
@@ -270,13 +260,13 @@ const handleApply = async () => {
                                 <p class="text-[11px] text-slate-400">Unggah berkas lokal atau tempel tautan URL</p>
                             </div>
                         </div>
-                        <button
-                            type="button"
+                        <ButtonSubmit
+                            variant="ghost"
+                            size="xs"
+                            icon="close"
                             @click="close"
-                            class="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer transition-colors"
-                        >
-                            <span class="material-symbols-outlined text-base">close</span>
-                        </button>
+                            title="Tutup Dialog"
+                        />
                     </div>
 
                     <!-- Modern Tab Switcher -->
@@ -371,70 +361,50 @@ const handleApply = async () => {
                                         Siap disisipkan
                                     </span>
                                 </div>
-                                <button
-                                    type="button"
+                                <ButtonSubmit
+                                    variant="ghost"
+                                    color="rose"
+                                    size="xs"
+                                    icon="delete"
                                     @click="clearSelectedFile"
-                                    class="w-7 h-7 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-colors flex items-center justify-center cursor-pointer"
                                     title="Hapus / Ganti Berkas"
-                                >
-                                    <span class="material-symbols-outlined text-base">delete</span>
-                                </button>
-                            </div>
-
-                            <!-- Alt text input -->
-                            <div class="space-y-1">
-                                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                                    Teks Keterangan (Alt / Deskripsi):
-                                </label>
-                                <input
-                                    v-model="imageAlt"
-                                    type="text"
-                                    placeholder="Deskripsi singkat gambar..."
-                                    :class="[
-                                        'w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 transition-all',
-                                        colorStyles.focusRing,
-                                        radiusClasses.btn
-                                    ]"
                                 />
                             </div>
+
+                            <!-- Alt text input via Pack UI InputField -->
+                            <InputField
+                                v-model="imageAlt"
+                                type="text"
+                                label="Teks Keterangan (Alt / Deskripsi)"
+                                placeholder="Deskripsi singkat gambar..."
+                                size="sm"
+                                :color="themeColor"
+                            />
                         </div>
 
                         <!-- Tab 2: URL Link -->
                         <div v-else class="space-y-3">
-                            <div class="space-y-1">
-                                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                                    URL Gambar Eksternal:
-                                </label>
-                                <input
-                                    v-model="imageUrl"
-                                    type="url"
-                                    placeholder="https://images.unsplash.com/..."
-                                    @keyup.enter="handleApply"
-                                    :class="[
-                                        'w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 transition-all',
-                                        colorStyles.focusRing,
-                                        radiusClasses.btn
-                                    ]"
-                                    autofocus
-                                />
-                            </div>
+                            <InputField
+                                v-model="imageUrl"
+                                type="url"
+                                label="URL Gambar Eksternal"
+                                placeholder="https://images.unsplash.com/..."
+                                icon="image"
+                                size="sm"
+                                :color="themeColor"
+                                @keyup.enter="handleApply"
+                                autofocus
+                            />
 
-                            <div class="space-y-1">
-                                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                                    Teks Alternatif (Alt):
-                                </label>
-                                <input
-                                    v-model="imageAlt"
-                                    type="text"
-                                    placeholder="Deskripsi singkat gambar..."
-                                    @keyup.enter="handleApply"
-                                    :class="[
-                                        'w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 transition-all',
-                                        colorStyles.focusRing,
-                                        radiusClasses.btn
-                                    ]"
-                                />
-                            </div>
+                            <InputField
+                                v-model="imageAlt"
+                                type="text"
+                                label="Teks Alternatif (Alt)"
+                                placeholder="Deskripsi singkat gambar..."
+                                size="sm"
+                                :color="themeColor"
+                                @keyup.enter="handleApply"
+                            />
 
                             <!-- Live URL Image Preview -->
                             <div
@@ -459,28 +429,24 @@ const handleApply = async () => {
 
                     <!-- Footer Actions -->
                     <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-                        <button
-                            type="button"
+                        <ButtonSubmit
+                            variant="secondary"
+                            size="xs"
                             @click="close"
-                            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                         >
                             Batal
-                        </button>
-                        <button
-                            type="button"
-                            @click="handleApply"
+                        </ButtonSubmit>
+                        <ButtonSubmit
+                            variant="primary"
+                            :color="themeColor"
+                            size="xs"
+                            :loading="isUploading"
                             :disabled="isUploading || (activeTab === 'upload' && !selectedFile) || (activeTab === 'url' && !imageUrl.trim())"
-                            :class="[
-                                'px-4 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs',
-                                radiusClasses.btn,
-                                isUploading || (activeTab === 'upload' && !selectedFile) || (activeTab === 'url' && !imageUrl.trim())
-                                    ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
-                                    : [colorStyles.btn, 'cursor-pointer active:scale-95']
-                            ]"
+                            icon="image"
+                            @click="handleApply"
                         >
-                            <span v-if="isUploading" class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                            <span>{{ isUploading ? 'Mengunggah...' : 'Sisipkan Gambar' }}</span>
-                        </button>
+                            Sisipkan Gambar
+                        </ButtonSubmit>
                     </div>
                 </div>
             </div>

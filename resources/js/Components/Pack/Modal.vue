@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import ButtonSubmit from './ButtonSubmit.vue';
 
 // Module-level state for nested modal scroll management
 let activeModalsCount = 0;
@@ -112,6 +113,11 @@ const displayConfirmText = computed(() => {
         default: return 'Simpan';
     }
 });
+
+const open = () => {
+    emit('update:modelValue', true);
+    emit('update:show', true);
+};
 
 const close = () => {
     if (props.loading) return;
@@ -346,30 +352,30 @@ const iconBadgeClasses = computed(() => {
     }
 });
 
-const confirmButtonClasses = computed(() => {
+const confirmButtonVariant = computed(() => {
     switch (props.variant) {
-        case 'danger':
-            return 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs focus:ring-rose-500';
-        case 'warning':
-            return 'bg-amber-500 hover:bg-amber-600 text-white shadow-xs focus:ring-amber-500';
-        case 'success':
-            return 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs focus:ring-emerald-500';
+        case 'danger': return 'danger';
+        case 'warning': return 'warning';
+        case 'success': return 'success';
         case 'info':
-            return 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs focus:ring-blue-500';
-        case 'default':
         case 'confirm':
+        case 'default':
         default:
-            return 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs focus:ring-blue-500';
+            return 'primary';
     }
 });
 
 defineExpose({
+    open,
     close,
     isOpen,
 });
 </script>
 
 <template>
+    <!-- Optional Trigger Slot -->
+    <slot name="trigger" :open="open" />
+
     <Teleport to="body">
         <Transition
             enter-active-class="transition-opacity duration-200 ease-out"
@@ -412,16 +418,16 @@ defineExpose({
                     />
 
                     <!-- Modal Header -->
-                    <div class="flex items-start justify-between p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800/80 gap-3 shrink-0">
-                        <slot name="header">
-                            <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="flex items-start justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800/80 gap-3 shrink-0">
+                        <slot name="header" :title="title" :context="context" :icon="defaultIcon" :close="close">
+                            <div class="flex items-center gap-3 sm:gap-3.5 min-w-0">
                                 <!-- Status Icon Badge -->
                                 <div
                                     v-if="defaultIcon"
-                                    class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs"
+                                    class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 shadow-2xs"
                                     :class="iconBadgeClasses"
                                 >
-                                    <span class="material-symbols-outlined text-2xl leading-none select-none">
+                                    <span class="material-symbols-outlined text-xl sm:text-2xl leading-none select-none">
                                         {{ defaultIcon }}
                                     </span>
                                 </div>
@@ -430,13 +436,13 @@ defineExpose({
                                 <div class="min-w-0">
                                     <span
                                         v-if="context"
-                                        class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 select-none"
+                                        class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-0.5 sm:mb-1 select-none"
                                     >
                                         {{ context }}
                                     </span>
                                     <h3
                                         :id="titleId"
-                                        class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-snug truncate"
+                                        class="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-snug truncate"
                                     >
                                         {{ title }}
                                     </h3>
@@ -448,7 +454,7 @@ defineExpose({
                         <button
                             v-if="showClose && !loading"
                             type="button"
-                            @click="close"
+                            @click.prevent.stop="close"
                             class="inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
                             aria-label="Tutup modal"
                             title="Tutup"
@@ -460,7 +466,7 @@ defineExpose({
                     <!-- Modal Body -->
                     <div
                         :class="[
-                            'p-5 sm:p-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed overflow-y-auto flex-1 min-h-0',
+                            'p-4 sm:p-6 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed overflow-y-auto flex-1 min-h-0',
                             bodyClass
                         ]"
                     >
@@ -470,37 +476,35 @@ defineExpose({
                     <!-- Modal Footer -->
                     <div
                         v-if="showFooter"
-                        class="px-5 py-4 sm:px-6 bg-slate-50/70 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end gap-2.5 shrink-0"
+                        class="px-4 py-3 sm:px-6 sm:py-4 bg-slate-50/70 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end shrink-0"
                     >
-                        <slot name="footer">
-                            <button
-                                v-if="showCancel"
-                                type="button"
-                                @click="close"
-                                :disabled="loading"
-                                class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-98 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                            >
-                                {{ cancelText }}
-                            </button>
-
-                            <button
-                                v-if="showConfirm && (variant !== 'default' || confirmText || displayConfirmText)"
-                                type="button"
-                                @click="handleConfirm"
-                                :disabled="loading"
-                                :class="[
-                                    'inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl active:scale-98 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
-                                    confirmButtonClasses
-                                ]"
-                            >
-                                <span
-                                    v-if="loading"
-                                    class="material-symbols-outlined text-sm leading-none animate-spin"
+                        <slot name="footer" :close="close" :confirm="handleConfirm" :loading="loading" :confirm-text="displayConfirmText" :cancel-text="cancelText">
+                            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 w-full">
+                                <ButtonSubmit
+                                    v-if="showCancel"
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    :disabled="loading"
+                                    class="w-full sm:w-auto justify-center font-medium"
+                                    @click="close"
                                 >
-                                    progress_activity
-                                </span>
-                                <span>{{ displayConfirmText }}</span>
-                            </button>
+                                    {{ cancelText }}
+                                </ButtonSubmit>
+
+                                <ButtonSubmit
+                                    v-if="showConfirm && (variant !== 'default' || confirmText || displayConfirmText)"
+                                    type="button"
+                                    :variant="confirmButtonVariant"
+                                    size="sm"
+                                    :loading="loading"
+                                    :disabled="loading"
+                                    class="w-full sm:w-auto justify-center font-semibold"
+                                    @click="handleConfirm"
+                                >
+                                    {{ displayConfirmText }}
+                                </ButtonSubmit>
+                            </div>
                         </slot>
                     </div>
                 </div>

@@ -83,19 +83,21 @@ export function useFormValidation(formData, schemaRules = {}, options = {}) {
             }
         }
 
-        // 5. Min (Nilai angka atau panjang string)
+        // 5. Min (Nilai angka)
         if (rule.min !== undefined) {
             const minVal = Number(rule.min);
-            if (typeof val === 'number' && val < minVal) {
-                return `${label} minimal harus bernilai ${minVal}.`;
+            const numVal = Number(val);
+            if (!isNaN(numVal) && (typeof val === 'number' || rule.numeric) && numVal < minVal) {
+                return rule.minMessage || `${label} minimal harus bernilai ${minVal}.`;
             }
         }
 
-        // 6. Max (Nilai angka atau panjang string)
+        // 6. Max (Nilai angka)
         if (rule.max !== undefined) {
             const maxVal = Number(rule.max);
-            if (typeof val === 'number' && val > maxVal) {
-                return `${label} maksimal bernilai ${maxVal}.`;
+            const numVal = Number(val);
+            if (!isNaN(numVal) && (typeof val === 'number' || rule.numeric) && numVal > maxVal) {
+                return rule.maxMessage || `${label} maksimal bernilai ${maxVal}.`;
             }
         }
 
@@ -259,5 +261,6 @@ export function useFormValidation(formData, schemaRules = {}, options = {}) {
         setFieldError,
         setErrors,
         reset,
+        resetValidation: reset,
     };
 }

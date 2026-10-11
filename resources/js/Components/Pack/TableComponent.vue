@@ -1,6 +1,10 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { router } from '@inertiajs/vue3';
+import Badge from './Badge.vue';
+import ButtonSubmit from './ButtonSubmit.vue';
+import Skeleton from './Skeleton.vue';
+import Pagination from './Pagination.vue';
 
 const props = defineProps({
     /**
@@ -76,6 +80,14 @@ const props = defineProps({
     emptyActionText: {
         type: String,
         default: '',
+    },
+    emptyActionIcon: {
+        type: String,
+        default: 'refresh',
+    },
+    colspan: {
+        type: [Number, String],
+        default: null,
     },
     /**
      * 1. WARNA: Palet aksen warna semantik tabel (hover row, selection, checkbox, skeleton)
@@ -200,6 +212,17 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    /**
+     * Objek Paginator Laravel atau Mock Client-Side Pagination
+     */
+    pagination: {
+        type: Object,
+        default: null,
+    },
+    paginationProps: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const emit = defineEmits([
@@ -209,6 +232,9 @@ const emit = defineEmits([
     'select',
     'select-all',
     'empty-action',
+    'page-change',
+    'update:perPage',
+    'per-page-change',
 ]);
 
 const internalLoading = ref(false);
@@ -218,14 +244,38 @@ let inertiaFinishUnregister = null;
 
 // Ref Scroll Track untuk Overflow Indicator
 const scrollWrapperRef = ref(null);
+const tableElementRef = ref(null);
 const canScrollRight = ref(false);
 const canScrollLeft = ref(false);
+const detectedColCount = ref(0);
+let resizeObserver = null;
 
 const updateScrollIndicator = () => {
     if (!scrollWrapperRef.value || !props.scrollIndicator) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollWrapperRef.value;
-    canScrollLeft.value = scrollLeft > 10;
-    canScrollRight.value = scrollLeft + clientWidth < scrollWidth - 10;
+    const { scrollLeft: sLeft, scrollWidth, clientWidth } = scrollWrapperRef.value;
+    canScrollLeft.value = sLeft > 6;
+    canScrollRight.value = sLeft + clientWidth < scrollWidth - 6;
+};
+
+const scrollLeft = () => {
+    if (scrollWrapperRef.value) {
+        scrollWrapperRef.value.scrollBy({ left: -260, behavior: 'smooth' });
+    }
+};
+
+const scrollRight = () => {
+    if (scrollWrapperRef.value) {
+        scrollWrapperRef.value.scrollBy({ left: 260, behavior: 'smooth' });
+    }
+};
+
+const updateColCount = () => {
+    if (tableElementRef.value) {
+        const ths = tableElementRef.value.querySelectorAll('thead tr:first-child th');
+        if (ths && ths.length > 0) {
+            detectedColCount.value = ths.length;
+        }
+    }
 };
 
 // Gabungan state loading manual prop & otomatis (transisi / Inertia)
@@ -247,6 +297,7 @@ const stopLoading = () => {
 watch(
     () => props.items,
     () => {
+        nextTick(updateColCount);
         if (props.autoLoading && !props.loading) {
             internalLoading.value = true;
             if (loadingTimeout) clearTimeout(loadingTimeout);
@@ -262,10 +313,32 @@ watch(
     { deep: false }
 );
 
+watch(
+    () => props.selectable,
+    () => {
+        nextTick(updateColCount);
+    }
+);
+
 // 2. Auto-Skeleton saat navigasi berpindah halaman / submit form via Inertia
 onMounted(() => {
     updateScrollIndicator();
+    nextTick(() => {
+        updateColCount();
+        updateScrollIndicator();
+    });
     window.addEventListener('resize', updateScrollIndicator);
+
+    if (typeof ResizeObserver !== 'undefined' && scrollWrapperRef.value) {
+        resizeObserver = new ResizeObserver(() => {
+            updateScrollIndicator();
+            updateColCount();
+        });
+        resizeObserver.observe(scrollWrapperRef.value);
+        if (tableElementRef.value) {
+            resizeObserver.observe(tableElementRef.value);
+        }
+    }
 
     if (props.watchInertia && typeof router !== 'undefined' && typeof router.on === 'function') {
         try {
@@ -284,6 +357,10 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('resize', updateScrollIndicator);
+    if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+    }
     if (loadingTimeout) clearTimeout(loadingTimeout);
     if (inertiaStartUnregister) inertiaStartUnregister();
     if (inertiaFinishUnregister) inertiaFinishUnregister();
@@ -368,6 +445,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-blue-50/50 dark:hover:bg-blue-950/20',
             selected: 'bg-blue-50/80 dark:bg-blue-950/40 font-medium',
             checkbox: 'text-blue-600 focus:ring-blue-500/20 border-slate-300 dark:border-slate-600',
+            checkboxActive: 'bg-blue-600 border-blue-600 text-white shadow-xs ring-2 ring-blue-500/20',
             badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
             icon: 'text-blue-600 dark:text-blue-400',
         },
@@ -375,6 +453,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20',
             selected: 'bg-indigo-50/80 dark:bg-indigo-950/40 font-medium',
             checkbox: 'text-indigo-600 focus:ring-indigo-500/20 border-slate-300 dark:border-slate-600',
+            checkboxActive: 'bg-indigo-600 border-indigo-600 text-white shadow-xs ring-2 ring-indigo-500/20',
             badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300',
             icon: 'text-indigo-600 dark:text-indigo-400',
         },
@@ -382,6 +461,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20',
             selected: 'bg-emerald-50/80 dark:bg-emerald-950/40 font-medium',
             checkbox: 'text-emerald-600 focus:ring-emerald-500/20 border-slate-300 dark:border-slate-600',
+            checkboxActive: 'bg-emerald-600 border-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/20',
             badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
             icon: 'text-emerald-600 dark:text-emerald-400',
         },
@@ -389,6 +469,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-purple-50/50 dark:hover:bg-purple-950/20',
             selected: 'bg-purple-50/80 dark:bg-purple-950/40 font-medium',
             checkbox: 'text-purple-600 focus:ring-purple-500/20 border-slate-300 dark:border-slate-600',
+            checkboxActive: 'bg-purple-600 border-purple-600 text-white shadow-xs ring-2 ring-purple-500/20',
             badge: 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300',
             icon: 'text-purple-600 dark:text-purple-400',
         },
@@ -396,6 +477,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-amber-50/50 dark:hover:bg-amber-950/20',
             selected: 'bg-amber-50/80 dark:bg-amber-950/40 font-medium',
             checkbox: 'text-amber-600 focus:ring-amber-500/20 border-slate-300 dark:border-slate-600',
+            checkboxActive: 'bg-amber-600 border-amber-600 text-white shadow-xs ring-2 ring-amber-500/20',
             badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
             icon: 'text-amber-600 dark:text-amber-400',
         },
@@ -403,6 +485,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-rose-50/50 dark:hover:bg-rose-950/20',
             selected: 'bg-rose-50/80 dark:bg-rose-950/40 font-medium',
             checkbox: 'text-rose-600 focus:ring-rose-500/20 border-slate-300 dark:border-slate-600',
+            checkboxActive: 'bg-rose-600 border-rose-600 text-white shadow-xs ring-2 ring-rose-500/20',
             badge: 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
             icon: 'text-rose-600 dark:text-rose-400',
         },
@@ -410,6 +493,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-cyan-50/50 dark:hover:bg-cyan-950/20',
             selected: 'bg-cyan-50/80 dark:bg-cyan-950/40 font-medium',
             checkbox: 'text-cyan-600 focus:ring-cyan-500/20 border-slate-300 dark:border-slate-600',
+            checkboxActive: 'bg-cyan-600 border-cyan-600 text-white shadow-xs ring-2 ring-cyan-500/20',
             badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300',
             icon: 'text-cyan-600 dark:text-cyan-400',
         },
@@ -417,6 +501,7 @@ const colorClasses = computed(() => {
             hover: 'hover:bg-slate-100/70 dark:hover:bg-slate-800/60',
             selected: 'bg-slate-100 dark:bg-slate-800/80 font-medium',
             checkbox: 'text-slate-900 dark:text-slate-100 focus:ring-slate-700 border-slate-400',
+            checkboxActive: 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 text-white dark:text-slate-900 shadow-xs ring-2 ring-slate-500/20',
             badge: 'bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
             icon: 'text-slate-800 dark:text-slate-200',
         },
@@ -513,16 +598,35 @@ const containerClasses = computed(() => {
     return classes.join(' ');
 });
 
+const effectiveScrollStyle = computed(() => {
+    const style = {};
+    const limit = props.maxHeight || (props.stickyHeader ? '500px' : null);
+    if (limit) {
+        style.maxHeight = typeof limit === 'number' ? `${limit}px` : limit;
+        style.overflowY = 'auto';
+    }
+    return style;
+});
+
 const tableClasses = computed(() => {
-    return ['w-full text-left border-collapse', sizeStyles.value.table].join(' ');
+    const classes = ['w-full text-left'];
+    if (props.stickyHeader || props.stickyFirstColumn) {
+        classes.push('border-separate border-spacing-0');
+    } else {
+        classes.push('border-collapse');
+    }
+    classes.push(sizeStyles.value.table);
+    return classes.join(' ');
 });
 
 const theadClasses = computed(() => {
     const classes = [
-        'bg-slate-50/90 dark:bg-slate-800/70 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider select-none'
+        'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider select-none'
     ];
     if (props.stickyHeader) {
-        classes.push('sticky top-0 z-20 backdrop-blur-md');
+        classes.push('sticky top-0 z-20 bg-slate-50 dark:bg-slate-800 shadow-[0_1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.08)]');
+    } else {
+        classes.push('border-b border-slate-200/80 dark:border-slate-800');
     }
     return classes.join(' ');
 });
@@ -560,9 +664,13 @@ const getSkeletonColWidth = (colIndex) => {
 };
 
 const totalCols = computed(() => {
+    if (props.colspan) return Number(props.colspan);
+    if (detectedColCount.value > 0) return detectedColCount.value;
     let count = props.skeletonCols;
     if (props.selectable) count += 1;
-    return count;
+    // Standar HTML: colspan yang lebih besar dari jumlah kolom thead aktual
+    // akan dibatasi browser selebar 100% dari kolom thead yang tersedia.
+    return Math.max(count, 100);
 });
 
 // CSV Export Helper
@@ -599,6 +707,9 @@ defineExpose({
     clearSelection,
     toggleSelectAll,
     isLoading,
+    scrollLeft,
+    scrollRight,
+    checkScroll: updateScrollIndicator,
 });
 </script>
 
@@ -621,12 +732,12 @@ defineExpose({
                             {{ icon }}
                         </span>
                         <div>
-                            <h3 v-if="title" class="text-slate-900 dark:text-white" :class="sizeStyles.headerTitle">
+                            <div v-if="title" class="text-slate-900 dark:text-white" :class="sizeStyles.headerTitle">
                                 {{ title }}
-                            </h3>
-                            <p v-if="subtitle" class="text-slate-500 dark:text-slate-400 mt-0.5" :class="sizeStyles.headerSubtitle">
+                            </div>
+                            <div v-if="subtitle" class="text-slate-500 dark:text-slate-400 mt-0.5" :class="sizeStyles.headerSubtitle">
                                 {{ subtitle }}
-                            </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -661,27 +772,26 @@ defineExpose({
         >
             <div
                 v-if="selectable && selected.length > 0"
-                class="px-5 py-2.5 bg-slate-50 dark:bg-slate-800/90 border-b border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-3 text-xs"
+                class="px-3 sm:px-5 py-2.5 bg-slate-50 dark:bg-slate-800/90 border-b border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs"
             >
                 <div class="flex items-center gap-2.5">
-                    <span
-                        class="inline-flex items-center justify-center font-bold px-2.5 py-0.5 rounded-full text-[11px] leading-none"
-                        :class="colorClasses.badge"
-                    >
+                    <Badge :color="normalizedColor" variant="solid" size="xs">
                         {{ selected.length }} baris terpilih
-                    </span>
-                    <button
+                    </Badge>
+                    <ButtonSubmit
                         type="button"
+                        size="xs"
+                        variant="ghost"
+                        color="dark"
+                        icon="close"
                         @click="clearSelection"
-                        class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 inline-flex items-center gap-1 cursor-pointer leading-none"
                     >
-                        <span class="material-symbols-outlined text-[14px]">close</span>
-                        <span>Batal Pilih</span>
-                    </button>
+                        Batal Pilih
+                    </ButtonSubmit>
                 </div>
 
                 <!-- Custom Bulk Action Buttons Slot -->
-                <div class="flex items-center gap-2">
+                <div class="flex items-center flex-wrap gap-2 w-full sm:w-auto justify-end">
                     <slot
                         name="bulk-actions"
                         :selected="selected"
@@ -700,10 +810,11 @@ defineExpose({
                 class="w-full"
                 :class="[
                     responsive ? 'overflow-x-auto scrollbar-none' : '',
+                    { 'table-sticky-first-col': stickyFirstColumn, 'table-selectable': selectable }
                 ]"
-                :style="maxHeight ? { maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight, overflowY: 'auto' } : {}"
+                :style="effectiveScrollStyle"
             >
-                <table :class="tableClasses">
+                <table ref="tableElementRef" :class="tableClasses">
                     <thead :class="theadClasses">
                         <tr>
                             <!-- Checkbox Select All Column -->
@@ -712,18 +823,49 @@ defineExpose({
                                 class="text-center select-none"
                                 :class="[
                                     sizeStyles.checkboxTh,
-                                    stickyFirstColumn ? 'sticky left-0 z-30 bg-slate-50/95 dark:bg-slate-800/95 shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.06)]' : '',
+                                    stickyFirstColumn ? 'sticky left-0 border-r border-slate-200/80 dark:border-slate-700/80' : '',
+                                    stickyHeader ? 'sticky top-0' : '',
+                                    stickyHeader && stickyFirstColumn ? 'z-40' : (stickyHeader ? 'z-20' : (stickyFirstColumn ? 'z-30' : '')),
+                                    'bg-slate-50 dark:bg-slate-800'
                                 ]"
                             >
-                                <input
-                                    type="checkbox"
-                                    :checked="isAllSelected"
-                                    :indeterminate.prop="isSomeSelected"
-                                    @change="toggleSelectAll"
-                                    class="rounded-sm cursor-pointer transition-colors"
-                                    :class="colorClasses.checkbox"
-                                    aria-label="Pilih semua baris"
-                                />
+                                <div class="flex items-center justify-center">
+                                    <label
+                                        class="relative inline-flex items-center justify-center cursor-pointer select-none group"
+                                        :title="isAllSelected ? 'Batalkan semua pilihan' : 'Pilih semua baris'"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :checked="isAllSelected"
+                                            :indeterminate.prop="isSomeSelected"
+                                            @change="toggleSelectAll"
+                                            class="sr-only peer"
+                                            aria-label="Pilih semua baris"
+                                        />
+                                        <div
+                                            class="w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all duration-150"
+                                            :class="[
+                                                isAllSelected || isSomeSelected
+                                                    ? colorClasses.checkboxActive
+                                                    : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 group-hover:border-slate-400 dark:group-hover:border-slate-500',
+                                            ]"
+                                        >
+                                            <span
+                                                v-if="isSomeSelected && !isAllSelected"
+                                                class="material-symbols-outlined text-xs font-bold leading-none text-white select-none"
+                                            >
+                                                remove
+                                            </span>
+                                            <span
+                                                v-else
+                                                class="material-symbols-outlined text-xs font-bold leading-none text-white select-none transition-transform duration-150"
+                                                :class="isAllSelected ? 'scale-100 opacity-100' : 'scale-0 opacity-0'"
+                                            >
+                                                check
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
                             </th>
 
                             <!-- Slot Headers Kolom -->
@@ -731,30 +873,51 @@ defineExpose({
                         </tr>
                     </thead>
 
-                    <!-- Skeleton Loading State (Multi-column Animated Pulse) -->
-                    <tbody v-if="isLoading" class="divide-y divide-slate-100 dark:divide-slate-800/60 animate-pulse">
-                        <tr v-for="r in skeletonRows" :key="r" class="bg-white dark:bg-slate-900">
-                            <td
-                                v-if="selectable"
-                                class="text-center"
-                                :class="[
-                                    sizeStyles.checkboxTd,
-                                    stickyFirstColumn ? 'sticky left-0 z-10 bg-white dark:bg-slate-900' : '',
-                                ]"
-                            >
-                                <div class="w-4 h-4 bg-slate-200 dark:bg-slate-800 rounded-sm mx-auto"></div>
-                            </td>
-                            <td
-                                v-for="c in skeletonCols"
-                                :key="c"
-                                :class="sizeStyles.td"
-                            >
-                                <div
-                                    class="bg-slate-200 dark:bg-slate-800 rounded-md"
-                                    :class="[getSkeletonColWidth(c), sizeStyles.skeletonHeight]"
-                                ></div>
-                            </td>
-                        </tr>
+                    <!-- Skeleton Loading State (Pack UI Skeleton Component) -->
+                    <tbody v-if="isLoading" class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                        <slot
+                            name="skeleton"
+                            :rows="skeletonRows"
+                            :cols="skeletonCols"
+                            :color="normalizedColor"
+                            :size="size"
+                        >
+                            <tr v-for="r in skeletonRows" :key="r" class="bg-white dark:bg-slate-900">
+                                <td
+                                    v-if="selectable"
+                                    class="text-center"
+                                    :class="[
+                                        sizeStyles.checkboxTd,
+                                        stickyFirstColumn ? 'sticky left-0 z-10 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800' : '',
+                                    ]"
+                                >
+                                    <div class="flex items-center justify-center">
+                                        <Skeleton variant="rounded" :color="normalizedColor" width="w-4" height="h-4" />
+                                    </div>
+                                </td>
+
+                                <slot
+                                    name="skeleton-row"
+                                    :row-index="r"
+                                    :cols="skeletonCols"
+                                    :color="normalizedColor"
+                                    :size="size"
+                                >
+                                    <td
+                                        v-for="c in skeletonCols"
+                                        :key="c"
+                                        :class="sizeStyles.td"
+                                    >
+                                        <Skeleton
+                                            variant="rounded"
+                                            :color="normalizedColor"
+                                            :width="getSkeletonColWidth(c)"
+                                            :height="sizeStyles.skeletonHeight"
+                                        />
+                                    </td>
+                                </slot>
+                            </tr>
+                        </slot>
                     </tbody>
 
                     <!-- Actual Data Rows -->
@@ -774,18 +937,40 @@ defineExpose({
                                 class="text-center"
                                 :class="[
                                     sizeStyles.checkboxTd,
-                                    stickyFirstColumn ? 'sticky left-0 z-10 bg-inherit shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.06)]' : '',
+                                    stickyFirstColumn ? 'sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 border-r border-slate-100 dark:border-slate-800' : '',
+                                    selectedMap.has(item[itemKey]) ? colorClasses.selected : '',
                                 ]"
                                 @click.stop
                             >
-                                <input
-                                    type="checkbox"
-                                    :checked="selectedMap.has(item[itemKey])"
-                                    @change="toggleSelectItem(item)"
-                                    class="rounded-sm cursor-pointer transition-colors"
-                                    :class="colorClasses.checkbox"
-                                    :aria-label="`Pilih baris ${index + 1}`"
-                                />
+                                <div class="flex items-center justify-center">
+                                    <label
+                                        class="relative inline-flex items-center justify-center cursor-pointer select-none group"
+                                        :title="`Pilih baris ${index + 1}`"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :checked="selectedMap.has(item[itemKey])"
+                                            @change="toggleSelectItem(item)"
+                                            class="sr-only peer"
+                                            :aria-label="`Pilih baris ${index + 1}`"
+                                        />
+                                        <div
+                                            class="w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all duration-150"
+                                            :class="[
+                                                selectedMap.has(item[itemKey])
+                                                    ? colorClasses.checkboxActive
+                                                    : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 group-hover:border-slate-400 dark:group-hover:border-slate-500',
+                                            ]"
+                                        >
+                                            <span
+                                                class="material-symbols-outlined text-xs font-bold leading-none text-white select-none transition-transform duration-150"
+                                                :class="selectedMap.has(item[itemKey]) ? 'scale-100 opacity-100' : 'scale-0 opacity-0'"
+                                            >
+                                                check
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
                             </td>
 
                             <!-- Slot Row Scoped -->
@@ -801,32 +986,56 @@ defineExpose({
                     <!-- Empty State -->
                     <tbody v-else>
                         <tr>
-                            <td :colspan="totalCols" class="px-6 py-14 text-center bg-white dark:bg-slate-900">
-                                <slot name="empty">
-                                    <div class="flex flex-col items-center justify-center max-w-sm mx-auto">
+                            <td
+                                :colspan="totalCols"
+                                class="px-6 py-12 sm:py-16 text-center bg-white dark:bg-slate-900"
+                            >
+                                <slot
+                                    name="empty"
+                                    :title="emptyTitle"
+                                    :message="emptyMessage"
+                                    :icon="emptyIcon"
+                                    :action-text="emptyActionText"
+                                    :action-icon="emptyActionIcon"
+                                >
+                                    <div class="w-full flex flex-col items-center justify-center max-w-sm sm:max-w-md mx-auto text-center">
                                         <!-- 4. ICON: Empty State Icon -->
-                                        <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 flex items-center justify-center mb-3.5 shadow-2xs">
-                                            <span class="material-symbols-outlined text-3xl select-none leading-none">{{ emptyIcon }}</span>
-                                        </div>
+                                        <slot name="empty-icon" :icon="emptyIcon">
+                                            <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 flex items-center justify-center mb-3.5 shadow-2xs">
+                                                <span class="material-symbols-outlined text-3xl select-none leading-none">{{ emptyIcon }}</span>
+                                            </div>
+                                        </slot>
 
                                         <!-- 3. TEKS KONTEN: Empty Title & Message -->
-                                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
-                                            {{ emptyTitle }}
-                                        </h4>
-                                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
-                                            {{ emptyMessage }}
-                                        </p>
+                                        <slot name="empty-title" :title="emptyTitle">
+                                            <div class="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200 mb-1">
+                                                {{ emptyTitle }}
+                                            </div>
+                                        </slot>
+
+                                        <slot name="empty-message" :message="emptyMessage">
+                                            <div class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4 max-w-sm">
+                                                {{ emptyMessage }}
+                                            </div>
+                                        </slot>
 
                                         <!-- Action Button Slot / Trigger -->
-                                        <slot name="empty-action">
-                                            <button
+                                        <slot
+                                            name="empty-action"
+                                            :action-text="emptyActionText"
+                                            :action-icon="emptyActionIcon"
+                                        >
+                                            <ButtonSubmit
                                                 v-if="emptyActionText"
                                                 type="button"
-                                                @click="$emit('empty-action')"
-                                                class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                                                size="sm"
+                                                variant="outline"
+                                                :color="normalizedColor"
+                                                :icon="emptyActionIcon"
+                                                @click.prevent.stop="$emit('empty-action')"
                                             >
                                                 {{ emptyActionText }}
-                                            </button>
+                                            </ButtonSubmit>
                                         </slot>
                                     </div>
                                 </slot>
@@ -836,25 +1045,91 @@ defineExpose({
                 </table>
             </div>
 
-            <!-- 5. RESPONSIF: Indikator Overflow Kanan (Fade Cue) -->
+            <!-- 5. RESPONSIF: Indikator Overflow Kanan (Fade Gradient + Interactive Scroll Assist Button) -->
             <div
                 v-if="scrollIndicator && canScrollRight"
-                class="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white/90 dark:from-slate-900/90 to-transparent z-10 transition-opacity"
-            />
-            <!-- Indikator Overflow Kiri (Fade Cue) -->
+                class="absolute right-0 top-0 bottom-0 w-12 bg-linear-to-l from-white dark:from-slate-900 via-white/80 dark:via-slate-900/80 to-transparent pointer-events-none z-20 flex items-center justify-end pr-1 transition-all duration-200"
+            >
+                <button
+                    type="button"
+                    class="pointer-events-auto w-7 h-7 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-md border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-105 active:scale-95 transition-all cursor-pointer select-none"
+                    title="Gulir tabel ke kanan"
+                    aria-label="Gulir ke kanan"
+                    @click.prevent.stop="scrollRight"
+                >
+                    <span class="material-symbols-outlined text-sm font-bold">chevron_right</span>
+                </button>
+            </div>
+
+            <!-- Indikator Overflow Kiri (Fade Gradient + Interactive Scroll Assist Button) -->
             <div
                 v-if="scrollIndicator && canScrollLeft"
-                class="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white/90 dark:from-slate-900/90 to-transparent z-10 transition-opacity"
-            />
+                class="absolute left-0 top-0 bottom-0 w-12 bg-linear-to-r from-white dark:from-slate-900 via-white/80 dark:via-slate-900/80 to-transparent pointer-events-none z-20 flex items-center justify-start pl-1 transition-all duration-200"
+            >
+                <button
+                    type="button"
+                    class="pointer-events-auto w-7 h-7 rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-md border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-105 active:scale-95 transition-all cursor-pointer select-none"
+                    title="Gulir tabel ke kiri"
+                    aria-label="Gulir ke kiri"
+                    @click.prevent.stop="scrollLeft"
+                >
+                    <span class="material-symbols-outlined text-sm font-bold">chevron_left</span>
+                </button>
+            </div>
         </div>
 
         <!-- Bottom Footer Slot (Pagination & Summaries) -->
         <div
-            v-if="$slots.footer"
-            class="border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-800/30"
+            v-if="$slots.footer || (pagination && (pagination.total > 0 || pagination.last_page > 1))"
+            class="border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-800/30 relative z-20"
             :class="sizeStyles.footer"
         >
-            <slot name="footer" />
+            <slot name="footer" :pagination="pagination">
+                <Pagination
+                    v-if="pagination"
+                    :data="pagination"
+                    :client-side="true"
+                    :color-theme="color === 'dark' || color === 'slate' ? 'dark' : (['emerald', 'success'].includes(color) ? 'emerald' : (['amber', 'warning'].includes(color) ? 'amber' : (['rose', 'danger'].includes(color) ? 'rose' : (['cyan', 'sky'].includes(color) ? 'cyan' : (['purple', 'violet'].includes(color) ? 'purple' : (color === 'indigo' ? 'indigo' : 'primary'))))))"
+                    v-bind="paginationProps"
+                    @change="(p) => $emit('page-change', p)"
+                    @page-change="(p) => $emit('page-change', p)"
+                    @update:per-page="(pp) => $emit('update:perPage', pp)"
+                    @per-page-change="(pp) => $emit('per-page-change', pp)"
+                />
+            </slot>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Otomatis sticky kolom data pertama jika selectable bernilai false */
+.table-sticky-first-col:not(.table-selectable) :deep(thead tr th:first-child) {
+    position: sticky;
+    left: 0;
+    z-index: 30;
+    background-color: #f8fafc;
+    box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.12);
+}
+:global(.dark) .table-sticky-first-col:not(.table-selectable) :deep(thead tr th:first-child) {
+    background-color: #1e293b;
+    box-shadow: 2px 0 5px -2px rgba(255, 255, 255, 0.05);
+}
+
+.table-sticky-first-col:not(.table-selectable) :deep(tbody tr td:first-child) {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: #ffffff;
+    box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.08);
+}
+:global(.dark) .table-sticky-first-col:not(.table-selectable) :deep(tbody tr td:first-child) {
+    background-color: #0f172a;
+    box-shadow: 2px 0 5px -2px rgba(255, 255, 255, 0.05);
+}
+.table-sticky-first-col:not(.table-selectable) :deep(tbody tr:hover td:first-child) {
+    background-color: #f8fafc;
+}
+:global(.dark) .table-sticky-first-col:not(.table-selectable) :deep(tbody tr:hover td:first-child) {
+    background-color: #1e293b;
+}
+</style>

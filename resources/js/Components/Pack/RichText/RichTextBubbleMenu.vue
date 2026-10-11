@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { BubbleMenu } from '@tiptap/vue-3/menus';
+import { BubbleMenu } from '@tiptap/vue-3';
 
 const props = defineProps({
     editor: {

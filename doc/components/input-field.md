@@ -1,415 +1,559 @@
-# 📝 Komponen InputField (`InputField.vue`) & Sub-Komponen (`Input/`)
+# InputField Component
 
-[← Kembali ke Dokumentasi Utama](../../README.md) | [Validasi Form](../composables/use-form-validation.md)
-
----
-
-## 8. Komponen InputField (`InputField.vue`)
-
-Komponen universal input form yang menggabungkan seluruh variasi elemen input HTML5 standar dan kontrol form modern dalam 1 komponen seragam yang adaptif terhadap dark mode Tailwind CSS dan Google Material Icons.
-
-### Fitur Utama:
-
-1. **Dukungan 20+ Tipe Input Lengkap**: Mendukung seluruh tipe HTML5 standar (`text`, `email`, `password`, `number`, `tel`, `url`, `search`, `date`, `time`, `datetime-local`, `month`, `week`) serta komponen khusus (`textarea`, `select`, `checkbox`, `radio`, `switch`, `file`, `color`, `range`).
-2. **Password Reveal Toggle**: Tombol otomatis (ikon mata) untuk melihat/menyembunyikan sandi pada input `type="password"`.
-3. **Search Auto-Clear**: Tombol silang untuk menghapus kata kunci pencarian secara instan pada `type="search"`.
-4. **File Drag & Drop with Live Preview**: Area unggah berkas interaktif dengan drag-and-drop, validasi tipe file, serta pratinjau thumbnail instan untuk gambar dan nama file.
-5. **Textarea dengan Character Counter**: Menampilkan sisa karakter otomatis saat prop `maxlength` digunakan.
-6. **Selection Dropdown Modern**: Dropdown `<select>` dengan ikon chevron kustom, opsi array string atau pasangan `{ value, label }`.
-7. **Switch & Toggles**: Komponen switch toggle animasi halus dan radio button group.
-8. **Addon Prefix & Suffix**: Penambahan teks addon di kiri/kanan (misal: `"Rp"`, `"%"`, `"IDR"`, `"https://"`) atau ikon Google Material Symbols.
-9. **Status Validasi Error**: Border merah otomatis, ikon peringatan, dan pesan error ramah pengguna yang selaras dengan error validation Inertia / Laravel.
+Komponen input universal berbasis Vue 3 dan Tailwind CSS v4 yang mengintegrasikan lebih dari 20 tipe input kontrol ke dalam satu API yang konsisten, deklaratif, dan modular. Bertindak sebagai fasad terpadu (*smart orchestrator*) yang secara otomatis mendelegasikan rendering ke sub-komponen khusus berdasarkan prop `type`.
 
 ---
 
-### Daftar Tipe Input yang Didukung (`type="..."`)
+## 01. Overview
 
-| Kategori                      | Nilai`type`        | Deskripsi & Fitur Khusus                                                                                                    |
-| :---------------------------- | :------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
-| **Kredensial & Teks**   | `'text'`           | Input teks umum dengan addon prefix/suffix dan ikon                                                                         |
-|                               | `'email'`          | Input alamat email dengan validasi format bawaan browser                                                                    |
-|                               | `'password'`       | Input kata sandi dengan tombol toggle show/hide password (Google Icons)                                                     |
-|                               | `'search'`         | Input pencarian dengan tombol hapus/clear instan                                                                            |
-|                               | `'number'`         | Input angka dengan dukungan min, max, step, dan prefix mata uang (`"Rp"`)                                                 |
-|                               | `'tel'`            | Input nomor telepon / WhatsApp                                                                                              |
-|                               | `'url'`            | Input tautan web dengan prefix link                                                                                         |
-| **Tanggal & Waktu**     | `'date'`           | Pemilih tanggal kalender kustom ala PrimeVue (navigasi bulan/tahun, badge tanggal aktif, tombol hari ini & hapus)           |
-|                               | `'time'`           | Pemilih jam & menit popover kustom dengan kontrol spinner                                                                   |
-|                               | `'datetime-local'` | Pemilih tanggal dan waktu terintegrasi dalam satu panel popover kustom                                                      |
-|                               | `'month'`          | Pemilih bulan & tahun                                                                                                       |
-|                               | `'week'`           | Pemilih minggu & tahun                                                                                                      |
-| **Pilihan & Multiline** | `'select'`         | Custom floating dropdown popover ala PrimeVue dengan filter pencarian, checkmark terpilih, dan keyboard navigation          |
-|                               | `'textarea'`       | Input teks multiline dengan`rows` dan live character counter limit                                                        |
-|                               | `'checkbox'`       | Kotak centang dengan label dan subteks penjelasan                                                                           |
-|                               | `'radio'`          | Pilihan radio group dengan array`options`                                                                                 |
-|                               | `'switch'`         | Toggle sakelar switch on/off modern                                                                                         |
-| **Media & Spesial**     | `'file'`           | Box upload drag-and-drop dengan live thumbnail preview                                                                      |
-|                               | `'color'`          | Floating color picker popover dengan palet warna cepat, eyedropper layar, dan salin HEX                                     |
-|                               | `'range'`          | Slider rentang nilai dengan indikator badge angka dinamis                                                                   |
-|                               | `'otp'`            | Input One-Time Password / PIN dengan slot digit terpisah, auto-focus, paste parsing, masking, dan countdown timer           |
-|                               | `'mask'`           | Input berformat pola kustom/preset (kartu kredit, NPWP, NIK, kode pos) dengan pemformatan otomatis dan pengikatan raw value |
+**Penjelasan Singkat**: `InputField` adalah komponen antarmuka tunggal terstandarisasi untuk menangani segala bentuk interaksi masukan formulir pada aplikasi web enterprise. Komponen ini membungkus siklus hidup input, integrasi validasi, serta sinkronisasi dua arah secara headless.
+
+### 1.1 Apa Entitas Ini
+
+**Vue Component** (Single File Component) yang berlokasi di [InputField.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/InputField.vue) serta fasad resmi [InputFieldComponent.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/InputFieldComponent.vue). `InputField` mengevaluasi prop `type` dan secara internal mendelegasikan rendering ke salah satu dari 15 sub-komponen khusus: `InputText`, `InputSelect`, `InputTextarea`, `InputRadio`, `InputCheckbox`, `InputSwitch`, `InputFile`, `InputColor`, `InputRange`, `InputDatePicker`, `InputOtp`, `InputMask`, `InputLocation`, `InputTag`, dan `InputRepeater`.
+
+### 1.2 Fungsi Utama
+
+- Menyediakan satu antarmuka terpadu (`v-model`, `label`, `icon`, `error`, `hint`, `size`) untuk seluruh varian input native HTML5 maupun kontrol kustom kompleks.
+- Menghasilkan atribut `id` unik yang aman untuk proses rendering sisi server (SSR Hydration-Safe) melalui utilitas `useId()` Vue 3.5+.
+- Menjalankan validasi instan (*live validation*) berbasis tipe data (email, URL, telepon, kekuatan kata sandi) serta mendukung validator kustom.
+- Menghitung dan menampilkan jumlah karakter secara dinamis saat prop `maxlength` ditentukan.
+- Mengekspos kendali terprogram seperti `focus()`, `blur()`, `clear()`, dan `validate()` ke komponen induk melalui `defineExpose()`.
+
+### 1.3 Kapan Digunakan
+
+- Setiap formulir aplikasi yang membutuhkan masukan data pengguna (formulir CRUD, panel penyaring data, halaman checkout, pengaturan akun).
+- Skenario input terstruktur seperti NPWP, NIK, dan kartu kredit menggunakan tipe `mask`.
+- Alur verifikasi identitas menggunakan kode 4-8 digit dengan tipe `otp`.
+- Formulir dinamis majemuk (*repeatable form groups*) menggunakan tipe `repeater`.
+- Pencarian cerdas dengan saran otomatis menggunakan tipe `search` dan prop `options`.
+
+### 1.4 Karakteristik Penting
+
+- **Headless Delegation**: Elemen root hanya menyusun struktur tata letak luar (label, counter, hint, error), sedangkan interaksi data diserahkan ke sub-komponen spesialis.
+- **SSR Hydration-Safe**: ID elemen dijamin identik antara server render dan client hydration via `useId()`.
+- **Keseimbangan Rasio Optik Ikon**: Dimensi ikon prefix/suffix dan tombol clear disesuaikan dengan tinggi huruf kapital (*cap-height*) teks melalui pengaturan `font-variation-settings`.
+- **Integrasi Penuh Vue 3.5+ dan Tailwind CSS v4**: Menggunakan sintaks `<script setup>`, makro `defineModel()`, dan utilitas desain Tailwind v4 tanpa dependensi styling lawas.
 
 ---
 
+## 02. Preview
+
+> [!TIP]
+> Pengujian visual dan showcase interaktif entitas ini tersedia secara native pada portal pratinjau aplikasi:
+>
+> <a href="http://localhost:8000/preview/input-field" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Komponen InputField &rarr;</a>
+
 ---
 
-### Component Props API (`<InputField />`)
+## 03. Usage
 
-Berikut adalah daftar lengkap properti (*props*) yang didukung oleh `<InputField />`, dikelompokkan berdasarkan fungsinya:
+### Pohon Konsep Penggunaan
 
-#### 1. Properti Umum & Tipografi Form
-
-| Prop                         | Tipe Data                                          | Default    | Deskripsi                                                                                                                                                                                                                                                                                                                                                          |
-| :--------------------------- | :------------------------------------------------- | :--------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `modelValue` / `v-model` | `[String, Number, Boolean, File, Array, Object]` | `''`     | State binding reaktif nilai input.                                                                                                                                                                                                                                                                                                                                 |
-| `type`                     | `String`                                         | `'text'` | Tipe kontrol input (mendukung 20+ varian:`text`, `email`, `password`, `number`, `tel`, `url`, `search`, `date`, `time`, `datetime-local`, `month`, `week`, `currency`, `textarea`, `select`, `checkbox`, `radio`, `switch`, `file`, `color`, `range`, `otp`, `mask`, `location`, `tag`, `tags`, `repeater`). |
-| `label`                    | `String`                                         | `''`     | Teks judul label di atas input.                                                                                                                                                                                                                                                                                                                                    |
-| `subtext`                  | `String`                                         | `''`     | Teks penjelasan sekunder di samping label, switch, atau checkbox.                                                                                                                                                                                                                                                                                                  |
-| `name`                     | `String`                                         | `''`     | Atribut nama input HTML untuk form submission.                                                                                                                                                                                                                                                                                                                     |
-| `id`                       | `String`                                         | `''`     | Atribut ID elemen input (otomatis dibuat secara unik dan SSR-safe dengan`useId()` Vue 3.5 jika dikosongkan).                                                                                                                                                                                                                                                     |
-| `placeholder`              | `String`                                         | `''`     | Teks petunjuk abu-abu saat input masih kosong.                                                                                                                                                                                                                                                                                                                     |
-| `required`                 | `Boolean`                                        | `false`  | Menandai field wajib diisi dan otomatis menambahkan tanda bintang (`*`) merah.                                                                                                                                                                                                                                                                                   |
-| `disabled`                 | `Boolean`                                        | `false`  | Menonaktifkan interaksi input dan memberikan styling redup (*opacity 60%*).                                                                                                                                                                                                                                                                                      |
-| `readonly`                 | `Boolean`                                        | `false`  | Mengunci nilai input agar tidak dapat diedit pengguna namun tetap dapat disalin dan difokuskan.                                                                                                                                                                                                                                                                    |
-| `error`                    | `String`                                         | `''`     | Pesan error validasi (otomatis memberi border merah, glow ring, dan ikon peringatan di bawah input). Selaras dengan`form.errors.field` Inertia.                                                                                                                                                                                                                  |
-| `hint`                     | `String`                                         | `''`     | Teks panduan atau petunjuk pengisian di bawah kontrol form (hanya muncul saat tidak ada`error`).                                                                                                                                                                                                                                                                 |
-| `icon`                     | `String`                                         | `''`     | Nama Google Material Icon di sisi kiri input (contoh:`'mail'`, `'lock'`, `'person'`).                                                                                                                                                                                                                                                                        |
-| `iconRight`                | `String`                                         | `''`     | Nama Google Material Icon di sisi kanan input.                                                                                                                                                                                                                                                                                                                     |
-| `prefix`                   | `String`                                         | `''`     | Teks addon di sisi kiri luar (contoh:`'Rp'`, `'https://'`).                                                                                                                                                                                                                                                                                                    |
-| `suffix`                   | `String`                                         | `''`     | Teks addon di sisi kanan luar (contoh:`'%'`, `'IDR'`, `'/ bulan'`).                                                                                                                                                                                                                                                                                          |
-| `size`                     | `String`                                         | `'md'`   | Ukuran skala komponen:`'sm'` (kompak/tabel), `'md'` (standar form), `'lg'` (hero input).                                                                                                                                                                                                                                                                     |
-| `autocomplete`             | `String`                                         | `''`     | Atribut HTML5 autocomplete (contoh:`'current-password'`, `'new-password'`, `'email'`).                                                                                                                                                                                                                                                                       |
-| `clearable`                | `Boolean`                                        | `false`  | Menampilkan tombol silang (*clear*) instan saat input terisi (otomatis `true` pada `type="search"`).                                                                                                                                                                                                                                                         |
-| `loading`                  | `Boolean`                                        | `false`  | Menampilkan spinner animasi memuat di sisi kanan input atau select.                                                                                                                                                                                                                                                                                                |
-
-#### 2. Fitur Universal Watch & Validasi Kustom (Untuk Semua Input)
-
-| Prop               | Tipe Data            | Default                                   | Deskripsi                                                                                                                                                                                                 |
-| :----------------- | :------------------- | :---------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `liveValidation` | `Boolean`          | `true`                                  | Mengaktifkan evaluasi format real-time saat pengguna mengetik (email, password, tel, url, number).                                                                                                        |
-| `validator`      | `Function(value)`  | `null`                                  | Fungsi validasi kustom untuk**seluruh tipe input**. Mengembalikan `true` jika valid, atau `String` pesan error jika tidak valid. Pesan error langsung tampil di bawah input (*liveFeedback*). |
-| `pattern`        | `[String, RegExp]` | `null`                                  | Pola ekspresi reguler (Regex) untuk validasi langsung pada input teks.                                                                                                                                    |
-| `patternMessage` | `String`           | `'Format input tidak sesuai ketentuan'` | Pesan kesalahan yang ditampilkan saat input tidak lolos pengecekan`pattern`.                                                                                                                            |
-| `onWatch`        | `Function(newVal)` | `null`                                  | Callback hook pemantau yang dipicu setiap kali nilai input berubah secara reaktif (fitur*watch universal*).                                                                                             |
-
-#### 3. Fitur Password & Kekuatan Sandi (`type="password"`)
-
-| Prop                     | Tipe Data   | Default           | Deskripsi                                                                                                                                |
-| :----------------------- | :---------- | :---------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
-| `showPasswordToggle`   | `Boolean` | `true`          | Menampilkan tombol ikon mata (lihat/sembunyikan sandi).                                                                                  |
-| `showPasswordStrength` | `Boolean` | `true`          | Menampilkan atau menyembunyikan floating box*Strength Meter* dan checklist kriteria saat input password difokuskan.                    |
-| `passwordRules`        | `Object`  | *Lihat default* | Objek konfigurasi aturan kekuatan sandi. Bar indikator dan checklist otomatis beradaptasi secara dinamis hanya dengan aturan yang aktif. |
-
-Default konfigurasi `passwordRules`:
-
-```javascript
-{
-  minLength: 8,           // Batas minimal panjang karakter (misal: 6, 8, 10, 12)
-  requireUppercase: true, // Wajib memiliki minimal 1 huruf kapital (A-Z)
-  requireLowercase: true, // Wajib memiliki minimal 1 huruf kecil (a-z)
-  requireNumbers: true,   // Wajib mengandung angka (0-9)
-  requireSymbols: true,   // Wajib mengandung karakter simbol unik (!@#$%^&*)
-}
+```text
+InputField
+├── Form Submission
+│   ├── Create / Insert Record (text, email, number, select)
+│   ├── Update / Edit Record (seluruh tipe input)
+│   └── Multi-step Stepper Form (password, date, file)
+├── Validasi & Format Terstruktur
+│   ├── Nomor Identitas Pajak & Kependudukan (mask: NPWP, NIK)
+│   ├── Pembayaran Kartu Kredit (mask: 9999 9999 9999 9999)
+│   ├── Verifikasi Keamanan OTP (otp: 4-8 digit)
+│   └── Input Finansial (number + currency="IDR")
+├── Pencarian & Filter Data
+│   ├── Kolom Pencarian Cepat + Saran (search + options)
+│   └── Filter Kategori Multi-Tag (tags + options)
+├── Formulir Dinamis
+│   ├── Pengulangan Baris Form (repeater / multiple-form)
+│   └── Seleksi Majemuk (checkbox / radio + options)
+└── Kontrol Pengaturan Sistem
+    ├── Pengalih Opsi Instan (switch)
+    ├── Pemilih Warna Tema (color)
+    └── Penggeser Rentang Nilai (range)
 ```
 
-#### 4. Angka, Finansial & Slider (`type="number"`, `'range'`, `'currency'`)
+### Kapan Digunakan vs Kapan Dihindari
 
-| Prop               | Tipe Data             | Default     | Deskripsi                                                                                                                  |
-| :----------------- | :-------------------- | :---------- | :------------------------------------------------------------------------------------------------------------------------- |
-| `currency`       | `[Boolean, String]` | `false`   | Mengaktifkan pemformatan ribuan uang lokal (`1.500.000`) dan otomatis mengikat nilai angka murni numerik ke `v-model`. |
-| `min`            | `[Number, String]`  | `null`    | Nilai angka atau tanggal minimum yang diizinkan (dilengkapi validasi live).                                                |
-| `max`            | `[Number, String]`  | `null`    | Nilai angka atau tanggal maksimum yang diizinkan (dilengkapi validasi live).                                               |
-| `step`           | `[Number, String]`  | `null`    | Interval loncatan kelipatan nilai.                                                                                         |
-| `rangeLabel`     | `String`            | `'Nilai'` | Label teks sebelum angka nilai slider pada`type="range"`.                                                                |
-| `rangeFormatter` | `Function(val)`     | `null`    | Fungsi kustom pemformatan angka slider (contoh:`(v) => \`\${v}%\``atau`(v) => \`Rp \${v}\``).                          |
+| Kondisi Kebutuhan | Rekomendasi Komponen | Alasan Arsitektural |
+| :--- | :--- | :--- |
+| Formulir masukan data standar & terstruktur | Gunakan `InputField` | Konsistensi validasi, label, error, dan aksesibilitas. |
+| Pengeditan teks kaya dengan format HTML | Hindari `InputField` | Gunakan [RichTextEditor.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/RichTextEditor.vue) untuk engine Tiptap. |
+| Unggah berkas terpadu (KTP, Dokumen, Avatar) | Gunakan `InputField` (`type="file"`) atau `FileDropzone` | `InputField type="file"` mendelegasikan langsung ke engine FileDropzone (`InputFile.vue`). |
+| Pengurutan atau filter tabel data server-side | Hindari `InputField` | Gunakan [FilterToolbar.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/FilterToolbar.vue) yang terhubung ke composable tabel. |
 
-#### 5. Textarea Multiline (`type="textarea"`)
+### Alur Kerja Konseptual
 
-| Prop           | Tipe Data            | Default        | Deskripsi                                                                            |
-| :------------- | :------------------- | :------------- | :----------------------------------------------------------------------------------- |
-| `rows`       | `[Number, String]` | `3`          | Jumlah baris awal textarea.                                                          |
-| `maxlength`  | `[Number, String]` | `null`       | Batas maksimal karakter (menampilkan indikator live counter`charCount/maxlength`). |
-| `autoResize` | `Boolean`          | `false`      | Textarea otomatis membesar ke bawah mengikuti panjang teks yang diketik.             |
-| `minRows`    | `[Number, String]` | `null`       | Batas minimal baris saat`autoResize: true`.                                        |
-| `maxRows`    | `[Number, String]` | `null`       | Batas maksimal baris sebelum scrollbar vertikal muncul saat`autoResize: true`.     |
-| `resize`     | `String`           | `'vertical'` | Pengarah resize kursor CSS:`'none'`, `'vertical'`, `'both'`, `'horizontal'`. |
-
-#### 6. Dropdown & Pilihan (`type="select"`, `'radio'`, `'checkbox'`, `'switch'`)
-
-| Prop              | Tipe Data                     | Default   | Deskripsi                                                                                                                                                       |
-| :---------------- | :---------------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `options`       | `Array`                     | `[]`    | Pilihan array item (berupa array string`['A', 'B']` atau objek `[{ value: 1, label: 'Satu' }]`). Juga dipakai untuk saran pencarian pada `type="search"`. |
-| `multiple`      | `Boolean`                   | `false` | Mengizinkan pemilihan multi-opsi atau multi-upload berkas.                                                                                                      |
-| `chipDisplay`   | `Boolean`                   | `true`  | Menampilkan item terpilih dalam bentuk badge chips dengan tombol silang individual pada multi-select.                                                           |
-| `indeterminate` | `Boolean`                   | `false` | Status parsial "sebagian tercentang" (ikon minus`-`) pada checkbox parent.                                                                                    |
-| `value`         | `[String, Number, Boolean]` | `null`  | Nilai spesifik untuk binding checkbox / radio grup.                                                                                                             |
-
-#### 7. OTP / PIN Kode (`type="otp"`)
-
-| Prop               | Tipe Data   | Default                    | Deskripsi                                                    |
-| :----------------- | :---------- | :------------------------- | :----------------------------------------------------------- |
-| `length`         | `Number`  | `6`                      | Jumlah kotak slot digit OTP (misal: 4 atau 6 digit).         |
-| `integerOnly`    | `Boolean` | `true`                   | Hanya mengizinkan input karakter angka (0-9).                |
-| `masked`         | `Boolean` | `false`                  | Menyembunyikan tampilan digit dengan bulatan sandi.          |
-| `separator`      | `String`  | `''`                     | Karakter pemisah antar slot (contoh:`'-'`).                |
-| `separatorAfter` | `Number`  | `null`                   | Posisi slot ke-N sebelum pemisah diletakkan.                 |
-| `countdown`      | `Number`  | `0`                      | Durasi hitung mundur kirim ulang OTP (dalam detik).          |
-| `resendText`     | `String`  | `'Kirim Ulang Kode OTP'` | Teks label tombol kirim ulang setelah hitung mundur selesai. |
-
-#### 8. Pola Masking (`type="mask"`)
-
-| Prop         | Tipe Data   | Default  | Deskripsi                                                                                                                      |
-| :----------- | :---------- | :------- | :----------------------------------------------------------------------------------------------------------------------------- |
-| `mask`     | `String`  | `''`   | Pola mask kustom:`#` (angka), `A` (huruf), `*` (alfanumerik). Contoh: `####-####-####-####`.                           |
-| `preset`   | `String`  | `''`   | Preset bawaan siap pakai:`'credit-card'`, `'npwp'`, `'nik'`, `'postal-code'`, `'phone-id'`, `'expiry'`, `'cvv'`. |
-| `slotChar` | `String`  | `'_'`  | Karakter placeholder pada posisi slot yang belum terisi.                                                                       |
-| `emitRaw`  | `Boolean` | `true` | Mengikat nilai angka/karakter murni tanpa simbol pemisah ke`v-model`.                                                        |
-
-#### 9. Tag Input (`type="tag"` / `'tags'`)
-
-| Prop                  | Tipe Data            | Default                   | Deskripsi                                                                                                                   |
-| :-------------------- | :------------------- | :------------------------ | :-------------------------------------------------------------------------------------------------------------------------- |
-| `allowCustom`       | `Boolean`          | `true`                  | Mengizinkan penambahan tag teks baru di luar array`options`.                                                              |
-| `separatorKeys`     | `Array`            | `['Tab', 'Enter', ',']` | Tombol keyboard yang memicu pembentukan tag baru.                                                                           |
-| `allowDuplicates`   | `Boolean`          | `false`                 | Mencegah penambahan tag yang sama dua kali.                                                                                 |
-| `maxTags`           | `Number`           | `null`                  | Batas maksimum jumlah tag yang dapat dibuat.                                                                                |
-| `tagVariant`        | `String`           | `'default'`             | Skema warna badge tag:`'default'`, `'primary'`, `'success'`, `'warning'`, `'danger'`, `'purple'`, `'random'`. |
-| `tagStyle`          | `String`           | `'soft'`                | Gaya tampilan tag:`'soft'` (pastel), `'solid'` (kontras), `'outline'` (garis tepi).                                   |
-| `tagIcon`           | `String`           | `''`                    | Ikon Google Material Symbols di sebelah kiri setiap tag.                                                                    |
-| `pasteSeparators`   | `[RegExp, String]` | `/[,;\n\t]+/`           | Karakter pemisah otomatis saat pengguna menempel (*paste*) teks panjang ke input tag.                                     |
-| `addOnBlur`         | `Boolean`          | `true`                  | Otomatis menjadikan teks yang belum disubmit sebagai tag baru saat elemen kehilangan fokus.                                 |
-| `removeOnBackspace` | `Boolean`          | `true`                  | Menghapus tag terakhir saat pengguna menekan tombol Backspace pada input kosong.                                            |
-| `lowercase`         | `Boolean`          | `false`                 | Mengonversi seluruh teks tag ke huruf kecil secara otomatis.                                                                |
-
-#### 10. Dynamic Form Repeater (`type="repeater"` / `'form-repeater'`)
-
-| Prop              | Tipe Data              | Default              | Deskripsi                                                                                             |
-| :---------------- | :--------------------- | :------------------- | :---------------------------------------------------------------------------------------------------- |
-| `fields`        | `Array`              | `[]`               | Definisi skema kolom input di setiap baris repeater.                                                  |
-| `defaultItem`   | `Object`             | `null`             | Template data bawaan untuk baris entri baru.                                                          |
-| `addButtonText` | `String`             | `'Tambahkan Data'` | Teks pada tombol penambahan baris.                                                                    |
-| `addIcon`       | `String`             | `'add'`            | Nama ikon pada tombol penambahan.                                                                     |
-| `addPosition`   | `String`             | `'bottom'`         | Posisi tombol tambah:`'bottom'`, `'top'`, `'both'`.                                             |
-| `itemTitle`     | `[String, Function]` | `'Item'`           | Judul header per kartu item (mendukung fungsi dinamis`(item, index) => \`Peserta #${index + 1}\``). |
-| `columns`       | `[Number, String]`   | `2`                | Jumlah kolom grid layout pada kartu repeater.                                                         |
-| `collapsible`   | `Boolean`            | `false`            | Kartu item dapat diperluas atau dilipat.                                                              |
-| `reorderable`   | `Boolean`            | `true`             | Mengaktifkan tombol geser urutan baris ke atas / ke bawah.                                            |
-| `deletable`     | `Boolean`            | `true`             | Mengaktifkan tombol hapus baris.                                                                      |
-| `duplicable`    | `Boolean`            | `true`             | Mengaktifkan tombol duplikasi instan baris yang sudah terisi.                                         |
-| `confirmDelete` | `Boolean`            | `false`            | Memunculkan konfirmasi sebelum baris dihapus.                                                         |
-
----
-
-### Slots API (`<InputField />`)
-
-| Slot Name   | Parameter | Deskripsi                                                                  |
-| :---------- | :-------- | :------------------------------------------------------------------------- |
-| `default` | —        | Konten kustom di samping label checkbox, radio, atau fallback opsi select. |
-| `label`   | —        | Kustomisasi elemen teks/komponen label judul di bagian atas.               |
-| `prefix`  | —        | Kustomisasi elemen konten addon di sisi kiri.                              |
-| `suffix`  | —        | Kustomisasi elemen konten addon di sisi kanan.                             |
-| `hint`    | —        | Kustomisasi teks petunjuk atau link bantuan di bawah input.                |
-| `error`   | —        | Kustomisasi tampilan pesan error validasi.                                 |
-
----
-
-### Events API (`<InputField />`)
-
-Komponen `<InputField />` memancarkan event-event berikut untuk integrasi yang fleksibel:
-
-| Event Name             | Parameter                                    | Kapan Dipicu?                                                                                                                                                                             |
-| :--------------------- | :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@update:modelValue` | `(value: any)`                             | Dipicu setiap kali nilai state input berubah (sinkronisasi dua arah`v-model`).                                                                                                          |
-| `@input`             | `(event: Event)`                           | Dipicu secara native setiap kali karakter baru diketik atau diinput ke elemen kontrol.                                                                                                    |
-| `@change`            | `(event: Event)`                           | Dipicu saat nilai telah selesai dikomit (misal saat enter ditekan atau kontrol kehilangan fokus).                                                                                         |
-| `@focus`             | `(event: FocusEvent)`                      | Dipicu saat elemen menerima fokus pengguna.                                                                                                                                               |
-| `@blur`              | `(event: FocusEvent)`                      | Dipicu saat elemen kehilangan fokus pengguna.                                                                                                                                             |
-| `@clear`             | —                                           | Dipicu saat tombol hapus/silang pada input (`clearable`, `search`, `mask`, `select`) diklik.                                                                                      |
-| `@validate`          | `(result: Object)`                         | Dipicu setiap kali fungsi validasi dievaluasi. Mengembalikan payload lengkap:`{ valid: boolean, message: string, value: any, score?: number, totalScore?: number, criteria?: Object }`. |
-| `@error`             | `(errorMessage: string)`                   | Dipicu saat terjadi kegagalan validasi berkas pada`type="file"` (misal file melebihi `maxSize` atau `maxFiles`).                                                                    |
-| `@cancel-upload`     | —                                           | Dipicu saat tombol batal unggah pada berkas diklik.                                                                                                                                       |
-| `@complete`          | `(otpCode: string)`                        | Dipicu saat seluruh digit OTP telah selesai diisi (`type="otp"`).                                                                                                                       |
-| `@resend`            | —                                           | Dipicu saat tombol kirim ulang kode OTP diklik (`type="otp"`).                                                                                                                          |
-| `@tag-add`           | `(tag: string \| object)`                   | Dipicu saat tag baru berhasil ditambahkan (`type="tag"`).                                                                                                                               |
-| `@tag-remove`        | `(tag: string \| object)`                   | Dipicu saat salah satu tag dihapus (`type="tag"`).                                                                                                                                      |
-| `@max-reached`       | `(max: number)`                            | Dipicu saat jumlah tag atau baris repeater telah menyentuh batas maksimum.                                                                                                                |
-| `@item-add`          | `(newItem: object)`                        | Dipicu saat baris entri baru ditambahkan ke repeater (`type="repeater"`).                                                                                                               |
-| `@item-remove`       | `(index: number)`                          | Dipicu saat baris entri pada repeater dihapus.                                                                                                                                            |
-| `@item-duplicate`    | `(index: number)`                          | Dipicu saat baris entri pada repeater diduplikasi.                                                                                                                                        |
-| `@item-move`         | `({ fromIndex: number, toIndex: number })` | Dipicu saat urutan baris entri pada repeater dipindahkan.                                                                                                                                 |
-
-#### Contoh Menangani Events:
-
-```vue
-<InputField
-  v-model="username"
-  label="Username"
-  :validator="(val) => val.length < 4 ? 'Minimal 4 karakter' : true"
-  @input="handleNativeInput"
-  @validate="onValidationChanged"
-  @clear="onFieldCleared"
-/>
+```text
+Laravel Controller → Inertia Props → Page Component → InputField → Sub-Komponen Spesialis
+                                           ↑                            ↓
+                                   form.errors (Server)        v-model (Two-way Binding)
 ```
 
----
-
-### Component Expose API (`defineExpose`)
-
-Melalui template reference Vue (misal: `<InputField ref="inputRef" />`), komponen induk dapat mengakses properti dan metode programatik berikut:
-
-| Method / Property | Tipe Data                    | Deskripsi & Kegunaan                                                                                                                          |
-| :---------------- | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| `focus()`       | `Function()`               | Menempatkan kursor fokus secara programatik ke elemen input/textarea/kontrol aktif di dalam subkomponen.                                      |
-| `blur()`        | `Function()`               | Melepas fokus dari elemen kontrol aktif.                                                                                                      |
-| `clear()`       | `Function()`               | Mengosongkan nilai input secara instan dan membersihkan pesan validasi sementara.                                                             |
-| `validate()`    | `Function(): Object`       | Menjalankan proses validasi secara programatik tanpa harus menunggu interaksi pengguna. Mengembalikan`{ valid: Boolean, message: String }`. |
-| `inputId`       | `ComputedRef<String>`      | Mengambil string ID unik elemen input yang terhubung dengan atribut`<label for="...">`.                                                     |
-| `controlRef`    | `Ref<Component>`           | Referensi langsung ke instance Vue sub-komponen aktif (`InputText`, `InputSelect`, `InputFile`, dll.).                                  |
-| `inputRef`      | `ComputedRef<HTMLElement>` | Referensi langsung ke elemen HTML native (`<input>`, `<textarea>`, `<select>`) untuk manipulasi DOM tingkat rendah jika dibutuhkan.     |
-| `value`         | `ComputedRef<any>`         | Mengakses nilai state terkini yang sedang disimpan oleh input.                                                                                |
-
-#### Contoh Pemanggilan Programatik via Template Ref:
+Contoh Implementasi Sederhana:
 
 ```vue
 <script setup>
 import { ref } from 'vue';
 import InputField from '@/Components/Pack/InputField.vue';
 
-const nameField = ref(null);
-const nameValue = ref('');
-
-const handleFocusInput = () => {
-  // 1. Fokuskan kursor langsung ke kolom
-  nameField.value?.focus();
-};
-
-const handleResetForm = () => {
-  // 2. Kosongkan nilai kolom via expose
-  nameField.value?.clear();
-};
-
-const handleCheckValidity = () => {
-  // 3. Cek validitas secara programatik
-  const result = nameField.value?.validate();
-  if (!result.valid) {
-    console.warn('Validasi gagal:', result.message);
-  }
-};
+const username = ref('');
+const password = ref('');
 </script>
 
 <template>
-  <div class="space-y-3">
+  <form class="space-y-3 max-w-md">
     <InputField
-      ref="nameField"
-      v-model="nameValue"
-      label="Nama Lengkap"
-      :validator="(val) => val ? true : 'Nama tidak boleh kosong!'"
+      v-model="username"
+      type="text"
+      label="Username Akun"
+      placeholder="Masukkan username"
+      icon="person"
+      required
     />
 
-    <div class="flex gap-2">
-      <button @click="handleFocusInput">Fokuskan</button>
-      <button @click="handleResetForm">Bersihkan</button>
-      <button @click="handleCheckValidity">Validasi Sekarang</button>
-    </div>
-  </div>
+    <InputField
+      v-model="password"
+      type="password"
+      label="Kata Sandi"
+      placeholder="Minimal 8 karakter"
+      icon="lock"
+      show-password-strength
+      required
+    />
+  </form>
 </template>
 ```
 
 ---
 
-## 🔍 Panduan Fitur Unggulan
+## 04. Anatomy
 
-### 1. Fitur Live Watch & Custom Validator (Universal di Semua Input)
+### Diagram Hierarki Tekstual
 
-Tidak hanya terbatas pada alamat email, fitur pemantauan (*watch*) dan validasi interaktif dapat diterapkan pada **semua jenis input** (`text`, `number`, `url`, `tel`, dll.).
-
-1. **Validasi URL Bawaan (`type="url"`)**:
-   Otomatis mengecek protokol `http://` / `https://` dan struktur domain valid.
-2. **Validasi Rentang Angka (`type="number"`)**:
-   Otomatis memverifikasi batasan prop `:min="..."` dan `:max="..."` secara instan dan menampilkan pesan bantuan jika nilai di luar batas.
-3. **Validator Kustom via Prop `:validator`**:
-   Anda dapat memberikan fungsi logika bebas:
-   ```vue
-   <InputField
-     v-model="referralCode"
-     label="Kode Referral"
-     placeholder="Contoh: DISKON50"
-     :validator="(val) => {
-       if (!val) return true;
-       if (val.length < 5) return 'Kode referral minimal 5 karakter.';
-       if (!/^[A-Z0-9]+$/.test(val)) return 'Hanya huruf kapital dan angka.';
-       return true;
-     }"
-   />
-   ```
-4. **Validasi Regex Cepat via Prop `:pattern` & `:pattern-message`**:
-   ```vue
-   <InputField
-     v-model="npwp"
-     label="Nomor Pokok"
-     pattern="^[0-9]{15,16}$"
-     pattern-message="Nomor wajib terdiri dari 15 atau 16 digit angka."
-   />
-   ```
-5. **Hook Pemantau Realtime via Prop `:on-watch`**:
-   ```vue
-   <InputField
-     v-model="searchQuery"
-     type="search"
-     label="Cari Produk"
-     :on-watch="(val) => console.log('User mengetik:', val)"
-   />
-   ```
-
----
-
-### 2. Fitur Kustomisasi Password Strength Meter
-
-Kotak indikator kekuatan password yang muncul saat kolom sandi difokuskan dapat:
-
-* **Dinonaktifkan Sepenuhnya**:
-  Gunakan prop `:show-password-strength="false"`. Tombol reveal password (mata) tetap berfungsi normal.
-* **Dikustomisasi Aturan & Kriterianya**:
-  Gunakan prop `:password-rules="{ ... }"`. Bar indikator dan checklist otomatis beradaptasi hanya dengan aturan yang Anda pilih.
-
-#### Contoh 1: Mematikan Strength Meter
-
-```vue
-<InputField
-  v-model="password"
-  type="password"
-  label="Kata Sandi Akun"
-  :show-password-strength="false"
-/>
+```text
+InputField Component Shell
+│
+├── 1. Field Header Section (Dirender kondisional jika label atau slot label tersedia)
+│   ├── Container Header: flex items-center justify-between gap-2 select-none
+│   ├── Label Element: <label :for="inputId">
+│   │   ├── Teks Label (Prop label atau Slot default: label)
+│   │   └── Asterisk Penanda Wajib: <span aria-hidden="true">*</span>
+│   └── Character Counter: <span class="font-mono"> (Aktif saat maxlength diatur)
+│
+├── 2. Control Body Section (Didelegasikan ke Sub-Komponen Spesialis)
+│   ├── InputText        (type: text, email, password, number, tel, url, search, currency)
+│   ├── InputSelect      (type: select)
+│   ├── InputTextarea    (type: textarea)
+│   ├── InputRadio       (type: radio)
+│   ├── InputCheckbox    (type: checkbox)
+│   ├── InputSwitch      (type: switch)
+│   ├── InputFile        (type: file)
+│   ├── InputColor       (type: color)
+│   ├── InputRange       (type: range)
+│   ├── InputDatePicker  (type: date, time, datetime-local)
+│   ├── InputOtp         (type: otp)
+│   ├── InputMask        (type: mask)
+│   ├── InputLocation    (type: location)
+│   ├── InputTag         (type: tag, tags)
+│   └── InputRepeater    (type: repeater, form-repeater, multiple-form)
+│
+└── 3. Field Footer Section (Pesan Bantuan & Status Galat)
+    ├── Hint Container: <div v-if="hint && !error"> (Slot: hint)
+    └── Error Container: <div v-if="error" role="alert"> (Slot: error)
+        ├── Material Icon: <span class="material-symbols-outlined">error</span>
+        └── Error Text: <span class="leading-none inline-flex items-center">
 ```
 
-#### Contoh 2: Kustomisasi Sandi Sederhana (Hanya Panjang Karakter & Angka)
+### Diagram Alur Kontrol dan Reaktivitas
 
-```vue
-<InputField
-  v-model="pinCode"
-  type="password"
-  label="PIN Akses Cepat"
-  :password-rules="{
-    minLength: 6,
-    requireNumbers: true,
-    requireSymbols: false,
-    requireUppercase: false,
-    requireLowercase: false,
-  }"
-  hint="Hanya butuh minimal 6 karakter dan angka"
-/>
+```mermaid
+graph TD
+    A[Inisialisasi InputField] --> B{Evaluasi Tipe Input}
+    B -->|text / password / email / number| C[InputText]
+    B -->|select| D[InputSelect]
+    B -->|textarea| E[InputTextarea]
+    B -->|checkbox / radio / switch| F[Input Control Boolean / Group]
+    B -->|otp / mask| G[Input Masking & PIN]
+    B -->|file / location / color / range| H[Input Picker & Media]
+    B -->|tag / tags| I[InputTag]
+    B -->|date / time| J[InputDatePicker]
+    B -->|repeater| K[InputRepeater]
+    C --> L[Sinkronisasi Dua Arah v-model]
+    D --> L
+    E --> L
+    F --> L
+    G --> L
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+    L --> M[Validasi Live / Watcher]
+    M -->|Format Valid| N[Status Pristine / Valid]
+    M -->|Format Tidak Valid| O[Tampilkan Error Internal / Emit Validate]
+    L --> P[Pembaruan Footer: Hint atau Error Alert]
 ```
 
-*Hasil*: Checklist kriteria hanya menampilkan 2 butir ("Min. 6 karakter" & "Mengandung angka"), dan bar kekuatan sandi hanya terbagi menjadi 2 segmen proporsional.
+### Deskripsi Komponen Internal
+
+| Bagian Internal | Elemen DOM / Komponen | Peran dan Tanggung Jawab |
+| :--- | :--- | :--- |
+| **Field Header** | `<div class="flex justify-between">` | Menyajikan label form yang terikat ke ID input dan penghitung karakter sisa. |
+| **Control Body** | Sub-komponen Input terpilih | Mengelola elemen `<input>`, `<textarea>`, `<select>`, atau kontrol kustom serta event DOM native. |
+| **Field Footer** | `<div role="alert">` / `<div>` | Memberikan umpan balik instan berupa teks petunjuk bantuan teknis atau peringatan galat. |
 
 ---
 
+## 05. Variants
+
+Pengelompokan ragam varian kontrol input melalui prop `type`:
+
+| Kategori Varian | Nilai `type` yang Didukung | Karakteristik Perilaku |
+| :--- | :--- | :--- |
+| **Text Controls** | `text`, `email`, `password`, `number`, `tel`, `url`, `search` | Mendukung validasi regex langsung, tombol intip sandi, indikator kekuatan sandi, format pemecah digit telepon (chunk & pattern), dan format numerik. |
+| **Pilihan Formulir** | `select`, `checkbox`, `radio`, `switch` | Menampilkan pilihan tunggal atau banyak dengan tampilan chip opsional, 3 ragam gaya dropdown select, dan 5 varian sakelar switch modern. |
+| **Area Teks Luas** | `textarea` | Mendukung auto-resize tinggi baris berdasarkan panjang konten teks dan batas baris minimum/maksimum. |
+| **Pemilih Nilai (Pickers)** | `date`, `time`, `datetime-local`, `color`, `range` | Dialog popover pemilih tanggal (kalender grid & presets), pemilih warna hex (3 pemicu & 2 palet), serta 4 gaya bilah geser rentang angka. |
+| **Kontrol Terstruktur** | `otp`, `mask`, `currency` | Pemformatan otomatis digit kartu/NPWP (10 preset terverifikasi), navigasi auto-fokus tiap digit OTP (angka, huruf, simbol), dan pemisah ribuan Rupiah. |
+| **Media & Lokasi** | `file`, `location` | Unggah berkas dokumen dengan bar progres, serta pemilih koordinat peta OpenStreetMap dan GPS. |
+| **Daftar Tag & Dinamis** | `tag`, `tags`, `repeater` | Pembuat badge tag interaktif dan formulir bertingkat yang dapat ditambah, disortir, atau dihapus. |
+
+### 5.1 Ragam Gaya Desain Khusus per Tipe (Design Styles)
+
+Setiap kontrol interaktif modern dilengkapi prop spesifik untuk mengubah gaya desain visual tanpa mempengaruhi kontrak fungsional:
+
+| Tipe Target | Prop Varian Gaya | Pilihan Nilai | Keterangan Gaya Desain |
+| :--- | :--- | :--- | :--- |
+| `switch` | `toggleStyle` | `'ios'` (default)<br>`'icon'`<br>`'labeled'`<br>`'cyber'`<br>`'inset'` | • **ios**: Pill halus minimalis Apple dengan knob melayang.<br>• **icon**: Indikator morphic ikon centang/silang saat beralih.<br>• **labeled**: Label ON/OFF tercetak langsung di dalam lintasan track.<br>• **cyber**: Sudut tegas futuristik beraksen cahaya neon.<br>• **inset**: Lintasan sakelar dengan bayangan cekung ke dalam (neumorphic inset). |
+| `range` | `sliderStyle` | `'glow'` (default)<br>`'thick'`<br>`'stepper'`<br>`'minimal'` | • **glow**: Lintasan neon gradient bercahaya dengan halo handle.<br>• **thick**: Bar tebal kokoh dengan balon tooltip persentase melayang.<br>• **stepper**: Tombol presisi `[-]` dan `[+]` untuk penambahan nilai bertahap.<br>• **minimal**: Garis tipis ultra-bersih tanpa ornamen. |
+| `color` | `colorTriggerStyle` | `'button'` (default)<br>`'pill'`<br>`'inline-palette'` | • **button**: Tombol swatch warna dengan kode hex tebal.<br>• **pill**: Badge pill modern dengan ikon pipet eyedropper.<br>• **inline-palette**: Titik-titik warna cepat horizontal di dalam bar formulir. |
+| `color` | `colorPickerStyle` | `'palette'` (default)<br>`'slider'` | • **palette**: Palet kurasi tab tema (Brand, Vivid, Pastel, Dark) + slider hue.<br>• **slider**: Slider spektrum warna kontinu (Hue & Lightness) + tombol Eyedropper API. |
+| `date`, `time`, `datetime-local` | `datePickerStyle` | `'calendar'` (default)<br>`'presets'` | • **calendar**: Grid kalender bulanan lengkap + slider 24 jam + 4 tombol aksi.<br>• **presets**: Panel pintasan cepat (Hari Ini, Besok, Lusa, Jam Kerja) + kalender. |
+| `select` | `selectDropdownStyle` | `'modern'` (default)<br>`'cards'`<br>`'compact'` | • **modern**: Daftar rapi dengan badge kategori terkoordinasi & check aktif.<br>• **cards**: Pilihan kartu interaktif dengan ikon dan deskripsi subteks.<br>• **compact**: Tata letak grid 2 kolom hemat ruang untuk dataset banyak opsi. |
+| `search` | `searchStyle` | `'dropdown'` (default)<br>`'spotlight'` | • **dropdown**: Menu saran inline tepat di bawah kolom pencarian.<br>• **spotlight**: Command Palette melayang di tengah layar (Cmd+K style). |
+
+### 5.2 Arsitektur Popover Bebas Tabrakan (4 Arah)
+
+Komponen masukan yang memiliki panel melayang (`date`, `time`, `datetime-local`, `color`, `select`) dibangun di atas composable headless `usePopover.js` yang menjamin popover tidak pernah terpotong atau tertutup kontainer:
+
+- **Teleportasi ke `<body>`**: Elemen popover dilempar ke root body sehingga bebas dari stacking context trap (`overflow: hidden`, `z-index: 1`, dsb).
+- **Koordinat Fixed Presisi**: Posisi dihitung via `getBoundingClientRect()` dan diperbarui otomatis pada event `scroll` dan `resize`.
+- **4 Arah Penempatan (`placement` / `popoverPlacement`)**:
+  - `'bottom'` (Default): Melayang tepat di bawah elemen input trigger.
+  - `'top'`: Melayang di atas elemen input trigger.
+  - `'left'`: Melayang di sebelah kiri elemen input trigger.
+  - `'right'`: Melayang di sebelah kanan elemen input trigger.
+- **Deteksi Tabrakan Cerdas (Auto-Flip Collision Detection)**: Jika ruang viewport pada arah yang dipilih tidak mencukupi, sistem secara otomatis membalikkan posisi ke sisi yang berlawanan.
+- **Tingkat Tumpukan Tertinggi (`z-[99999]`)**: Berada di atas seluruh modal, drawer, atau kartu lainnya di halaman.
+- **Penutupan Otomatis**: Mendeteksi klik di luar popover dan penekanan tombol `Escape`.
+
 ---
 
-### Contoh Penggunaan InputField
+## 06. Sizes
 
-#### 1. Form Autentikasi (Text, Email & Password with Toggle)
+Tiga skala dimensi presisi untuk menjaga keselarasan hierarki visual halaman:
+
+| Ukuran | Tinggi Total | Ukuran Teks | Padding Kontainer | Ikon Prefix | Ikon Clear | Rekomendasi Skenario |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `sm` | ~32px | `text-xs` (12px) | `px-2.5 py-1 gap-2` | 14px | 12px (`w-4 h-4`) | Tabel data kompak, filter toolbar, jendela modal kecil. |
+| `md` | ~38-40px | `text-xs` / `text-sm` | `px-3 py-1.5 gap-2.5` | 15px | 13px (`w-4.5 h-4.5`) | Standar formulir entri data administratif (Default). |
+| `lg` | ~44-48px | `text-sm` / `text-base` | `px-3.5 py-2.5 gap-3` | 17px | 14px (`w-5 h-5`) | Formulir hero, halaman login/registrasi, tampilan mobile. |
+
+### Rasio Keseimbangan Optik Ikon terhadap Teks
+
+Ikon Google Material Symbols secara bawaan mengisi 75% - 85% kotak pembungkusnya, sedangkan huruf teks hanya mengisi sekitar 65% - 70% (*cap-height*). Untuk mencegah ikon menenggelamkan teks di sebelahnya:
+- **Ikon Prefix Semantik**: Diberikan rasio 1:1 terhadap ukuran font (`text-[14px]` pada `sm`, `text-[15px]` pada `md`, `text-[17px]` pada `lg`).
+- **Ikon Tombol Clear / Dismiss**: Diberikan rasio 80% - 85% dari ukuran font (`text-[12px]` pada `sm`, `text-[13px]` pada `md`).
+- **Konfigurasi Variasi Font**: Seluruh ikon Material Symbols dikonfigurasi dengan `font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 20` agar goresan garis tetap tajam dan tidak menebal pada dimensi mikro.
+
+---
+
+## 07. States
+
+| Status Entitas | Pemicu Status | Tampilan Visual |
+| :--- | :--- | :--- |
+| **Default (Idle)** | Komponen terpasang, belum berinteraksi | Border `border-slate-200 dark:border-slate-700/80`, placeholder warna redup. |
+| **Hover** | Penunjuk kursor berada di atas input | Border bertransisi halus ke `hover:border-slate-300 dark:hover:border-slate-600`. |
+| **Focused** | Pengguna mengklik atau menekan Tab ke input | Ring fokus tegas `ring-4 ring-blue-500/15`, border aksen `border-blue-600 dark:border-blue-500`. |
+| **Filled** | Model terisi teks | Tombol silang reset muncul otomatis jika prop `clearable=true`. |
+| **Error** | Prop `error` memiliki nilai pesan | Border merah `border-rose-500`, ring `ring-rose-500/15`, dan pesan galat dengan ikon di footer. |
+| **Disabled** | Prop `disabled=true` | Kontainer transparan `opacity-60`, latar redup `bg-slate-100 dark:bg-slate-800`, kursor `not-allowed`. |
+| **Readonly** | Prop `readonly=true` | Nilai terkunci dari editan, latar halus `bg-slate-50 dark:bg-slate-900/40`, kursor seleksi teks biasa. |
+| **Loading** | Prop `loading=true` | Spinner animasi berputar halus di bagian trailing kanan input. |
+
+---
+
+## 08. Props / Parameters / Attributes
+
+### Props Universal
+
+| Nama Prop | Tipe Data | Nilai Default | Wajib | Keterangan & Validasi |
+| :--- | :--- | :--- | :--- | :--- |
+| `modelValue` | `Any` | `null` | Ya | Nilai data sinkronisasi dua arah `v-model`. |
+| `type` | `String` | `'text'` | Tidak | Tipe kontrol input yang akan didelegasikan (20+ tipe didukung). |
+| `label` | `String` | `''` | Tidak | Teks label yang ditampilkan di atas input. |
+| `placeholder` | `String` | `''` | Tidak | Teks petunjuk saat kotak masukan masih kosong. |
+| `name` | `String` | `''` | Tidak | Atribut nama input untuk identifikasi formulir HTTP. |
+| `id` | `String` | `''` | Tidak | ID unik elemen (otomatis dibuat via `useId()` jika kosong). |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl'` | `'md'` | Tidak | Pilihan dimensi vertikal komponen dan proporsi ikon responsif. |
+| `rounded` | `'none' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl' \| '3xl' \| 'full'` | `'xl'` | Tidak | Kelengkungan sudut bingkai bar dan elemen kontrol internal. |
+| `popoverPlacement` / `placement` | `'bottom' \| 'top' \| 'left' \| 'right'` | `'bottom'` | Tidak | Arah penempatan panel melayang popover bebas tabrakan (date, time, color, select). |
+| `popoverOffset` | `Number` | `8` | Tidak | Jarak celah pixel antara elemen trigger input dengan panel popover. |
+| `required` | `Boolean` | `false` | Tidak | Menandai input wajib diisi serta memunculkan tanda bintang merah. |
+| `disabled` | `Boolean` | `false` | Tidak | Menonaktifkan interaksi pengguna (kursor `not-allowed`). |
+| `readonly` | `Boolean` | `false` | Tidak | Mengunci teks agar tidak dapat dimodifikasi namun tetap dapat disalin. |
+| `error` | `String` | `''` | Tidak | Pesan galat validasi yang memicu gaya alert error. |
+| `hint` | `String` | `''` | Tidak | Teks panduan informasi tambahan di bawah kontrol. |
+| `subtext` | `String` | `''` | Tidak | Teks deskripsi baris kedua pada checkbox, radio, atau switch. |
+| `icon` | `String` | `''` | Tidak | Nama ikon Material Symbols pada sisi kiri (leading). |
+| `iconRight` | `String` | `''` | Tidak | Nama ikon Material Symbols pada sisi kanan (trailing). |
+| `prefix` | `String` | `''` | Tidak | Teks awalan statis di dalam input (misal `Rp`, `https://`). |
+| `suffix` | `String` | `''` | Tidak | Teks akhiran statis di dalam input (misal `kg`, `bulan`). |
+| `clearable` | `Boolean` | `false` | Tidak | Menampilkan tombol silang Pack UI untuk mengosongkan nilai instan. |
+| `loading` | `Boolean` | `false` | Tidak | Menampilkan indikator proses pemuatan pada trailing area. |
+| `maxlength` | `Number \| String` | `null` | Tidak | Membatasi panjang teks dan menampilkan counter karakter. |
+| `autocomplete` | `String` | `''` | Tidak | Konfigurasi bawaan peramban untuk pengisian otomatis. |
+
+### Props Khusus Tipe Tertentu
+
+| Nama Prop | Tipe Data | Tipe Target | Keterangan |
+| :--- | :--- | :--- | :--- |
+| `toggleStyle` | `'ios' \| 'icon' \| 'labeled' \| 'cyber' \| 'inset'` | `switch` | 5 ragam gaya desain sakelar switch visual modern (default: `'ios'`). |
+| `sliderStyle` | `'glow' \| 'thick' \| 'stepper' \| 'minimal'` | `range` | 4 ragam gaya desain penggeser rentang slider (default: `'glow'`). |
+| `colorTriggerStyle` | `'button' \| 'pill' \| 'inline-palette'` | `color` | 3 ragam tombol pemicu pemilih warna (default: `'button'`). |
+| `colorPickerStyle` | `'palette' \| 'slider'` | `color` | 2 ragam menu popover pemilih warna: Palet Tab Kurasi atau Slider Spektrum Pelangi (default: `'palette'`). |
+| `datePickerStyle` | `'calendar' \| 'presets'` | `date`, `time`, `datetime-local` | 2 ragam picker tanggal: Kalender grid + slider 24 jam atau Panel Pintasan Cepat (default: `'calendar'`). |
+| `selectDropdownStyle` | `'modern' \| 'cards' \| 'compact'` | `select` | 3 ragam dropdown select: Modern sleek list, Interactive cards, atau Dense 2-kolom grid (default: `'modern'`). |
+| `searchStyle` | `'dropdown' \| 'spotlight'` | `search` | 2 ragam antarmuka pencarian: Menu inline dropdown atau Spotlight Command-Palette melayang di tengah layar (default: `'dropdown'`). |
+| `searchSuggestions` | `Boolean` | `search` | Mengaktifkan/menonaktifkan menu dropdown saran riwayat pencarian (default: `true`). |
+| `preset` | `String` | `mask` | Preset pola mask siap pakai: `'npwp'`, `'npwp-16'`, `'credit-card'`, `'nik'`, `'phone-id'`, `'date-id'`, `'time-id'`, `'license-plate'`, `'postal-code'`, `'ip-address'`. |
+| `mask` | `String` | `mask` | Pola masker kustom pembatas (`9` digit, `a` huruf, `*` alfanumerik). |
+| `slotChar` | `String` | `mask` | Karakter placeholder pada bilah kosong format mask (default: `'_'`). |
+| `emitRaw` | `Boolean` | `mask` | Mengirimkan nilai bersih tanpa karakter pemisah format ke model (default: `true`). |
+| `maskUppercase` | `Boolean` | `mask` | Otomatis mengonversi karakter masukan menjadi huruf kapital besar (default: `false`). |
+| `showMaskHint` | `Boolean` | `mask` | Menampilkan badge visual pembantu format masker di bawah kotak input (default: `false`). |
+| `length` | `Number \| String` | `otp` | Jumlah kotak karakter bilah kode OTP / PIN (default: `6`). |
+| `charType` | `'numeric' \| 'alpha' \| 'symbol' \| 'alphanumeric' \| 'any' \| 'custom'` | `otp` | Batasan karakter OTP: hanya angka, hanya huruf, simbol, alfanumerik, bebas, atau regex kustom. |
+| `pattern` | `String \| RegExp` | `otp` | Pola validasi karakter kustom saat `charType='custom'`. |
+| `uppercase` | `Boolean` | `otp` | Otomatis mengubah masukan huruf kecil menjadi huruf besar kapital (default: `false`). |
+| `integerOnly` | `Boolean` | `otp` | Membatasi input masukan dan paste khusus digit angka 0-9 (default: `true`). |
+| `masked` | `Boolean` | `otp` | Menyensor karakter kode OTP menjadi bulatan sandi dot (default: `false`). |
+| `separator` | `String` | `otp` | Karakter visual pembagi di tengah slot OTP (contoh: `'-'`). |
+| `separatorAfter` | `Number` | `otp` | Indeks bilah kotak tempat separator disisipkan (default: tengah). |
+| `countdown` | `Number` | `otp` | Durasi hitung mundur dalam detik untuk tombol kirim ulang OTP (default: `0`). |
+| `resendText` | `String` | `otp` | Teks tombol kirim ulang kode OTP (default: `'Kirim Ulang Kode OTP'`). |
+| `autoFocus` | `Boolean` | `otp` | Otomatis memfokuskan kotak digit pertama saat komponen terpasang (default: `false`). |
+| `telDelimiter` | `String` | `tel` | Karakter pemisah format nomor telepon (default: `'-'`). |
+| `telChunkSize` | `Number \| String \| Array` | `tel` | Ukuran pemecahan digit nomor telepon (misal: `2`, `4`, atau deret `[3,4,4]`). |
+| `telPattern` | `String` | `tel` | Pola masking format telepon dengan karakter `#` (misal: `'1###-2###'`). |
+| `urlProtocol` | `String` | `url` | Awalan protokol otomatis yang disematkan (default: `'https://'`). |
+| `urlErrorText` | `String` | `url` | Pesan galat kustom saat format URL tidak sesuai. |
+| `emailErrorText` | `String` | `email` | Pesan galat kustom saat format email tidak sesuai. |
+| `showPasswordToggle` | `Boolean` | `password` | Tombol intip tampilkan/sembunyikan karakter sandi (default: `true`). |
+| `showPasswordStrength` | `Boolean` | `password` | Menampilkan meteran visual kekuatan kata sandi (default: `true`). |
+| `passwordRules` | `Object` | `password` | Konfigurasi aturan sandi: `minLength`, `requireUppercase`, `requireNumbers`, dsb. |
+| `options` | `Array` | `select`, `tag`, `search` | Daftar pilihan data array `[{ label, value, subtext, group }]`. |
+| `searchable` | `Boolean \| null` | `select` | Menampilkan kotak pencarian opsi di dalam dropdown (otomatis jika opsi > 5). |
+| `multiple` | `Boolean` | `select`, `file` | Mengizinkan pemilihan banyak opsi tag atau multi-unggah berkas. |
+| `currency` | `Boolean \| String` | `number` | Mengaktifkan pemformatan ribuan Rupiah (misal `IDR` atau `true`). |
+| `min / max / step` | `Number` | `range`, `number` | Batas nilai minimum, maksimum, dan langkah kenaikan per geseran. |
+| `autoResize` | `Boolean` | `textarea` | Menyesuaikan tinggi textarea otomatis sesuai baris teks. |
+| `allowCustom` | `Boolean` | `tags` | Mengizinkan pembuatan tag kustom di luar daftar pilihan. |
+| `displayMode` | `'modal' \| 'inline'` | `location` | Mode tampilan pemilih peta OpenStreetMap: dialog modal atau sematan inline. |
+| `showCoordinatesBadge` | `Boolean` | `location` | Menampilkan badge ringkasan koordinat latitude/longitude di bawah input. |
+| `fields` | `Array` | `repeater` | Skema struktur kolom pada formulir berulang majemuk. |
+| `variant` / `layout` | `'dropzone' \| 'avatar' \| 'grid' \| 'list' \| 'button' \| 'compact' \| 'banner' \| 'paste'` | `file` | 8 varian gaya tata letak visual pengunggah berkas (default: `'dropzone'`). |
+| `accept` | `String` | `file` | Filter ekstensi atau tipe MIME bebas campuran (contoh: `'image/*'`, `'.pdf,.docx'`). |
+| `maxSize` | `Number \| String` | `file` | Batas maksimum ukuran berkas fleksibel (contoh: `'2KB'`, `'500KB'`, `'10MB'`, `'1GB'`). |
+| `maxFiles` | `Number` | `file` | Batas kuantitas maksimum berkas saat `multiple=true`. |
+| `simulateUpload` | `Boolean` | `file` | Menjalankan simulasi progres pengiriman otomatis oleh sistem secara bertahap. |
+| `minimal` | `Boolean` | `file` | Mode minimalis tanpa instruksi panjang, menyisakan elemen inti (sangat pas untuk avatar). |
+| `hideInfo` | `Boolean` | `file` | Menyembunyikan teks spesifikasi format dan batas ukuran berkas. |
+| `existingFiles` | `Array \| Object \| String` | `file` | Data berkas server yang sudah tersimpan di database untuk ditampilkan, diganti, atau dihapus. |
+
+---
+
+## 09. Slots / Content
+
+Titik injeksi konten untuk memodifikasi struktur markup bawaan komponen secara deklaratif:
+
+### Slot Universal & Layout
+
+| Nama Slot | Tipe Slot | Parameter Terbuka (Scoped Props) | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `default` | Standard | -- | Konten kustom yang diteruskan ke sub-komponen. |
+| `label` | Named | -- | Mengganti elemen judul label bawaan dengan komponen kustom (misal badge/tooltip). |
+| `hint` | Named | -- | Mengganti area teks petunjuk bantuan di bagian footer. |
+| `error` | Named | -- | Mengganti struktur tampilan pesan galat di bagian footer. |
+| `prefix` | Named | -- | Mengganti atau menyisipkan elemen awalan di sisi kiri kotak kontrol. |
+| `suffix` | Named | -- | Mengganti atau menyisipkan elemen akhiran di sisi kanan kotak kontrol. |
+
+### Slot Kustomisasi Popover Developer (`date`, `time`, `color`, `select`)
+
+| Nama Slot | Parameter Terbuka (Scoped Props) | Deskripsi |
+| :--- | :--- | :--- |
+| `#popover` | `{ value, close, placement, selectColor, currentColor, search, options, ... }` | **Kustomisasi antarmuka popover total oleh developer**. Memberikan kendali 100% pada tampilan dalam popover tanpa menghilangkan utilitas `usePopover` (teleportasi ke body, posisi fixed, auto-flip collision detection, dan outside-click). |
+| `#popover-header` | `{ close, hex, ... }` | Menginjeksi konten atau bilah aksi kustom pada bagian paling atas panel popover (tersedia pada `color` dan `select`). |
+| `#popover-footer` | `{ close, ... }` | Menginjeksi konten atau tombol aksi kustom pada bagian paling bawah panel popover (tersedia pada `date`, `color`, dan `select`). |
+
+### Slot Kontrol Opsi (`select` & `search`)
+
+| Nama Slot | Parameter Terbuka (Scoped Props) | Deskripsi |
+| :--- | :--- | :--- |
+| `#option` | `{ option, selected }` | Kustomisasi penuh tampilan baris opsi di dropdown pilihan (`select`). |
+| `#selected` | `{ selected, placeholder }` | Kustomisasi tampilan tombol pemicu opsi yang sedang aktif terpilih (`select`). |
+| `#header` | `{ close }` | Konten kustom di bagian atas daftar pilihan (`select`). |
+| `#footer` | `{ close }` | Konten kustom di bagian bawah daftar pilihan (`select`). |
+| `#empty` | -- | Kustomisasi tampilan pesan ketika tidak ada opsi yang cocok ditemukan. |
+
+### Slot Tambahan untuk Tipe `repeater`
+
+| Nama Slot | Parameter Terbuka (Scoped Props) | Deskripsi |
+| :--- | :--- | :--- |
+| `item-header` | `{ item, index, title, remove, isCollapsed }` | Mengubah tata letak bilah judul tiap kartu baris form repeater. |
+| `add-button` | `{ add, canAdd, count, max, isMaxReached }` | Mengganti tombol pemicu penambahan entri baru. |
+| `field-[name]` | `{ item, index, field, value, update }` | Kustomisasi tampilan input pada kolom tertentu. |
+
+---
+
+## 10. Events / Interactions / Returns
+
+### Event yang Dipancarkan (Emits)
+
+| Nama Event | Payload | Pemicu Eksekusi |
+| :--- | :--- | :--- |
+| `@update:modelValue` | `value: Any` | Nilai masukan mengalami perubahan data. |
+| `@input` | `event: Event` | Karakter baru dimasukkan ke kotak input (native input event). |
+| `@change` | `event: Event` | Nilai input kehilangan fokus atau opsi baru terkonfirmasi. |
+| `@focus` | `event: FocusEvent` | Elemen kontrol menerima fokus kursor. |
+| `@blur` | `event: FocusEvent` | Elemen kontrol kehilangan fokus kursor. |
+| `@clear` | -- | Tombol silang reset diklik oleh pengguna. |
+| `@validate` | `{ valid: Boolean, message: String }` | Evaluasi validasi internal selesai dilakukan. |
+| `@complete` | `otpCode: String` | Seluruh digit pada kotak masukan OTP telah terisi penuh. |
+| `@tag-add` | `tag: String` | Elemen tag baru ditambahkan ke daftar array. |
+| `@tag-remove` | `tag: String` | Elemen tag dikeluarkan dari daftar array. |
+| `@item-add` | `{ item: Object, index: Number }` | Baris data baru berhasil disisipkan pada form repeater. |
+| `@item-remove` | `{ item: Object, index: Number }` | Baris data dikeluarkan dari form repeater. |
+| `@item-duplicate` | `{ item: Object, index: Number }` | Baris data berhasil diduplikasi pada form repeater. |
+| `@item-move` | `{ oldIndex: Number, newIndex: Number }` | Posisi urutan baris data dipindahkan pada form repeater. |
+| `@max-reached` | -- | Batas kuantitas maksimum tag atau entri formulir tercapai. |
+| `@resend` | -- | Pengguna menekan tombol kirim ulang kode OTP. |
+| `@error` | `error: Any` | Proses validasi atau pengunggahan berkas mengalami galat. |
+| `@cancel-upload` | -- | Pengguna membatalkan proses unggah berkas yang sedang berjalan. |
+| `@delete-existing` | `file: Object \| String` | Berkas server database dihapus oleh pengguna (type="file"). |
+
+### Metode Publik Terbuka (Exposed Methods)
+
+Dapat diakses melalui template ref (`ref="inputRef"`):
+
+| Nama Method | Parameter | Nilai Kembali | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `focus()` | -- | `void` | Mengarahkan fokus kursor ke elemen masukan aktif. |
+| `blur()` | -- | `void` | Menghapus fokus kursor dari elemen masukan aktif. |
+| `clear()` | -- | `void` | Mereset nilai model kembali ke keadaan kosong default. |
+| `validate()` | -- | `{ valid, message }` | Menjalankan pemeriksaan validitas input secara manual. |
+| `triggerPicker()` | -- | `void` | Membuka dialog pemilih berkas native sistem peramban (type="file"). |
+| `removeFile(idx)` | `idx: Number` | `void` | Menghapus berkas terpilih berdasarkan indeks daftar (type="file"). |
+
+### Properti Terhitung Publik (Exposed Properties)
+
+| Properti | Tipe Data | Deskripsi |
+| :--- | :--- | :--- |
+| `inputId` | `ComputedRef<String>` | Nilai ID unik elemen yang terdaftar di DOM. |
+| `controlRef` | `Ref<ComponentPublicInstance>` | Referensi langsung ke instans sub-komponen aktif. |
+| `inputRef` | `ComputedRef<HTMLElement>` | Referensi langsung ke tag native `<input>`, `<textarea>`, atau `<select>`. |
+| `value` | `ComputedRef<Any>` | Nilai data model aktif saat ini (bersifat hanya-baca). |
+| `inputFileRef` | `Ref<ComponentPublicInstance>` | Referensi langsung ke engine `InputFile.vue` saat `type="file"`. |
+| `fileInputRef` | `Ref<HTMLInputElement>` | Referensi langsung ke elemen `<input type="file">` tersembunyi. |
+| `filePreviews` | `Ref<Array>` | Daftar array objek pratinjau berkas aktif (lokal maupun server). |
+
+---
+
+## 11. Code Example
+
+### 1. Penggunaan Dasar (Basic Example)
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+
+const fullname = ref('');
+</script>
+
+<template>
+  <InputField
+    v-model="fullname"
+    label="Nama Lengkap"
+    placeholder="Sesuai kartu identitas"
+    icon="person"
+    required
+    clearable
+  />
+</template>
+```
+
+### 2. Penggunaan Varian / Menengah (Intermediate Example)
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+
+const email = ref('');
+const creditCard = ref('');
+const salary = ref(7500000);
+const language = ref('id');
+
+const languageOptions = [
+    { label: 'Bahasa Indonesia', value: 'id' },
+    { label: 'English (US)', value: 'en' },
+];
+</script>
+
+<template>
+  <div class="space-y-3 max-w-md">
+    <InputField
+      v-model="email"
+      type="email"
+      label="Email Kantor"
+      placeholder="nama@perusahaan.co.id"
+      icon="mail"
+      clearable
+      required
+    />
+
+    <InputField
+      v-model="creditCard"
+      type="mask"
+      mask="9999 9999 9999 9999"
+      label="Nomor Kartu Kredit"
+      placeholder="4111 2222 3333 4444"
+      icon="credit_card"
+      clearable
+    />
+
+    <InputField
+      v-model="salary"
+      type="number"
+      currency="IDR"
+      prefix="Rp"
+      label="Gaji Pokok"
+      placeholder="0"
+    />
+
+    <InputField
+      v-model="language"
+      type="select"
+      label="Bahasa Pengantar"
+      icon="translate"
+      :options="languageOptions"
+    />
+  </div>
+</template>
+```
+
+### 3. Penggunaan Lanjutan (Advanced / Enterprise Inertia Example)
 
 ```vue
 <script setup>
@@ -418,24 +562,28 @@ import InputField from '@/Components/Pack/InputField.vue';
 import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
 
 const form = useForm({
-  name: '',
-  email: '',
-  password: '',
-  terms: false,
+    name: '',
+    email: '',
+    password: '',
+    verification_code: '',
+    skills: ['Vue.js', 'Laravel'],
 });
 
-const handleRegister = () => {
-  form.post('/register');
+const submitRegistration = () => {
+    form.post(route('register.store'), {
+        preserveScroll: true,
+        onSuccess: () => form.reset('password'),
+    });
 };
 </script>
 
 <template>
-  <form @submit.prevent="handleRegister" class="space-y-4">
+  <form @submit.prevent="submitRegistration" class="space-y-3.5 max-w-lg p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
     <InputField
       v-model="form.name"
       label="Nama Lengkap"
-      placeholder="Masukkan nama sesuai KTP"
-      icon="person"
+      placeholder="Tuliskan nama Anda"
+      icon="badge"
       :error="form.errors.name"
       required
     />
@@ -444,7 +592,7 @@ const handleRegister = () => {
       v-model="form.email"
       type="email"
       label="Alamat Email"
-      placeholder="nama@perusahaan.com"
+      placeholder="user@domain.com"
       icon="mail"
       :error="form.errors.email"
       required
@@ -453,418 +601,479 @@ const handleRegister = () => {
     <InputField
       v-model="form.password"
       type="password"
-      label="Kata Sandi"
-      placeholder="Minimal 8 karakter"
+      label="Kata Sandi Akun"
+      placeholder="Kombinasi minimal 8 karakter"
       icon="lock"
-      hint="Kombinasikan huruf besar, angka, dan simbol"
+      show-password-strength
       :error="form.errors.password"
       required
     />
 
     <InputField
-      v-model="form.terms"
-      type="checkbox"
-      label="Saya menyetujui Ketentuan Layanan"
-      subtext="Kebijakan Privasi dan Merchant Agreement"
-      :error="form.errors.terms"
-      required
+      v-model="form.verification_code"
+      type="otp"
+      :length="6"
+      label="Kode Verifikasi Keamanan"
+      :separator-after="3"
+      separator="-"
+      :error="form.errors.verification_code"
+      @complete="submitRegistration"
     />
 
-    <ButtonSubmit
-      type="submit"
-      variant="primary"
-      :loading="form.processing"
-      full-width
-    >
-      Daftar Sekarang
-    </ButtonSubmit>
+    <InputField
+      v-model="form.skills"
+      type="tags"
+      label="Kompetensi Teknis"
+      placeholder="Ketik keahlian & tekan Enter..."
+      :max-tags="8"
+      :error="form.errors.skills"
+      clearable
+    />
+
+    <div class="pt-2">
+      <ButtonSubmit
+        variant="primary"
+        icon="person_add"
+        :loading="form.processing"
+        full-width
+      >
+        Konfirmasi & Daftarkan Akun
+      </ButtonSubmit>
+    </div>
   </form>
 </template>
 ```
 
-#### 2. Form Keuangan & Konfigurasi Transaksi (Prefix "Rp", Select & Textarea)
+---
+
+## 12. Result / Behavior
+
+- **Reaktivitas Model Instan**: Setiap pengetikan atau pemutasi nilai langsung memperbarui model induk secara real-time tanpa penundaan rendering.
+- **Validasi Terpadu**:
+  - Pada tipe `email` atau `url`, pola format diperiksa langsung saat pengetikan berlangsung dan menampilkan status validitas.
+  - Pada tipe `password`, indikator kekuatan mengevaluasi kombinasi panjang, variasi huruf, angka, dan simbol.
+- **Pembersihan Bersih (Clear Action)**: Mengklik ikon silang mengembalikan nilai ke format kosong primitif yang sesuai (string kosong untuk teks, array kosong untuk tag, atau nilai boolean `false` untuk switch).
+- **Penanganan Galat Server**: Menerima prop `:error="form.errors.field"` dari Inertia.js untuk otomatis mewarnai border input menjadi merah pekat dan menampilkan alert error di baris footer.
+
+---
+
+## 13. Customization
+
+### 13.1 Penempatan Posisi Popover 4 Arah (`popoverPlacement` / `placement`)
+
+Komponen yang memiliki panel melayang (`date`, `time`, `datetime-local`, `color`, `select`) mendukung konfigurasi arah peletakan bebas tabrakan via prop `popover-placement` atau `placement`. Seluruh popover otomatis diteleportasikan ke `<body>` dengan koordinat `fixed` dan `z-[99999]`:
+
+```vue
+<!-- 1. Melayang di Bawah (Standar) -->
+<InputField
+  v-model="bookingDate"
+  type="date"
+  popover-placement="bottom"
+  label="Tanggal Reservasi (Bawah)"
+/>
+
+<!-- 2. Melayang di Atas (Top) -->
+<InputField
+  v-model="themeColor"
+  type="color"
+  popover-placement="top"
+  label="Warna Primer (Atas)"
+/>
+
+<!-- 3. Melayang di Sisi Kiri (Left) -->
+<InputField
+  v-model="activeRole"
+  type="select"
+  :options="roleOptions"
+  popover-placement="left"
+  label="Hak Akses (Kiri)"
+/>
+
+<!-- 4. Melayang di Sisi Kanan (Right) -->
+<InputField
+  v-model="shiftTime"
+  type="time"
+  popover-placement="right"
+  label="Jam Operasional (Kanan)"
+/>
+```
+
+> [!NOTE]
+> Jika ruang pada arah yang dipilih terbentur oleh batas viewport layar pengguna, logika `usePopover.js` akan secara otomatis membalikkan arah panel (misalnya `top` menjadi `bottom`, atau `right` menjadi `left`) untuk mencegah elemen terpotong.
+
+---
+
+### 13.2 Kustomisasi Penuh Panel Popover oleh Developer (`#popover` Slot)
+
+Developer diberikan kebebasan penuh untuk mendesain antarmuka popover mereka sendiri tanpa perlu menulis ulang penanganan posisi fixed, teleport, auto-flip batas layar, ataupun deteksi klik luar (outside click):
+
+```vue
+<template>
+  <InputField
+    v-model="brandColor"
+    type="color"
+    popover-placement="bottom"
+    label="Pilih Warna Brand Perusahaan"
+  >
+    <!-- Kustomisasi antarmuka popover total dengan Scoped Props -->
+    <template #popover="{ value, close, selectColor, currentColor }">
+      <div class="p-4 space-y-3 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Palet VIP Perusahaan</span>
+          <button
+            type="button"
+            @click="close"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+          >
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+
+        <p class="text-[11px] text-slate-500">Pilih tema status transaksi cepat:</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            v-for="item in [
+              { name: 'Aktif / Sukses', color: '#10B981' },
+              { name: 'Menunggu', color: '#F59E0B' },
+              { name: 'Peringatan', color: '#EF4444' },
+              { name: 'Prioritas', color: '#8B5CF6' }
+            ]"
+            :key="item.color"
+            type="button"
+            @click="selectColor(item.color); close();"
+            class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 flex items-center gap-2 transition cursor-pointer text-left"
+          >
+            <span class="w-4 h-4 rounded-full shrink-0 shadow-xs" :style="{ backgroundColor: item.color }" />
+            <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{{ item.name }}</span>
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px]">
+          <span class="font-mono text-slate-400">{{ currentColor }}</span>
+          <button
+            type="button"
+            @click="close"
+            class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 cursor-pointer"
+          >
+            Selesai
+          </button>
+        </div>
+      </div>
+    </template>
+  </InputField>
+</template>
+```
+
+---
+
+### 13.3 Kustomisasi Baris Opsi Dropdown Select (`#option` Slot)
+
+```vue
+<InputField
+  v-model="selectedTech"
+  type="select"
+  :options="frameworkOptions"
+  :searchable="true"
+  label="Framework Pilihan"
+>
+  <template #option="{ option, selected }">
+    <div class="flex items-center justify-between w-full py-1">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-xs">
+          {{ option.label.charAt(0) }}
+        </div>
+        <div>
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ option.label }}</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">{{ option.subtext }}</div>
+        </div>
+      </div>
+      <Badge v-if="option.group" variant="soft" color="neutral" size="xs">
+        {{ option.group }}
+      </Badge>
+    </div>
+  </template>
+</InputField>
+```
+
+---
+
+### 13.4 Kustomisasi Gaya Desain Kontrol (Style Props)
+
+```vue
+<!-- 1. Sakelar Switch Cyberpunk Neon -->
+<InputField
+  v-model="isCyberMode"
+  type="switch"
+  toggle-style="cyber"
+  label="Aktifkan Mode Performa Tinggi"
+/>
+
+<!-- 2. Slider Stepper Presisi -->
+<InputField
+  v-model="volumeLevel"
+  type="range"
+  slider-style="stepper"
+  :min="0"
+  :max="100"
+  :step="5"
+  label="Volume Audio Master"
+/>
+
+<!-- 3. Dropdown Seleksi Gaya Kartu Interaktif -->
+<InputField
+  v-model="userRole"
+  type="select"
+  select-dropdown-style="cards"
+  :options="roleCards"
+  label="Tingkat Akses Tim"
+/>
+```
+
+---
+
+### 13.5 Kustomisasi Kelas Tambahan melalui Prop `class`
+
+```vue
+<InputField
+  v-model="searchQuery"
+  label="Cari Dokumen"
+  icon="search"
+  class="w-full max-w-sm shadow-xs"
+/>
+```
+
+---
+
+### 13.6 Integrasi Tema Mode Gelap (Dark Mode)
+
+`InputField` telah mendukung mode gelap secara native via varian Tailwind `dark:`. Tidak diperlukan konfigurasi JavaScript khusus. Warna latar belakang, teks, border, serta ikon otomatis menyesuaikan kontras ketika kelas `html.dark` aktif.
+
+---
+
+### 13.7 Kustomisasi Validator Eksternal
+
+```vue
+<InputField
+  v-model="memberCode"
+  label="Kode Keanggotaan"
+  :validator="(val) => {
+    if (!val || val.length !== 8) return 'Kode anggota harus tepat 8 karakter';
+    if (!/^[A-Z0-9]+$/.test(val)) return 'Hanya karakter huruf kapital dan angka';
+    return true;
+  }"
+/>
+```
+
+---
+
+### 13.8 Integrasi Berkas Database / Server (`type="file"` & `existingFiles`)
+
+`InputField` mendukung pemuatan berkas yang sudah tersimpan di database server melalui prop `:existing-files`. Berkas dapat berupa URL string sederhana atau objek terstruktur:
 
 ```vue
 <script setup>
 import { ref } from 'vue';
 import InputField from '@/Components/Pack/InputField.vue';
 
-const amount = ref(250000);
-const paymentChannel = ref('qris');
-const notes = ref('');
+// 1. Berkas dari database (bisa berupa objek atau string URL)
+const storedKtp = ref({
+    id: 101,
+    name: 'KTP_Elektronik_Verifikasi.jpg',
+    size: 1450000,
+    url: 'https://cdn.perusahaan.com/uploads/ktp_101.jpg',
+    uploadedAt: '2026-10-01',
+});
 
-const channelOptions = [
-  { value: 'va_bca', label: 'BCA Virtual Account' },
-  { value: 'va_mandiri', label: 'Mandiri Virtual Account' },
-  { value: 'qris', label: 'QRIS Dynamic Merchant' },
-  { value: 'ewallet_gopay', label: 'GoPay Instant' },
-];
+// 2. Model file baru yang dipilih pengguna
+const newUploadedFile = ref(null);
+
+// 3. Handler saat pengguna menghapus berkas server
+const handleDeleteExisting = (file) => {
+    storedKtp.value = null;
+    // Panggil endpoint API untuk menghapus file di server (misal: axios.delete atau router.delete)
+};
 </script>
 
 <template>
-  <div class="space-y-4">
-    <!-- Input Angka dengan Prefix Rupiah & Suffix IDR -->
-    <InputField
-      v-model="amount"
-      type="number"
-      label="Nominal Deposit"
-      prefix="Rp"
-      suffix="IDR"
-      icon="payments"
-      :min="10000"
-      :step="5000"
-      hint="Minimal transaksi Rp 10.000"
-      required
-    />
+  <InputField
+    v-model="newUploadedFile"
+    type="file"
+    variant="dropzone"
+    label="Dokumen Identitas KTP"
+    :existing-files="storedKtp"
+    accept=".pdf,image/*"
+    max-size="5MB"
+    @delete-existing="handleDeleteExisting"
+  />
+</template>
+```
 
-    <!-- Dropdown Select Saluran Pembayaran -->
-    <InputField
-      v-model="paymentChannel"
-      type="select"
-      label="Metode Pembayaran"
-      :options="channelOptions"
-      icon="account_balance"
-      required
-    />
+Karakteristik perilaku penanganan berkas server:
+- **Tampilan Otomatis**: Berkas server langsung dirender dalam kartu pratinjau lengkap dengan badge status *"Tersimpan di Server"*, ukuran berkas, tombol pembesar gambar, tombol *Ganti Berkas*, dan tombol *Hapus*.
+- **Aksi Ganti Berkas**: Pengguna dapat mengklik tombol *Ganti Berkas* untuk memicu dialog berkas sistem peramban. Begitu berkas baru dipilih, `v-model` menerima objek `File` baru dan kartu pratinjau langsung diperbarui dengan berkas baru tersebut.
+- **Aksi Hapus Berkas**: Mengklik tombol *Hapus* pada berkas eksisting akan memancarkan event `@delete-existing` berisi objek berkas sumber, menghapus item dari pratinjau, dan mereset nilai `v-model`.
 
-    <!-- Textarea dengan Character Counter Limit -->
-    <InputField
-      v-model="notes"
-      type="textarea"
-      label="Catatan Pembayaran (Opsional)"
-      placeholder="Tuliskan keterangan transfer..."
-      :rows="3"
-      :maxlength="150"
-      hint="Maksimal 150 karakter"
-    />
+---
+
+## 14. Accessibility (a11y)
+
+### Navigasi Papan Ketik (Keyboard Navigation)
+
+| Tombol | Fungsi Interaksi |
+| :--- | :--- |
+| `Tab` | Memindahkan fokus kursor maju ke elemen input berikutnya. |
+| `Shift + Tab` | Memindahkan fokus kursor mundur ke elemen sebelumnya. |
+| `Enter` | Menjalankan aksi pengiriman formulir atau menambahkan tag baru pada tipe `tags`. |
+| `Escape` | Menutup daftar menu saran pencarian autocomplete pada tipe `search`. |
+| `Space` | Mengubah status aktif/nonaktif pada tipe `checkbox` dan `switch`. |
+
+### Atribut ARIA Bawaan
+
+- Label terhubung langsung secara semantik melalui atribut `<label :for="inputId">`.
+- Tanda bintang wajib menyertakan `aria-hidden="true"` agar tidak dibaca sebagai teks literal oleh screen reader.
+- Pesan galat pada bagian footer dibungkus dengan atribut `role="alert"` untuk pemberitahuan otomatis ke perangkat bantu tunanetra.
+- Tombol intip kata sandi dilengkapi atribut dinamis `aria-label="Tampilkan sandi"` dan `aria-label="Sembunyikan sandi"`.
+- Kontras warna teks memenuhi standar rasio minimum 4.5:1 terhadap latar belakang sesuai ketentuan WCAG 2.1 Level AA.
+
+---
+
+## 15. Responsive Behavior
+
+| Ukuran Viewport | Rentang Lebar Layar | Karakteristik Tata Letak |
+| :--- | :--- | :--- |
+| **Mobile** | `< 768px` | Elemen input meregang memenuhi lebar penuh kontainer (`w-full`). Skala font ukuran `md` diatur proporsional agar tidak memicu auto-zoom browser iOS Safari. |
+| **Tablet** | `768px - 1023px` | Formulir dapat ditata menjadi 2 kolom fleksibel menggunakan sistem grid parent. |
+| **Desktop** | `>= 1024px` | Kontrol form disarankan dibatasi dengan utilitas lebar maksimal (`max-w-md` atau `max-w-lg`) untuk kenyamanan jarak pandang. |
+
+Touch target pada tombol mikro (tombol clear, toggle password) dirancang memiliki bantalan sentuh minimum 44x44px pada layar sentuh.
+
+---
+
+## 16. Do / Don't
+
+### Rekomendasi (Do)
+
+- Selalu berikan teks `label` yang deskriptif dan mencerminkan data yang diharapkan.
+- Gunakan prop `placeholder` hanya untuk memberikan contoh format masukan, bukan sebagai pengganti label utama.
+- Pasangkan properti `:error="form.errors[name]"` saat mengintegrasikan formulir dengan Laravel Inertia.js.
+- Aktifkan `clearable` pada kolom pencarian atau input teks bertingkat untuk kemudahan koreksi cepat.
+- Manfaatkan tipe khusus seperti `mask`, `otp`, atau `tags` daripada menulis logika pemformatan manual sendiri.
+
+### Larangan (Don't)
+
+- Jangan menggunakan tag heading bawaan (`<h5>`, `<h6>`) atau paragraf `<p>` di dalam slot kustom untuk menghindari margin default yang merusak layout.
+- Dilarang menempatkan margin luar permanen (`m-*`) pada root pembungkus di luar parent layout.
+- Jangan menggunakan label generik yang ambigu seperti "Input 1" atau "Field".
+- Jangan menggunakan tipe `type="number"` untuk nomor handphone, nomor KTP, atau kode pos; gunakan `type="tel"` atau `type="mask"`.
+- Jangan menggunakan opsi `disabled` apabila data tetap perlu dibaca dan disalin oleh pengguna; gunakan `readonly`.
+
+---
+
+## 17. Examples / Recipes
+
+### Resep 1: Formulir Transaksi dengan Auto-Save Terpadu
+
+```vue
+<script setup>
+import { ref } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+import AutoSaveStatus from '@/Components/Pack/AutoSaveStatus.vue';
+import { useAutoSave } from '@/Composables/Pack/useAutoSave.js';
+
+const draftForm = ref({
+    title: '',
+    category: '',
+    budget: 0,
+});
+
+const { isSaving, lastSaved } = useAutoSave('form-draft-key', draftForm);
+</script>
+
+<template>
+  <div class="space-y-3 max-w-md">
+    <AutoSaveStatus :is-saving="isSaving" :last-saved="lastSaved" />
+
+    <InputField v-model="draftForm.title" label="Judul Pengajuan" icon="description" required />
+    <InputField v-model="draftForm.budget" type="number" currency="IDR" prefix="Rp" label="Estimasi Anggaran" required />
+    <ButtonSubmit variant="primary" icon="send">Kirimkan Pengajuan</ButtonSubmit>
   </div>
 </template>
 ```
 
-#### 3. Upload File & Rich Metadata Preview (4 Varian Desain)
+### Resep 2: Pengaturan Profil dengan Konfirmasi Modal
 
-Mendukung 4 varian desain: 2 untuk *Single File* (`'avatar'`, `'dropzone'`) dan 2 untuk *Multiple File* (`'grid'`, `'list'`). Setiap varian dilengkapi kartu informasi detail berkas (ekstensi/MIME badge, ukuran KB/MB, dimensi piksel foto, timestamp waktu upload, tombol zoom modal, serta progress bar loading unggah).
+```vue
+<script setup>
+import { ref } from 'vue';
+import InputField from '@/Components/Pack/InputField.vue';
+import ButtonSubmit from '@/Components/Pack/ButtonSubmit.vue';
+import Modal from '@/Components/Pack/Modal.vue';
+
+const showConfirmModal = ref(false);
+const userBio = ref('Pengembang aplikasi sistem web terintegrasi');
+</script>
+
+<template>
+  <div class="space-y-3 max-w-md">
+    <InputField v-model="userBio" type="textarea" label="Biografi Singkat" :rows="3" :maxlength="200" />
+    <ButtonSubmit variant="primary" @click="showConfirmModal = true">Simpan Profil</ButtonSubmit>
+
+    <Modal v-model="showConfirmModal" title="Konfirmasi Pembaruan">
+      <div class="text-sm text-slate-600 dark:text-slate-300">
+        Apakah Anda yakin ingin mempublikasikan pembaruan biografi profil Anda?
+      </div>
+    </Modal>
+  </div>
+</template>
+```
+
+### Resep 3: Unggah Berkas & Foto Profil Terpadu (type="file")
 
 ```vue
 <script setup>
 import { ref } from 'vue';
 import InputField from '@/Components/Pack/InputField.vue';
 
-// 1. Single File: Avatar / Logo
-const merchantLogo = ref(null);
-
-// 2. Single File: Hero Dropzone
 const kycDocument = ref(null);
+const existingServerDoc = ref({
+    name: 'KTP_Terverifikasi.jpg',
+    size: '1.45 MB',
+    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+});
 
-// 3. Multiple File: Visual Gallery Grid
-const productGallery = ref([]);
+const userAvatar = ref('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
 
-// 4. Multiple File: Compact List / Table
-const financialReports = ref([]);
-
-const isUploading = ref(false);
-const uploadProgress = ref(65);
+const removeServerKyc = () => {
+    existingServerDoc.value = null;
+    kycDocument.value = null;
+};
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Single File: Avatar / Logo Profil -->
-    <InputField
-      v-model="merchantLogo"
-      type="file"
-      variant="avatar"
-      label="Logo Merchant / Avatar"
-      accept="image/*"
-      max-size="2MB"
-      hint="Format PNG/JPG/WebP, maksimal 2 MB"
-    />
-
-    <!-- Single File: Hero Dropzone Dokumen -->
+  <div class="space-y-4 max-w-md">
+    <!-- Mode 1: Dokumen KYC Hero Dropzone dengan Dukungan Berkas Server -->
     <InputField
       v-model="kycDocument"
       type="file"
       variant="dropzone"
-      label="Dokumen KYC / NPWP Perusahaan"
-      accept="image/*,.pdf"
+      label="Unggah KTP / Dokumen Identitas"
+      placeholder="Letakkan berkas identitas di sini"
+      :existing-files="existingServerDoc"
+      accept=".pdf,image/*"
       max-size="5MB"
-      :uploading="isUploading"
-      :progress="uploadProgress"
-      hint="Mendukung Drag & Drop berkas KTP, NPWP atau NIB"
-      required
+      @delete-existing="removeServerKyc"
     />
 
-    <!-- Multiple File: Visual Gallery Grid -->
+    <!-- Mode 2: Foto Profil Avatar Minimal -->
     <InputField
-      v-model="productGallery"
+      v-model="userAvatar"
       type="file"
-      variant="grid"
-      multiple
-      :max-files="6"
-      max-size="10MB"
-      label="Galeri Foto Produk / Bukti Transaksi"
+      variant="avatar"
+      label="Foto Profil Akun"
+      :minimal="true"
       accept="image/*"
-      hint="Rasio 1:1 kartu grid dengan fitur klik perbesar (zoom modal)"
-    />
-
-    <!-- Multiple File: Compact Row List / Table -->
-    <InputField
-      v-model="financialReports"
-      type="file"
-      variant="list"
-      multiple
-      :max-files="10"
-      max-size="20MB"
-      label="Lampiran Rekonsiliasi Keuangan"
-      accept=".pdf,.doc,.docx,.xls,.xlsx,.zip"
-      hint="Format tabel ringkas dengan badge tipe file, ukuran KB/MB, dan aksi cepat"
-    />
-  </div>
-</template>
-```
-
-#### 4. Pengaturan Sistem (Switch, Radio Group, Slider & Color Picker)
-
-```vue
-<script setup>
-import { ref } from 'vue';
-import InputField from '@/Components/Pack/InputField.vue';
-
-const isAutoRetry = ref(true);
-const gatewayEnv = ref('sandbox');
-const fraudThreshold = ref(80);
-const brandColor = ref('#2563eb');
-
-const envOptions = [
-  { value: 'sandbox', label: 'Sandbox Mode (Development)' },
-  { value: 'production', label: 'Production Mode (Live)' },
-];
-</script>
-
-<template>
-  <div class="space-y-5">
-    <!-- Switch Toggle -->
-    <InputField
-      v-model="isAutoRetry"
-      type="switch"
-      label="Otomatis Kirim Ulang Webhook"
-      subtext="Kirim ulang callback hingga 3x jika server merchant gagal merespons"
-    />
-
-    <!-- Radio Options -->
-    <InputField
-      v-model="gatewayEnv"
-      type="radio"
-      name="gateway_environment"
-      label="Lingkungan API"
-      :options="envOptions"
-    />
-
-    <!-- Range Slider -->
-    <InputField
-      v-model="fraudThreshold"
-      type="range"
-      label="Skor Proteksi Anti-Fraud"
-      :min="0"
-      :max="100"
-      :step="5"
-      hint="Transaksi di bawah skor ini akan otomatis ditolak"
-    />
-
-    <!-- Color Picker -->
-    <InputField
-      v-model="brandColor"
-      type="color"
-      label="Warna Aksen Halaman Pembayaran"
-      hint="Sesuaikan dengan identitas visual merek Anda"
-    />
-  </div>
-</template>
-```
-
-#### 5. Kontrol Programatik via Template Ref (`ref.focus()`)
-
-```vue
-<script setup>
-import { ref } from 'vue';
-import InputField from '@/Components/Pack/InputField.vue';
-
-const emailFieldRef = ref(null);
-const emailValue = ref('');
-
-const focusEmailInput = () => {
-  // Memicu fokus secara programatik langsung ke elemen input native di dalam subkomponen
-  emailFieldRef.value?.focus();
-};
-</script>
-
-<template>
-  <div class="space-y-3">
-    <InputField
-      ref="emailFieldRef"
-      v-model="emailValue"
-      type="email"
-      label="Email Notifikasi Webhook"
-      placeholder="webhook@merchant.com"
-      icon="mail"
-    />
-    <button
-      @click="focusEmailInput"
-      class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
-    >
-      Fokuskan Kursor ke Email
-    </button>
-  </div>
-</template>
-```
-
-#### 6. Verifikasi Transaksi & Kartu Kredit (OTP & Masked Input)
-
-```vue
-<script setup>
-import { ref } from 'vue';
-import InputField from '@/Components/Pack/InputField.vue';
-
-const otpCode = ref('');
-const cardNumber = ref('');
-const cardExpiry = ref('');
-const cardCvv = ref('');
-const npwp = ref('');
-
-const handleOtpComplete = (code) => {
-  console.log('OTP siap diverifikasi:', code);
-};
-
-const handleResendOtp = () => {
-  console.log('Mengirim ulang OTP ke nomor WhatsApp merchant...');
-};
-</script>
-
-<template>
-  <div class="space-y-5">
-    <!-- Input OTP / PIN 6-digit dengan countdown & separator '-' -->
-    <InputField
-      v-model="otpCode"
-      type="otp"
-      label="Kode Verifikasi OTP"
-      hint="Masukkan 6 digit kode yang dikirim via SMS/WhatsApp"
-      :length="6"
-      separator="-"
-      :countdown="60"
-      auto-focus
-      @complete="handleOtpComplete"
-      @resend="handleResendOtp"
-      required
-    />
-
-    <!-- Input Nomor Kartu Kredit dengan Masking Otomatis -->
-    <InputField
-      v-model="cardNumber"
-      type="mask"
-      preset="credit-card"
-      label="Nomor Kartu Kredit / Debit"
-      icon="credit_card"
-      clearable
-      required
-    />
-
-    <div class="grid grid-cols-2 gap-3">
-      <!-- Expiry Date MM/YY -->
-      <InputField
-        v-model="cardExpiry"
-        type="mask"
-        preset="expiry"
-        label="Masa Berlaku"
-        placeholder="BB/TT"
-        required
-      />
-
-      <!-- CVV 3-digit -->
-      <InputField
-        v-model="cardCvv"
-        type="mask"
-        preset="cvv"
-        label="Kode CVV"
-        placeholder="123"
-        icon-right="lock"
-        required
-      />
-    </div>
-
-    <!-- Input NPWP Perusahaan -->
-    <InputField
-      v-model="npwp"
-      type="mask"
-      preset="npwp"
-      label="Nomor Pokok Wajib Pajak (NPWP)"
-      hint="Format: 00.000.000.0-000.000"
-    />
-  </div>
-</template>
-```
-
-#### 7. Fitur Lanjutan (Auto-Resize Textarea, Grouped Select & Indeterminate Checkbox)
-
-```vue
-<script setup>
-import { ref } from 'vue';
-import InputField from '@/Components/Pack/InputField.vue';
-
-const complaintNote = ref('');
-const selectedBank = ref('');
-const selectedChannels = ref(['qris', 'va_bca']);
-const isAllSelected = ref(false);
-const isIndeterminate = ref(true);
-
-const groupedBanks = [
-  { value: 'bca', label: 'BCA (Bank Central Asia)', group: 'Bank Konvensional' },
-  { value: 'mandiri', label: 'Bank Mandiri', group: 'Bank Konvensional' },
-  { value: 'bri', label: 'Bank BRI', group: 'Bank Konvensional' },
-  { value: 'bsi', label: 'BSI (Bank Syariah Indonesia)', group: 'Bank Syariah' },
-  { value: 'muamalat', label: 'Bank Muamalat', group: 'Bank Syariah' },
-];
-</script>
-
-<template>
-  <div class="space-y-4">
-    <!-- Textarea yang mengembang otomatis (Auto-Resize) -->
-    <InputField
-      v-model="complaintNote"
-      type="textarea"
-      label="Keterangan Komplain Transaksi"
-      placeholder="Ketik detail transaksi yang ingin diinvestigasi..."
-      auto-resize
-      :min-rows="2"
-      :max-rows="8"
-      hint="Textarea otomatis meninggi tanpa scrollbar hingga batas 8 baris"
-    />
-
-    <!-- Select dengan Pengelompokan Opsi (Grouped Options) & Clearable -->
-    <InputField
-      v-model="selectedBank"
-      type="select"
-      label="Pilih Bank Penyelesaian"
-      :options="groupedBanks"
-      clearable
-      required
-    />
-
-    <!-- Multi-Select dengan Tampilan Chips/Badges -->
-    <InputField
-      v-model="selectedChannels"
-      type="select"
-      label="Saluran Pembayaran Aktif"
-      :options="groupedBanks"
-      multiple
-      chip-display
-    />
-
-    <!-- Checkbox Indeterminate (State Parsial) -->
-    <InputField
-      v-model="isAllSelected"
-      type="checkbox"
-      label="Pilih Semua Transaksi"
-      subtext="Menampilkan ikon tanda minus (-) saat sebagian data terpilih"
-      :indeterminate="isIndeterminate"
+      max-size="2MB"
     />
   </div>
 </template>
@@ -872,203 +1081,43 @@ const groupedBanks = [
 
 ---
 
-## 9. Arsitektur Internal & Sub-Komponen Input (`Input/`)
+## 18. Related Items
 
-Untuk menjaga agar komponen `InputField.vue` tetap bersih, modular, dan mudah dirawat, arsitektur form control Pack menggunakan pola **Facade Pattern**. Komponen induk `InputField.vue` bertindak sebagai *orchestrator / facade* (menangani label, *required asterisk*, *character counter limit*, slot header/hint/error, dan forwarding `ref="controlRef"`), sementara logika render dan penanganan interaksi spesifik didelegasikan ke **10 sub-komponen** yang berada di dalam folder `resources/js/Components/Pack/Input/`.
-Untuk menjaga agar komponen `InputField.vue` tetap bersih, modular, dan mudah dirawat, arsitektur form control Pack menggunakan pola **Facade Pattern**. Komponen induk `InputField.vue` bertindak sebagai *orchestrator / facade* (menangani label, *required asterisk*, *character counter limit*, slot header/hint/error, dan forwarding `ref="controlRef"`), sementara logika render dan penanganan interaksi spesifik didelegasikan ke **12 sub-komponen** yang berada di dalam folder `resources/js/Components/Pack/Input/`.
+Pemetaan hubungan ekosistem pendukung antarmuka:
 
-### Diagram Alur Delegasi Facade InputField
+### Sub-Komponen Internal (Tergabung)
 
-```
-InputField.vue (Facade Orchestrator)
-│
-├── type="text" | "email" | "password" | "number" | "tel" | "url" | "search" | "currency"
-│     └── → InputText.vue
-│           ├── Live Validation & Password Strength Meter
-│           ├── Currency Formatter (id-ID) & Phone Formatter
-│           ├── Search Suggestions Dropdown & Auto-Clear
-│           └── Password Reveal Toggle
-│
-├── type="select"
-│     └── → InputSelect.vue (Custom PrimeVue-style Dropdown with Search & Keyboard Nav)
-│     └── → InputSelect.vue (Custom PrimeVue-style Dropdown with Grouping, Chips & Keyboard Nav)
-│
-├── type="textarea"
-│     └── → InputTextarea.vue (Multiline Text Input with Auto-rows & Character Counter)
-│     └── → InputTextarea.vue (Multiline Text Input with Auto-Resize, Min/Max Rows & Char Counter)
-│
-├── type="checkbox"
-│     └── → InputCheckbox.vue (Custom Checkbox with Label & Subtext Slots)
-│     └── → InputCheckbox.vue (Custom Checkbox with Indeterminate State & Group Options Mode)
-│
-├── type="radio"
-│     └── → InputRadio.vue (Radio Group with Rich Option Card / Standard Styling)
-│
-├── type="switch"
-│     └── → InputSwitch.vue (Modern Animated On/Off Toggle Pill)
-│
-├── type="otp"
-│     └── → InputOtp.vue (Digit Slot Entry, Auto-Focus, Paste Parsing, Masking & Countdown Timer)
-│
-├── type="mask"
-│     └── → InputMask.vue (Pattern Masking: Credit Card, NPWP, NIK, Expiry, CVV & Raw Binding)
-│
-├── type="file"
-│     └── → InputFile.vue
-│           ├── Single: 'dropzone' (Hero Drag-and-Drop) & 'avatar' (Circular/Square Logo)
-│           ├── Multiple: 'grid' (Gallery Cards with Zoom Modal) & 'list' (Table Attachments)
-│           └── Live Thumbnail, MIME Validation, Size/Count Limits, Upload Progress Bar
-│
-├── type="color"
-│     └── → InputColor.vue (Color Picker Popover with Swatches & Screen Eyedropper)
-│
-├── type="range"
-│     └── → InputRange.vue (Value Slider with Dynamic Value Badge & Range Formatter)
-│
-└── type="date" | "time" | "datetime-local"
-      └── → InputDatePicker.vue (Custom PrimeVue-style Calendar, Time Spinner, Datetime Popover)
-```
+- [InputText.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputText.vue): Kontrol masukan teks standar, email, kata sandi, numerik, dan mata uang.
+- [InputSelect.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputSelect.vue): Kotak pilihan menu dropdown tunggal dan majemuk.
+- [InputTextarea.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputTextarea.vue): Kotak pengetikan paragraf multi-baris dengan auto-resize.
+- [InputMask.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputMask.vue): Format masukan kartu identitas dan kartu pembayaran.
+- [InputOtp.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputOtp.vue): Barisan digit PIN/OTP terfragmentasi.
+- [InputTag.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputTag.vue): Kotak penyusunan chips tag fleksibel.
+- [InputRepeater.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputRepeater.vue): Generator formulir berulang dinamis.
+- [InputFile.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputFile.vue): Engine pengunggah berkas terpadu dengan 8 varian tata letak, pratinjau lokal, dan penanganan berkas server.
+- [InputLocation.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputLocation.vue): Pemilih titik lokasi peta Leaflet / OpenStreetMap.
+- [InputDatePicker.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Input/InputDatePicker.vue): Pemilih kalender tanggal dan waktu.
+
+### Komponen Pendukung Terkait
+
+- [InputFieldComponent.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/InputFieldComponent.vue): Fasad utama dan alias resmi untuk `InputField`.
+- [ButtonSubmit.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/ButtonSubmit.vue): Tombol pengirim data formulir dengan indikator loading.
+- [AutoSaveStatus.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/AutoSaveStatus.vue): Indikator visual penyimpanan data formulir otomatis.
+- [Modal.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Modal.vue): Dialog konfirmasi sebelum submit data penting.
+- [Badge.vue](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Components/Pack/Badge.vue): Label penanda status yang digunakan dalam tag input.
+
+### Composables Terkait
+
+- [useAutoSave.js](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Composables/Pack/useAutoSave.js): Pengelola penyimpanan draft masukan form ke local storage secara reaktif.
+- [useFormValidation.js](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Composables/Pack/useFormValidation.js): Penanganan aturan validasi skema form pada client-side.
+- [useMask.js](file:///c:/SPEED/LARAVEL-PACK-UI/packages/laravel-pack-ui/resources/js/Composables/Pack/useMask.js): Utilitas masking string input native.
 
 ---
 
-### Inventaris & Spesifikasi 10 Sub-Komponen Input
+## 19. Notes / Limitations
 
-### Inventaris & Spesifikasi 12 Sub-Komponen Input
-
-#### 9.1 `InputText.vue`
-
-* **Lokasi File**: `InputText.vue`
-* **Tipe yang Ditangani**: `'text'`, `'email'`, `'password'`, `'number'`, `'tel'`, `'url'`, `'search'`, `'currency'`.
-* **Fitur Unggulan**:
-  * **Password Toggle & Strength Meter**: Menghitung skor kekuatan sandi (1-4) berdasarkan panjang karakter, kombinasi huruf besar/kecil, angka, dan simbol khusus dengan visual progress bar.
-  * **Live Validation**: Validasi format email secara langsung dan format nomor telepon Indonesia (`08xx-xxxx-xxxx`).
-  * **Currency Auto-Formatting**: Otomatis memformat tampilan nominal rupiah (`id-ID`) sementara `v-model` tetap menyimpan nilai numerik bersih (`Number` atau `null`).
-  * **Search Suggestions Popover**: Menggunakan `useClickOutside` untuk menutup panel saran pencarian otomatis saat pengguna mengklik di luar kontainer.
-  * **Expose API**: Menyediakan method `focus()`, `blur()`, dan `inputRef` ke elemen native `<input>`.
-
-#### 9.2 `InputFile.vue`
-
-* **Lokasi File**: `InputFile.vue`
-* **Tipe yang Ditangani**: `'file'`.
-* **Fitur Unggulan**:
-  * **4 Varian Tata Letak**:
-    1. `'dropzone'`: Area drag-and-drop hero untuk upload single dokumen (KYC, NPWP, NIB).
-    2. `'avatar'`: Pratinjau upload logo/foto profil berbentuk lingkaran atau persegi rounded.
-    3. `'grid'`: Galeri kartu multi-berkas dengan thumbnail gambar, dimensi piksel, dan tombol zoom pratinjau modal.
-    4. `'list'`: Format tabel lampiran multi-berkas dengan badge ekstensi berkas, ukuran KB/MB, timestamp, dan tombol hapus individual.
-  * **Validasi Sisi Klien Instan**: Validasi batas ukuran maksimum (`max-size="5MB"` atau bytes) dan jumlah berkas maksimum (`max-files="6"`).
-  * **State Unggah Asinkron**: Mendukung prop `uploading` dan `progress` (0-100%) dengan bar indikator progres animasi.
-
-#### 9.3 `InputDatePicker.vue`
-
-* **Lokasi File**: `InputDatePicker.vue`
-* **Tipe yang Ditangani**: `'date'`, `'time'`, `'datetime-local'`.
-* **Fitur Unggulan**:
-  * **Desain Popover ala PrimeVue**: Floating overlay kalender interaktif tanpa mengandalkan datepicker native browser yang inkonsisten antar OS.
-  * **Integrasi `useClickOutside`**: Otomatis menutup panel kalender saat pengguna mengklik di luar area input.
-  * **Time Spinner Selector**: Pengatur jam dan menit presisi dengan tombol increment/decrement dan format 24 jam.
-  * **Tombol Cepat**: Tombol *Hari Ini* dan *Hapus (Clear)* bawaan.
-
-#### 9.4 `InputSelect.vue`
-
-* **Lokasi File**: `InputSelect.vue`
-* **Tipe yang Ditangani**: `'select'`.
-* **Fitur Unggulan**:
-  * **Option Grouping**: Mendukung pengelompokan opsi dengan header divider otomatis jika properti `group` disertakan pada opsi (contoh: `{ value: 'bca', label: 'BCA', group: 'Bank Transfer' }`).
-  * **Multi-Select Chips Mode**: Opsi terpilih ditampilkan sebagai badge chip individual yang dapat dihapus satu per satu (`chipDisplay`, default `true`).
-  * **Clearable Single Select**: Tombol `(X)` untuk mereset pilihan kembali ke kosong (`clearable: true`).
-  * **Search Filter**: Input pencarian real-time di dalam dropdown jika jumlah opsi > 5 atau prop `searchable` aktif.
-  * **Navigasi Keyboard Lengkap**: Mendukung tombol panah atas/bawah (`ArrowUp`/`ArrowDown`), `Enter` untuk memilih, dan `Escape` untuk menutup.
-  * **Integrasi `useClickOutside`**: Menutup panel listbox secara mulus saat klik di luar.
-  * **Expose API**: Menyediakan `open()`, `close()`, `focus()`, dan `isOpen`.
-
-#### 9.5 `InputColor.vue`
-
-* **Lokasi File**: `InputColor.vue`
-* **Tipe yang Ditangani**: `'color'`.
-* **Fitur Unggulan**:
-  * **Palet Warna Cepat**: Grid preset palet warna modern yang siap dipilih dalam 1 klik.
-  * **Hex Manual Input & Copy**: Input teks nilai hexadecimal langsung dengan tombol salin instan.
-  * **Screen Eyedropper API**: Menggunakan `window.EyeDropper` native browser untuk mengambil warna dari layar mana saja bila didukung.
-
-#### 9.6 `InputRadio.vue`
-
-* **Lokasi File**: `InputRadio.vue`
-* **Tipe yang Ditangani**: `'radio'`.
-* **Fitur Unggulan**:
-  * Menerima array opsi string sederhana maupun objek kaya `{ value, label, subtext, disabled }`.
-  * Status visual aktif/fokus yang jelas dengan border kontras dan ring glow.
-
-#### 9.7 `InputCheckbox.vue`
-
-* **Lokasi File**: `InputCheckbox.vue`
-* **Tipe yang Ditangani**: `'checkbox'`.
-* **Fitur Unggulan**:
-  * Checkbox kustom dengan ikon centang Google Icons.
-  * Mendukung label, subteks penjelasan tambahan, serta slot default untuk link syarat & ketentuan interaktif.
-  * **Indeterminate State**: Mendukung status parsial (`indeterminate: true`) yang menampilkan ikon minus (`remove`), sangat berguna untuk checkbox *"Select All"* pada tabel data.
-  * **Group Options Mode**: Mendukung prop `options` untuk merender daftar pilihan banyak sekaligus dengan binding array ke `v-model`.
-  * **Array Value Binding**: Mendukung prop `value` untuk menambahkan/menghapus item ke dalam array `modelValue`.
-  * **Aksesibilitas**: Dilengkapi atribut `aria-checked="mixed"` saat kondisi indeterminate aktif.
-
-#### 9.8 `InputTextarea.vue`
-
-* **Lokasi File**: `InputTextarea.vue`
-* **Tipe yang Ditangani**: `'textarea'`.
-* **Fitur Unggulan**:
-  * Atribut baris dinamis (`rows`) dan batas karakter (`maxlength`).
-  * Styling fokus seragam dengan `InputText`.
-  * Expose API: `focus()`, `blur()`, dan `textareaRef`.
-  * **Auto-Resize Otomatis**: Textarea mengembang otomatis menyesuaikan tinggi isi teks tanpa scrollbar (`autoResize: true`).
-  * **Min & Max Rows Constraints**: Membatasi batas minimum (`minRows`) dan batas maksimum (`maxRows`) ketinggian saat auto-resize aktif.
-  * **Resize Handle Control**: Kontrol arah handle resize CSS via prop `resize` (`'none'`, `'vertical'`, `'both'`, `'horizontal'`).
-  * **Expose API**: Menyediakan `focus()`, `blur()`, `adjustHeight()`, dan `textareaRef`.
-
-#### 9.9 `InputRange.vue`
-
-* **Lokasi File**: `InputRange.vue`
-* **Tipe yang Ditangani**: `'range'`.
-* **Fitur Unggulan**:
-  * Slider rentang nilai responsif dengan badge visual indikator angka saat digeser.
-  * Mendukung fungsi `rangeFormatter` kustom (contoh: `(v) => \`\${v}%\``atau`(v) => \`Rp \${v.toLocaleString()}\``).
-
-#### 9.10 `InputSwitch.vue`
-
-* **Lokasi File**: `InputSwitch.vue`
-* **Tipe yang Ditangani**: `'switch'`.
-* **Fitur Unggulan**:
-  * Toggle pill modern dengan transisi geser halus.
-  * Aksesibilitas bawaan dengan `role="switch"` dan `aria-checked`.
-
-#### 9.11 `InputOtp.vue` *(Komponen Baru)*
-
-* **Lokasi File**: `InputOtp.vue`
-* **Tipe yang Ditangani**: `'otp'`.
-* **Fitur Unggulan**:
-  * **Slot-Based Digits**: Input terpisah per digit (default 6 digit) dengan navigasi otomatis keyboard (`ArrowLeft`, `ArrowRight`, `Backspace`).
-  * **Clipboard Paste Auto-Distribute**: Otomatis mendistribusikan kode OTP saat pengguna melakukan paste (*Ctrl+V*) dari SMS atau pesan WhatsApp.
-  * **Masking Support**: Mode `masked: true` untuk menyembunyikan angka menjadi titik sandi (cocok untuk PIN transaksi/keuangan).
-  * **Separator Visual**: Menampilkan pemisah visual antar grup angka (misal `separator="-"` setelah digit ke-3).
-  * **Built-in Resend Countdown**: Fitur timer hitung mundur bawaan (`countdown="60"`) dengan tombol kirim ulang otomatis aktif saat waktu habis.
-  * **Event `@complete`**: Otomatis memicu event saat seluruh slot telah terisi penuh.
-  * **Expose API**: `focus()`, `clear()`, `getValue()`, `startCountdown()`.
-
-#### 9.12 `InputMask.vue`
-
-* **Lokasi File**: `InputMask.vue`
-* **Tipe yang Ditangani**: `'mask'`.
-* **Fitur Unggulan**:
-  * **Pattern Masking Fleksibel**: Mendukung pola kustom dengan karakter `#` (angka), `A` (huruf), dan `*` (alfanumerik).
-  * **Preset Pola Bawaan**:
-    * `'credit-card'`: `####-####-####-####`
-    * `'npwp'`: `##.###.###.#-###.###`
-    * `'nik'`: `################` (16 digit)
-    * `'postal-code'`: `#####` (5 digit)
-    * `'phone-id'`: `####-####-####`
-    * `'expiry'`: `##/##` (MM/YY)
-    * `'cvv'`: `###`
-  * **Dual Value Binding**: Nilai yang diikat ke `v-model` adalah nilai mentah tanpa separator (`emitRaw: true`), sementara tampilan input memformat otomatis secara visual.
-  * **Slot Placeholder**: Menampilkan karakter panduan pada posisi yang belum terisi (default `slotChar="_"`).
-  * **Expose API**: `focus()`, `blur()`, `inputRef`.
-
----
+- **Dependensi Ikon Font**: Memerlukan font Google Material Symbols yang dimuat secara global pada dokumen HTML (`font-variation-settings` diatur pada level komponen).
+- **Tipe Input `location`**: Memerlukan akses internet aktif untuk memuat tile peta OpenStreetMap dan API geocoding Nominatim. Tidak dapat beroperasi penuh pada jaringan offline.
+- **Tipe Input `otp`**: Penempelan teks (*paste*) hanya berfungsi optimal apabila jumlah karakter yang ditempel cocok dengan prop `length` (misal 6 digit).
+- **Format Mata Uang Rupiah**: Konfigurasi bawaan menggunakan pemisah ribuan titik (`.`) khas Indonesia. Gunakan prop custom formatter untuk format mata uang negara lain.
+- **Kompatibilitas Runtime**: Membutuhkan lingkungan Vue versi 3.5.0 ke atas untuk mendukung pembuatan ID otomatis via `useId()`.
