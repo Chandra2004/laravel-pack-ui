@@ -42,8 +42,8 @@ InputRepeater menyediakan arsitektur berbasis kartu (*card repeater*) dengan duk
 
 Rujukan rute showcase interaktif dan pengujian live native:
 
-- Rute Demo Native: `http://localhost:8000/demo/form-repeater` (atau alias `http://localhost:8000/demo/input-repeater`)
-- Rute Portal Preview: `http://localhost:8000/preview/form-repeater`
+- Rute Demo Native: `/demo/form-repeater` (atau alias `/demo/input-repeater`)
+- Rute Portal Preview: `/preview/form-repeater`
 
 ---
 

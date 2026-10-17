@@ -40,7 +40,7 @@ Composable ini dirancang untuk mengeliminasi risiko kehilangan data masukan peng
 > [!TIP]
 > Pengujian fungsional dan showcase composable ini dapat diuji secara native pada portal pratinjau aplikasi:
 >
-> <a href="http://localhost:8000/preview/auto-save-status" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Komponen AutoSaveStatus &rarr;</a>
+> <a href="/preview/auto-save-status" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Komponen AutoSaveStatus &rarr;</a>
 
 ---
 

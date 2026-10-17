@@ -36,7 +36,7 @@ Komponen Vue 3 berbasis Composition API (`packages/laravel-pack-ui/resources/js/
 > [!TIP]
 > Pengujian visual dan showcase interaktif entitas ini tersedia secara native pada portal pratinjau aplikasi:
 >
-> Rute Showcase: `http://localhost:8000/demo/drag-drop` atau `http://localhost:8000/preview/drag-drop`
+> Rute Showcase: `/demo/drag-drop` atau `/preview/drag-drop`
 
 ---
 

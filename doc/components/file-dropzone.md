@@ -36,10 +36,10 @@ Komponen Vue 3 berbasis Composition API (`packages/laravel-pack-ui/resources/js/
 > [!TIP]
 > Pengujian visual dan showcase interaktif entitas ini tersedia secara native pada portal pratinjau aplikasi:
 >
-> - Rute Demo Native: `http://localhost:8000/demo/file-dropzone`
-> - Portal Pratinjau: `http://localhost:8000/preview/file-dropzone`
+> - Rute Demo Native: `/demo/file-dropzone`
+> - Portal Pratinjau: `/preview/file-dropzone`
 >
-> <a href="http://localhost:8000/demo/file-dropzone" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Demo Komponen FileDropzone &rarr;</a>
+> <a href="/demo/file-dropzone" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Demo Komponen FileDropzone &rarr;</a>
 
 ---
 

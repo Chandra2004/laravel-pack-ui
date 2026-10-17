@@ -38,8 +38,8 @@ Komponen Vue 3 berbasis Composition API (`packages/laravel-pack-ui/resources/js/
 
 Rujukan rute showcase interaktif dan pengujian live native:
 
-- Rute Demo Native: `http://localhost:8000/demo/filter-toolbar`
-- Rute Portal Preview: `http://localhost:8000/preview/filter-toolbar`
+- Rute Demo Native: `/demo/filter-toolbar`
+- Rute Portal Preview: `/preview/filter-toolbar`
 
 ---
 

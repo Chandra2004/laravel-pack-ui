@@ -42,7 +42,7 @@ Komponen input universal berbasis Vue 3 dan Tailwind CSS v4 yang mengintegrasika
 > [!TIP]
 > Pengujian visual dan showcase interaktif entitas ini tersedia secara native pada portal pratinjau aplikasi:
 >
-> <a href="http://localhost:8000/preview/input-field" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Komponen InputField &rarr;</a>
+> <a href="/preview/input-field" target="_self" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; margin-top: 8px; background-color: var(--vp-c-brand-1, #4f46e5); color: #ffffff;">Buka Live Preview Komponen InputField &rarr;</a>
 
 ---
 
